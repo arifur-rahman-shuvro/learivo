@@ -4,7 +4,7 @@ Learivo is a private, cloud-synced academic workspace. Every student owns a priv
 
 ## Status
 
-Phase 0-1 (discovery and architecture) complete. No application code yet. The product and engineering blueprint is kept as the "Learivo Product and Engineering Blueprint" document and will be mirrored into `docs/`.
+Phase 0-1 (discovery and architecture) complete. Phase 2 (design system and UX) built: theme registry with Default, Forest and Space, brand SVGs, core components and a Design Lab page. No backend, database or sign-in yet (Phase 3).
 
 ## Chosen stack
 
@@ -16,3 +16,15 @@ Phase 0-1 (discovery and architecture) complete. No application code yet. The pr
 ## Roadmap
 
 See `docs/ROADMAP.md`.
+
+## Run it
+
+```bash
+pnpm install
+pnpm dev        # open the Design Lab
+pnpm test       # unit and accessibility-contrast tests
+pnpm typecheck
+pnpm build
+```
+
+Docs: `docs/DESIGN_SYSTEM.md` (themes and tokens), `docs/SCREENS.md` (MVP screen specs), `docs/ROADMAP.md`.

@@ -1,0 +1,185 @@
+@import "tailwindcss";
+
+/* Map Tailwind utilities to the theme tokens (set per theme in the generated CSS). */
+@theme inline {
+  --color-bg: var(--lv-bg);
+  --color-surface-1: var(--lv-surface-1);
+  --color-surface-2: var(--lv-surface-2);
+  --color-surface-3: var(--lv-surface-3);
+  --color-fg: var(--lv-text);
+  --color-muted: var(--lv-text-muted);
+  --color-accent: var(--lv-accent);
+  --color-on-accent: var(--lv-accent-contrast);
+  --color-line: var(--lv-border);
+  --color-line-strong: var(--lv-border-strong);
+  --color-focus: var(--lv-focus);
+  --color-success: var(--lv-success);
+  --color-warning: var(--lv-warning);
+  --color-danger: var(--lv-danger);
+  --font-heading: var(--lv-font-heading);
+  --font-sans: var(--lv-font-body);
+  --font-mono: var(--lv-font-mono);
+  --radius-control: var(--lv-radius-control);
+  --radius-card: var(--lv-radius-card);
+  --radius-pill: var(--lv-radius-pill);
+}
+
+html {
+  background: var(--lv-bg);
+  color: var(--lv-text);
+  font-family: var(--lv-font-body);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--lv-page-background);
+  background-attachment: fixed;
+}
+
+h1, h2, h3 {
+  font-family: var(--lv-font-heading);
+  letter-spacing: -0.015em;
+}
+
+/* Theme-aware surfaces */
+.lv-card {
+  background-color: var(--lv-surface-1);
+  background-image: var(--lv-surface-texture);
+  border: var(--lv-border-width) solid var(--lv-border);
+  border-radius: var(--lv-radius-card);
+  box-shadow: var(--lv-shadow-card);
+  transition: box-shadow var(--lv-motion-base) var(--lv-ease), transform var(--lv-motion-base) var(--lv-ease);
+}
+.lv-card-raised {
+  box-shadow: var(--lv-shadow-raised);
+}
+@media (hover: hover) {
+  .lv-card-interactive:hover {
+    box-shadow: var(--lv-shadow-raised);
+    transform: translateY(-2px);
+  }
+}
+
+/* Buttons */
+.lv-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 44px; /* touch target */
+  padding: 0 1.1rem;
+  border-radius: var(--lv-radius-control);
+  border: var(--lv-border-width) solid transparent;
+  font-weight: 600;
+  font-family: var(--lv-font-body);
+  cursor: pointer;
+  transition: box-shadow var(--lv-motion-fast) var(--lv-ease), transform var(--lv-motion-fast) var(--lv-ease),
+    background-color var(--lv-motion-fast) var(--lv-ease);
+}
+.lv-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.lv-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.lv-btn-sm { min-height: 36px; padding: 0 0.8rem; font-size: 0.875rem; }
+.lv-btn-lg { min-height: 52px; padding: 0 1.5rem; font-size: 1.0625rem; }
+.lv-btn-primary {
+  background: var(--lv-accent);
+  color: var(--lv-accent-contrast);
+  box-shadow: var(--lv-button-shadow);
+}
+.lv-btn-primary:hover:not(:disabled) {
+  box-shadow: var(--lv-button-shadow-hover);
+}
+.lv-btn-secondary {
+  background: var(--lv-surface-2);
+  color: var(--lv-text);
+  border-color: var(--lv-border-strong);
+}
+.lv-btn-secondary:hover:not(:disabled) {
+  background: var(--lv-surface-3);
+}
+.lv-btn-ghost {
+  background: transparent;
+  color: var(--lv-text);
+}
+.lv-btn-ghost:hover:not(:disabled) {
+  background: var(--lv-surface-2);
+}
+.lv-btn-danger {
+  background: transparent;
+  color: var(--lv-danger);
+  border-color: var(--lv-danger);
+}
+.lv-btn-danger:hover:not(:disabled) {
+  background: var(--lv-surface-2);
+}
+
+/* Inputs */
+.lv-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 0.9rem;
+  background: var(--lv-surface-1);
+  color: var(--lv-text);
+  border: var(--lv-border-width) solid var(--lv-border-strong);
+  border-radius: var(--lv-radius-control);
+  font: inherit;
+}
+.lv-input::placeholder {
+  color: var(--lv-text-muted);
+}
+.lv-input[aria-invalid="true"] {
+  border-color: var(--lv-danger);
+}
+
+/* Focus: one clear ring for every interactive element */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--lv-focus);
+  outline-offset: 2px;
+}
+
+/* Progress */
+.lv-ring-arc {
+  stroke-linecap: var(--lv-ring-cap);
+  filter: var(--lv-ring-glow);
+  transition: stroke-dashoffset var(--lv-motion-base) var(--lv-ease);
+}
+
+/* Decorative background art slot */
+.lv-bg-art {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Loader and ambient animations */
+@keyframes lv-spin { to { transform: rotate(360deg); } }
+@keyframes lv-sway { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); } }
+@keyframes lv-orbit { to { transform: rotate(360deg); } }
+@keyframes lv-drift { 0% { transform: translate(0, 0) rotate(0); } 100% { transform: translate(24px, 180px) rotate(40deg); } }
+.lv-spin { animation: lv-spin 0.9s linear infinite; }
+.lv-sway { animation: lv-sway 1.6s ease-in-out infinite; transform-origin: 50% 90%; }
+.lv-orbit { animation: lv-orbit 1.4s linear infinite; transform-origin: 12px 12px; }
+.lv-drift { animation: lv-drift 22s linear infinite; }
+.lv-drift-b { animation-duration: 30s; animation-delay: -8s; }
+.lv-drift-c { animation-duration: 26s; animation-delay: -15s; }
+
+/* Respect reduced motion and the Low effects switch */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+html[data-effects="low"] .lv-bg-art { display: none; }
+html[data-effects="low"] * { animation: none !important; }
+html[data-effects="low"] { --lv-ring-glow: none; }

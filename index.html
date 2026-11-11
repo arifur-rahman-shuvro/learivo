@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en" data-theme="default" data-mode="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#4f46e5" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Learivo</title>
+    <script>
+      // Apply saved theme before first paint to avoid a flash.
+      try {
+        var t = localStorage.getItem("learivo.theme");
+        var m = localStorage.getItem("learivo.mode");
+        if (t) document.documentElement.setAttribute("data-theme", t);
+        if (m) document.documentElement.setAttribute("data-mode", m);
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
