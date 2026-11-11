@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build output
+dist/
+build/
+bin/
+*.exe
+
+# Environment and secrets (never commit)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Tooling
+.DS_Store
+.vscode/
+.idea/
+coverage/
+*.log
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
