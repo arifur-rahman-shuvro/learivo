@@ -4,7 +4,7 @@ Learivo is a private, cloud-synced academic workspace. Every student owns a priv
 
 ## Status
 
-Phase 2 (design system) complete. Phase 3 (foundation) in progress: lint and CI, Go service skeleton, database foundation migration, module registry, app shell, sync skeleton. Accounts, deployment and sign-in are not set up yet.
+Phase 2 (design system) complete. Phase 3 (foundation) in progress: CI, Go service skeleton, database foundation (applied to the Learivo Supabase project), app shell, sign-up and sign-in screens, sync skeleton. Go service deployment and database connection are not done yet.
 
 ## Chosen stack
 

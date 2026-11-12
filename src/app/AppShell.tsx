@@ -8,6 +8,8 @@ import {
   ThemeBackground,
 } from "../design-system/index.ts";
 import App from "../App.tsx";
+import { useAuth } from "../auth/AuthProvider.tsx";
+import AuthScreen from "../auth/AuthScreen.tsx";
 import AppearanceMenu from "./AppearanceMenu.tsx";
 import Home from "./screens/Home.tsx";
 import { moduleForHash, visibleModules } from "./registry.ts";
@@ -30,7 +32,10 @@ function useHash(): [string, (hash: string) => void] {
  */
 export default function AppShell() {
   const [hash, go] = useHash();
+  const { status, user, client } = useAuth();
   if (hash === LAB_ROUTE) return <App />;
+  if (status === "loading") return <div role="status" aria-label="Loading" className="min-h-dvh" />;
+  if (status === "signed-out") return <AuthScreen />;
 
   const current = moduleForHash(hash);
   const modules = visibleModules();
@@ -61,8 +66,14 @@ export default function AppShell() {
             <div className="lg:hidden">
               <LogoWordmark />
             </div>
-            <div className="ml-auto">
+            <div className="ml-auto flex items-center gap-2">
+              <span className="hidden max-w-[16rem] truncate text-sm text-muted sm:inline">
+                {user?.email}
+              </span>
               <AppearanceMenu />
+              <Button variant="ghost" size="sm" onClick={() => void client.signOut()}>
+                Sign out
+              </Button>
             </div>
           </header>
           <main aria-labelledby="module-title">

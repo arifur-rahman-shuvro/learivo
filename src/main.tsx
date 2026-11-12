@@ -8,15 +8,20 @@ import "@fontsource-variable/jetbrains-mono";
 import "virtual:learivo-theme.css";
 import "./app.css";
 import AppShell from "./app/AppShell.tsx";
+import { AuthProvider } from "./auth/AuthProvider.tsx";
+import { createSupabaseAuth } from "./auth/supabaseClient.ts";
 import { ThemeProvider } from "./themes/ThemeProvider.tsx";
 
+const authClient = createSupabaseAuth();
 const root = document.getElementById("root");
 if (!root) throw new Error("Missing #root element");
 
 createRoot(root).render(
   <StrictMode>
     <ThemeProvider>
-      <AppShell />
+      <AuthProvider client={authClient}>
+        <AppShell />
+      </AuthProvider>
     </ThemeProvider>
   </StrictMode>,
 );
