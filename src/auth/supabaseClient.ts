@@ -1,5 +1,5 @@
-import { createClient, type Session } from "@supabase/supabase-js";
-import { config } from "../lib/config.ts";
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabase.ts";
 import type { AuthClient, AuthUser } from "./types.ts";
 
 const toUser = (s: Session | null): AuthUser | null =>
@@ -18,7 +18,6 @@ function friendly(message: string): string {
 }
 
 export function createSupabaseAuth(): AuthClient {
-  const supabase = createClient(config.supabaseUrl, config.supabasePublishableKey);
   return {
     async getUser() {
       const { data } = await supabase.auth.getSession();
