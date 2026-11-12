@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   BottomNav,
   Button,
@@ -13,6 +13,32 @@ import AuthScreen from "../auth/AuthScreen.tsx";
 import AppearanceMenu from "./AppearanceMenu.tsx";
 import Home from "./screens/Home.tsx";
 import { moduleForHash, visibleModules } from "./registry.ts";
+import { supabase } from "../lib/supabase.ts";
+import { SupabaseRepo } from "../modules/question-bank/data/supabaseRepo.ts";
+import type { QuestionRepo } from "../modules/question-bank/data/repo.ts";
+import { BankProvider } from "../modules/question-bank/ui/bank.tsx";
+
+const QuestionsScreen = lazy(() => import("../modules/question-bank/ui/QuestionsScreen.tsx"));
+
+function QuestionsHost({
+  userId,
+  makeRepo,
+}: {
+  userId: string;
+  makeRepo?: (userId: string) => QuestionRepo;
+}) {
+  const repo = useMemo(
+    () => (makeRepo ? makeRepo(userId) : new SupabaseRepo(supabase, userId)),
+    [userId, makeRepo],
+  );
+  return (
+    <BankProvider repo={repo}>
+      <Suspense fallback={<div role="status" aria-label="Loading" />}>
+        <QuestionsScreen />
+      </Suspense>
+    </BankProvider>
+  );
+}
 
 const LAB_ROUTE = "#/lab";
 
@@ -30,7 +56,9 @@ function useHash(): [string, (hash: string) => void] {
  * App shell. Phones: top bar, content, bottom tab bar. Desktop: left sidebar plus content.
  * Navigation is built from the module registry; modules without a screen show a status panel.
  */
-export default function AppShell() {
+export default function AppShell({
+  makeRepo,
+}: { makeRepo?: (userId: string) => QuestionRepo } = {}) {
   const [hash, go] = useHash();
   const { status, user, client } = useAuth();
   if (hash === LAB_ROUTE) return <App />;
@@ -79,6 +107,8 @@ export default function AppShell() {
           <main aria-labelledby="module-title">
             {current.id === "home" ? (
               <Home onNavigate={go} />
+            ) : current.id === "questions" && user ? (
+              <QuestionsHost userId={user.id} makeRepo={makeRepo} />
             ) : (
               <div className="lv-card p-5 sm:p-7">
                 <h1 id="module-title" className="m-0 text-3xl font-bold">

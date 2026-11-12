@@ -27,7 +27,8 @@ Each phase ends with a written report and owner approval before the next begins.
 | 0-1   | Done (blueprint)                                                                          |
 | 2     | Done, and the app shell and Home screen were redesigned afterwards at the owner's request |
 | 3     | Done, except the items below. Go service live on Render free (owner-checked 2026-11-12)   |
-| 4-9   | Not started; each phase waits for the owner's approval                                    |
+| 4     | Built and tested; waiting for the owner's phone test and approval (see below)             |
+| 5-9   | Not started; each phase waits for the owner's approval                                    |
 
 Phase 3 items not done, with reasons:
 
@@ -36,3 +37,12 @@ Phase 3 items not done, with reasons:
 - **Error tracking (Sentry).** Needs an account; add it together with the Go deployment.
 
 Deviations from the blueprint: hash routing instead of TanStack Router, no Radix, Zustand or Dexie yet (each is added when its phase needs it), and the Go service replaces Supabase Edge Functions (sections 3, 4 and 8 of the blueprint still say Edge Functions).
+
+Phase 4 deviations from the blueprint:
+
+- Question create, edit, search and bulk actions go from the browser to Supabase under row-level security, not through the Go service. The Go database connection stays deferred.
+- Answers are stored as validated JSON (`answer_spec`) instead of a separate options table.
+- Statements and explanations are plain text; rich text comes later.
+- Import files are parsed in the browser and inserted in batches of 500. The duplicate policies are Skip and Import anyway; Replace is not built.
+- Search uses a generated full-text column (simple dictionary), which handles Bengali.
+- Not checked in a real browser session against production: the owner must try the screens at https://learivo.pages.dev.
