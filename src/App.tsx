@@ -24,7 +24,8 @@ export default function App() {
   const { theme, mode } = useTheme();
   const colors = getTokens(theme, mode).colors;
   const [email, setEmail] = useState("");
-  const emailError = email.length > 0 && !email.includes("@") ? "Enter a valid email address." : undefined;
+  const emailError =
+    email.length > 0 && !email.includes("@") ? "Enter a valid email address." : undefined;
 
   return (
     <>
@@ -40,8 +41,8 @@ export default function App() {
             One design system, three worlds
           </h1>
           <p className="max-w-2xl text-muted">
-            Every component below reads only design tokens. Switch theme or mode and the surfaces, type, depth, motion and
-            illustrations change together.
+            Every component below reads only design tokens. Switch theme or mode and the surfaces,
+            type, depth, motion and illustrations change together.
           </p>
         </section>
 
@@ -108,7 +109,9 @@ export default function App() {
 
           <Card className="flex flex-col gap-3 p-5" interactive>
             <h2 className="text-xl font-semibold">Interactive card</h2>
-            <p className="text-muted">Lifts on hover on devices with a pointer. Raised surfaces use the theme shadow recipe.</p>
+            <p className="text-muted">
+              Lifts on hover on devices with a pointer. Raised surfaces use the theme shadow recipe.
+            </p>
             <div className="flex items-center gap-2 text-success">
               <CheckIcon size={18} /> <span className="font-semibold">12 questions due today</span>
             </div>
@@ -124,11 +127,17 @@ export default function App() {
         </Card>
 
         <Card className="flex flex-col gap-3 p-5">
-          <h2 className="text-xl font-semibold">Colour tokens · {theme.name} · {mode}</h2>
+          <h2 className="text-xl font-semibold">
+            Colour tokens · {theme.name} · {mode}
+          </h2>
           <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0 sm:grid-cols-4">
             {Object.entries(colors).map(([name, value]) => (
               <li key={name} className="flex items-center gap-2 text-sm">
-                <span aria-hidden="true" className="h-6 w-6 shrink-0 rounded-control border border-line-strong" style={{ background: value }} />
+                <span
+                  aria-hidden="true"
+                  className="h-6 w-6 shrink-0 rounded-control border border-line-strong"
+                  style={{ background: value }}
+                />
                 <span className="truncate">{name}</span>
               </li>
             ))}

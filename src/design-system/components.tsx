@@ -1,4 +1,10 @@
-import { useId, type ButtonHTMLAttributes, type HTMLAttributes, type InputHTMLAttributes, type ReactNode } from "react";
+import {
+  useId,
+  type ButtonHTMLAttributes,
+  type HTMLAttributes,
+  type InputHTMLAttributes,
+  type ReactNode,
+} from "react";
 import { useTheme } from "../themes/ThemeProvider.tsx";
 import { slots } from "../themes/slots.tsx";
 
@@ -15,7 +21,17 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: ReactNode;
 }
 
-export function Button({ variant = "primary", size = "md", loading = false, icon, className, children, disabled, type = "button", ...rest }: ButtonProps) {
+export function Button({
+  variant = "primary",
+  size = "md",
+  loading = false,
+  icon,
+  className,
+  children,
+  disabled,
+  type = "button",
+  ...rest
+}: ButtonProps) {
   return (
     <button
       type={type}
@@ -37,7 +53,17 @@ interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export function Card({ raised, interactive, className, ...rest }: CardProps) {
-  return <div className={cx("lv-card", raised && "lv-card-raised", interactive && "lv-card-interactive", className)} {...rest} />;
+  return (
+    <div
+      className={cx(
+        "lv-card",
+        raised && "lv-card-raised",
+        interactive && "lv-card-interactive",
+        className,
+      )}
+      {...rest}
+    />
+  );
 }
 
 /* ---------- Field (labelled input with error) ---------- */
@@ -50,13 +76,20 @@ interface FieldProps extends InputHTMLAttributes<HTMLInputElement> {
 export function Field({ label, hint, error, id, className, ...rest }: FieldProps) {
   const auto = useId();
   const inputId = id ?? auto;
-  const describedBy = [hint && `${inputId}-hint`, error && `${inputId}-error`].filter(Boolean).join(" ") || undefined;
+  const describedBy =
+    [hint && `${inputId}-hint`, error && `${inputId}-error`].filter(Boolean).join(" ") || undefined;
   return (
     <div className={cx("flex flex-col gap-1.5", className)}>
       <label htmlFor={inputId} className="text-sm font-semibold">
         {label}
       </label>
-      <input id={inputId} className="lv-input" aria-invalid={error ? true : undefined} aria-describedby={describedBy} {...rest} />
+      <input
+        id={inputId}
+        className="lv-input"
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy}
+        {...rest}
+      />
       {hint && !error && (
         <p id={`${inputId}-hint`} className="text-sm text-muted">
           {hint}
@@ -81,22 +114,41 @@ const toneClass: Record<Tone, string> = {
   danger: "bg-surface-2 text-danger border-danger",
 };
 
-export function Badge({ tone = "neutral", className, ...rest }: HTMLAttributes<HTMLSpanElement> & { tone?: Tone }) {
+export function Badge({
+  tone = "neutral",
+  className,
+  ...rest
+}: HTMLAttributes<HTMLSpanElement> & { tone?: Tone }) {
   return (
     <span
-      className={cx("inline-flex items-center rounded-pill border px-2.5 py-0.5 text-xs font-semibold", toneClass[tone], className)}
+      className={cx(
+        "inline-flex items-center rounded-pill border px-2.5 py-0.5 text-xs font-semibold",
+        toneClass[tone],
+        className,
+      )}
       {...rest}
     />
   );
 }
 
 /* ---------- Progress ring ---------- */
-export function ProgressRing({ value, size = 96, label }: { value: number; size?: number; label: string }) {
+export function ProgressRing({
+  value,
+  size = 96,
+  label,
+}: {
+  value: number;
+  size?: number;
+  label: string;
+}) {
   const clamped = Math.max(0, Math.min(100, value));
   const r = 40;
   const c = 2 * Math.PI * r;
   return (
-    <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
+    <div
+      className="relative inline-flex items-center justify-center"
+      style={{ width: size, height: size }}
+    >
       <svg
         width={size}
         height={size}
@@ -138,7 +190,10 @@ export function ProgressBar({ value, label }: { value: number; label: string }) 
       aria-valuenow={Math.round(clamped)}
       className="h-2.5 w-full overflow-hidden rounded-pill bg-surface-3"
     >
-      <div className="h-full rounded-pill bg-accent" style={{ width: `${clamped}%`, transition: "width var(--lv-motion-base) var(--lv-ease)" }} />
+      <div
+        className="h-full rounded-pill bg-accent"
+        style={{ width: `${clamped}%`, transition: "width var(--lv-motion-base) var(--lv-ease)" }}
+      />
     </div>
   );
 }
@@ -148,11 +203,21 @@ export function Spinner({ size = 28, inherit = false }: { size?: number; inherit
   const { themeId } = useTheme();
   const Loader = slots[themeId].Loader;
   // `inherit` keeps the surrounding text colour (needed on an accent-coloured button).
-  return <span className={inherit ? "inline-flex" : "inline-flex text-accent"}>{Loader({ size })}</span>;
+  return (
+    <span className={inherit ? "inline-flex" : "inline-flex text-accent"}>{Loader({ size })}</span>
+  );
 }
 
 /* ---------- Empty state (theme slot illustration) ---------- */
-export function EmptyState({ title, description, action }: { title: string; description: string; action?: ReactNode }) {
+export function EmptyState({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description: string;
+  action?: ReactNode;
+}) {
   const { themeId } = useTheme();
   const Art = slots[themeId].EmptyArt;
   return (

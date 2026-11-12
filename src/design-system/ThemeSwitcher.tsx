@@ -2,12 +2,17 @@ import { supportedModes, themeList } from "../themes/registry.ts";
 import { useTheme } from "../themes/ThemeProvider.tsx";
 import type { ModePreference } from "../themes/types.ts";
 
-const modeLabels: Record<ModePreference, string> = { system: "System", light: "Light", dark: "Dark" };
+const modeLabels: Record<ModePreference, string> = {
+  system: "System",
+  light: "Light",
+  dark: "Dark",
+};
 
 export function ThemeSwitcher() {
   const { theme, themeId, setTheme, modePreference, setModePreference } = useTheme();
   const available = supportedModes(theme);
-  const modeOptions: ModePreference[] = available.length > 1 ? ["system", "light", "dark"] : [available[0] ?? "dark"];
+  const modeOptions: ModePreference[] =
+    available.length > 1 ? ["system", "light", "dark"] : [available[0] ?? "dark"];
 
   return (
     <div className="flex flex-col gap-4">
@@ -47,7 +52,9 @@ export function ThemeSwitcher() {
             </button>
           ))}
         </div>
-        {available.length === 1 && <p className="mt-2 text-sm text-muted">{theme.name} has one mode only.</p>}
+        {available.length === 1 && (
+          <p className="mt-2 text-sm text-muted">{theme.name} has one mode only.</p>
+        )}
       </fieldset>
     </div>
   );

@@ -8,10 +8,10 @@ Global rules: every list has loading, empty and error states; destructive action
 
 ## Public and account (Phase 3)
 
-| Screen | Content | Key interactions |
-| --- | --- | --- |
-| Landing | Value statement, three feature highlights, theme preview, sign-up button | Theme preview switches live |
-| Sign up, sign in, reset password | Email and password, Google button, inline validation | Show or hide password; clear error text; confirmation email notice |
+| Screen                           | Content                                                                  | Key interactions                                                   |
+| -------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| Landing                          | Value statement, three feature highlights, theme preview, sign-up button | Theme preview switches live                                        |
+| Sign up, sign in, reset password | Email and password, Google button, inline validation                     | Show or hide password; clear error text; confirmation email notice |
 
 ## Home (Phase 4 shell, Phase 6 widgets)
 
@@ -20,14 +20,14 @@ Global rules: every list has loading, empty and error states; destructive action
 
 ## Questions (Phase 4)
 
-| Screen | Specification |
-| --- | --- |
-| Question list | Search box, filter button (opens bottom sheet on phones, side panel on desktop), sort, count, virtualized rows (50 per page, cursor loading). Row: stem preview, type badge, subject and topic, difficulty, tags. Long-press or select mode enables bulk actions: categorize, tag, move to collection, archive, delete. |
-| Filter sheet | Subject, chapter, topic tree; type; difficulty; tags; status; source; exam year; date range. Active filters shown as removable chips. Save a filter later. |
-| Question editor | Phones: full screen. Desktop: right drawer. Fields in order: type, statement, options or answer, explanation, classification (subject, chapter, topic, subtopic), difficulty, tags, source, institution, exam name and year, custom fields. Only type and statement are required. Live preview tab. Autosaved drafts. Duplicate warning appears under the statement. Version history tab with restore. |
-| Collections and tags | List with counts, create, rename, reorder by drag, delete (questions stay). |
-| Taxonomy manager | Tree view, drag to reorder or reparent, inline rename, merge nodes. |
-| Archive | Archived questions with Restore and Delete forever (typed confirmation). |
+| Screen               | Specification                                                                                                                                                                                                                                                                                                                                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Question list        | Search box, filter button (opens bottom sheet on phones, side panel on desktop), sort, count, virtualized rows (50 per page, cursor loading). Row: stem preview, type badge, subject and topic, difficulty, tags. Long-press or select mode enables bulk actions: categorize, tag, move to collection, archive, delete.                                                                                |
+| Filter sheet         | Subject, chapter, topic tree; type; difficulty; tags; status; source; exam year; date range. Active filters shown as removable chips. Save a filter later.                                                                                                                                                                                                                                             |
+| Question editor      | Phones: full screen. Desktop: right drawer. Fields in order: type, statement, options or answer, explanation, classification (subject, chapter, topic, subtopic), difficulty, tags, source, institution, exam name and year, custom fields. Only type and statement are required. Live preview tab. Autosaved drafts. Duplicate warning appears under the statement. Version history tab with restore. |
+| Collections and tags | List with counts, create, rename, reorder by drag, delete (questions stay).                                                                                                                                                                                                                                                                                                                            |
+| Taxonomy manager     | Tree view, drag to reorder or reparent, inline rename, merge nodes.                                                                                                                                                                                                                                                                                                                                    |
+| Archive              | Archived questions with Restore and Delete forever (typed confirmation).                                                                                                                                                                                                                                                                                                                               |
 
 ## Import and Export (Phase 4)
 
@@ -43,21 +43,21 @@ Export is a dialog: scope (all, selected, filtered, collection, subject or chapt
 
 ## Practice (Phase 5)
 
-| Screen | Specification |
-| --- | --- |
-| Setup sheet | Source (all, subject, chapter, topic, collection), filters (unattempted, incorrect, bookmarked, weak areas, random), number of questions, timed or untimed, instant feedback on or off. Start button shows the resulting question count. |
-| Player | One question per screen. Top bar: progress, timer, palette button. Options as large tap targets. Actions: Submit, Mark for review, Bookmark, Note. After submit: correct or incorrect state, explanation panel. Bottom bar: Previous, Next. Palette sheet: numbered grid coloured by status (unanswered, answered, flagged, correct, incorrect). Exit asks to save and resume. |
-| Session summary | Score ring, accuracy, time, breakdown by subject and topic, list of questions with status, buttons: Retry incorrect, Review all, New session. |
+| Screen          | Specification                                                                                                                                                                                                                                                                                                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Setup sheet     | Source (all, subject, chapter, topic, collection), filters (unattempted, incorrect, bookmarked, weak areas, random), number of questions, timed or untimed, instant feedback on or off. Start button shows the resulting question count.                                                                                                                                       |
+| Player          | One question per screen. Top bar: progress, timer, palette button. Options as large tap targets. Actions: Submit, Mark for review, Bookmark, Note. After submit: correct or incorrect state, explanation panel. Bottom bar: Previous, Next. Palette sheet: numbered grid coloured by status (unanswered, answered, flagged, correct, incorrect). Exit asks to save and resume. |
+| Session summary | Score ring, accuracy, time, breakdown by subject and topic, list of questions with status, buttons: Retry incorrect, Review all, New session.                                                                                                                                                                                                                                  |
 
 ## Exams (Phase 5)
 
-| Screen | Specification |
-| --- | --- |
-| Exam builder | Title; sources and rules (number of questions per subject or topic, difficulty mix); time limit; randomize questions and options; marks per question; negative marking; instructions. Shows a live "available questions" check and warns when a rule cannot be met. Save as template. |
-| Instructions | Rules summary, number of questions, duration, marking scheme, Start button. |
-| Exam player | Same layout as practice without instant feedback. Countdown timer that turns to a warning state in the final 10 percent. Palette with answered, unanswered and flagged states. Autosave indicator. Submit opens a confirmation dialog listing unanswered and flagged counts. Time expiry auto-submits and tells the student. |
-| Results | Score, correct, incorrect, unanswered, accuracy, time spent, subject, topic and difficulty breakdown charts, comparison with previous attempts. |
-| Answer review | Each question with the student's answer, the correct answer and the explanation; filter by incorrect, unanswered or flagged; Reattempt incorrect. |
+| Screen        | Specification                                                                                                                                                                                                                                                                                                                |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Exam builder  | Title; sources and rules (number of questions per subject or topic, difficulty mix); time limit; randomize questions and options; marks per question; negative marking; instructions. Shows a live "available questions" check and warns when a rule cannot be met. Save as template.                                        |
+| Instructions  | Rules summary, number of questions, duration, marking scheme, Start button.                                                                                                                                                                                                                                                  |
+| Exam player   | Same layout as practice without instant feedback. Countdown timer that turns to a warning state in the final 10 percent. Palette with answered, unanswered and flagged states. Autosave indicator. Submit opens a confirmation dialog listing unanswered and flagged counts. Time expiry auto-submits and tells the student. |
+| Results       | Score, correct, incorrect, unanswered, accuracy, time spent, subject, topic and difficulty breakdown charts, comparison with previous attempts.                                                                                                                                                                              |
+| Answer review | Each question with the student's answer, the correct answer and the explanation; filter by incorrect, unanswered or flagged; Reattempt incorrect.                                                                                                                                                                            |
 
 ## Review (Phase 6)
 

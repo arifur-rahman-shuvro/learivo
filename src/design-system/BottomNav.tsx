@@ -10,11 +10,27 @@ const items: Array<{ id: string; label: string; icon: ReactNode }> = [
 ];
 
 /** Primary navigation: the same five destinations on every device (bottom bar on phones). */
-export function BottomNav() {
-  const [active, setActive] = useState("home");
+export function BottomNav({
+  activeId,
+  onSelect,
+  ids,
+}: {
+  /** Controlled mode: the shell owns the active module. Omit for a self-contained demo. */
+  activeId?: string;
+  onSelect?: (id: string) => void;
+  /** Which destinations to show, in order. Defaults to all five. */
+  ids?: readonly string[];
+} = {}) {
+  const [local, setLocal] = useState("home");
+  const active = activeId ?? local;
+  const shown = ids ? items.filter((it) => ids.includes(it.id)) : items;
+  const setActive = (id: string) => {
+    setLocal(id);
+    onSelect?.(id);
+  };
   return (
-    <nav aria-label="Primary" className="lv-card grid grid-cols-5 gap-1 p-1.5">
-      {items.map((it) => {
+    <nav aria-label="Primary" className="lv-card grid grid-flow-col auto-cols-fr gap-1 p-1.5">
+      {shown.map((it) => {
         const current = it.id === active;
         return (
           <button

@@ -4,7 +4,7 @@ Learivo is a private, cloud-synced academic workspace. Every student owns a priv
 
 ## Status
 
-Phase 0-1 (discovery and architecture) complete. Phase 2 (design system and UX) built: theme registry with Default, Forest and Space, brand SVGs, core components and a Design Lab page. No backend, database or sign-in yet (Phase 3).
+Phase 2 (design system) complete. Phase 3 (foundation) in progress: lint and CI, Go service skeleton, database foundation migration, module registry, app shell, sync skeleton. Accounts, deployment and sign-in are not set up yet.
 
 ## Chosen stack
 

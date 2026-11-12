@@ -38,7 +38,9 @@ body {
   background-attachment: fixed;
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   font-family: var(--lv-font-heading);
   letter-spacing: -0.015em;
 }
@@ -50,7 +52,9 @@ h1, h2, h3 {
   border: var(--lv-border-width) solid var(--lv-border);
   border-radius: var(--lv-radius-card);
   box-shadow: var(--lv-shadow-card);
-  transition: box-shadow var(--lv-motion-base) var(--lv-ease), transform var(--lv-motion-base) var(--lv-ease);
+  transition:
+    box-shadow var(--lv-motion-base) var(--lv-ease),
+    transform var(--lv-motion-base) var(--lv-ease);
 }
 .lv-card-raised {
   box-shadow: var(--lv-shadow-raised);
@@ -75,7 +79,9 @@ h1, h2, h3 {
   font-weight: 600;
   font-family: var(--lv-font-body);
   cursor: pointer;
-  transition: box-shadow var(--lv-motion-fast) var(--lv-ease), transform var(--lv-motion-fast) var(--lv-ease),
+  transition:
+    box-shadow var(--lv-motion-fast) var(--lv-ease),
+    transform var(--lv-motion-fast) var(--lv-ease),
     background-color var(--lv-motion-fast) var(--lv-ease);
 }
 .lv-btn:disabled {
@@ -85,8 +91,16 @@ h1, h2, h3 {
 .lv-btn:active:not(:disabled) {
   transform: translateY(1px);
 }
-.lv-btn-sm { min-height: 36px; padding: 0 0.8rem; font-size: 0.875rem; }
-.lv-btn-lg { min-height: 52px; padding: 0 1.5rem; font-size: 1.0625rem; }
+.lv-btn-sm {
+  min-height: 36px;
+  padding: 0 0.8rem;
+  font-size: 0.875rem;
+}
+.lv-btn-lg {
+  min-height: 52px;
+  padding: 0 1.5rem;
+  font-size: 1.0625rem;
+}
 .lv-btn-primary {
   background: var(--lv-accent);
   color: var(--lv-accent-contrast);
@@ -161,25 +175,72 @@ h1, h2, h3 {
 }
 
 /* Loader and ambient animations */
-@keyframes lv-spin { to { transform: rotate(360deg); } }
-@keyframes lv-sway { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); } }
-@keyframes lv-orbit { to { transform: rotate(360deg); } }
-@keyframes lv-drift { 0% { transform: translate(0, 0) rotate(0); } 100% { transform: translate(24px, 180px) rotate(40deg); } }
-.lv-spin { animation: lv-spin 0.9s linear infinite; }
-.lv-sway { animation: lv-sway 1.6s ease-in-out infinite; transform-origin: 50% 90%; }
-.lv-orbit { animation: lv-orbit 1.4s linear infinite; transform-origin: 12px 12px; }
-.lv-drift { animation: lv-drift 22s linear infinite; }
-.lv-drift-b { animation-duration: 30s; animation-delay: -8s; }
-.lv-drift-c { animation-duration: 26s; animation-delay: -15s; }
+@keyframes lv-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes lv-sway {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+}
+@keyframes lv-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes lv-drift {
+  0% {
+    transform: translate(0, 0) rotate(0);
+  }
+  100% {
+    transform: translate(24px, 180px) rotate(40deg);
+  }
+}
+.lv-spin {
+  animation: lv-spin 0.9s linear infinite;
+}
+.lv-sway {
+  animation: lv-sway 1.6s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+.lv-orbit {
+  animation: lv-orbit 1.4s linear infinite;
+  transform-origin: 12px 12px;
+}
+.lv-drift {
+  animation: lv-drift 22s linear infinite;
+}
+.lv-drift-b {
+  animation-duration: 30s;
+  animation-delay: -8s;
+}
+.lv-drift-c {
+  animation-duration: 26s;
+  animation-delay: -15s;
+}
 
 /* Respect reduced motion and the Low effects switch */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
 }
-html[data-effects="low"] .lv-bg-art { display: none; }
-html[data-effects="low"] * { animation: none !important; }
-html[data-effects="low"] { --lv-ring-glow: none; }
+html[data-effects="low"] .lv-bg-art {
+  display: none;
+}
+html[data-effects="low"] * {
+  animation: none !important;
+}
+html[data-effects="low"] {
+  --lv-ring-glow: none;
+}

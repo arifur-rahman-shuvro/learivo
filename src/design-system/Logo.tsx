@@ -37,9 +37,14 @@ export function LogoMark({ size = 32, tile = false, title = "Learivo" }: LogoMar
 
 export function LogoWordmark({ size = 28 }: { size?: number }) {
   return (
-    <span className="inline-flex items-center gap-2" style={{ fontFamily: "var(--lv-font-heading)" }}>
+    <span
+      className="inline-flex items-center gap-2"
+      style={{ fontFamily: "var(--lv-font-heading)" }}
+    >
       <LogoMark size={size} />
-      <span style={{ fontSize: size * 0.72, fontWeight: 700, letterSpacing: "-0.02em" }}>learivo</span>
+      <span style={{ fontSize: size * 0.72, fontWeight: 700, letterSpacing: "-0.02em" }}>
+        learivo
+      </span>
     </span>
   );
 }

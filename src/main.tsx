@@ -7,7 +7,7 @@ import "@fontsource-variable/space-grotesk";
 import "@fontsource-variable/jetbrains-mono";
 import "virtual:learivo-theme.css";
 import "./app.css";
-import App from "./App.tsx";
+import AppShell from "./app/AppShell.tsx";
 import { ThemeProvider } from "./themes/ThemeProvider.tsx";
 
 const root = document.getElementById("root");
@@ -16,7 +16,7 @@ if (!root) throw new Error("Missing #root element");
 createRoot(root).render(
   <StrictMode>
     <ThemeProvider>
-      <App />
+      <AppShell />
     </ThemeProvider>
   </StrictMode>,
 );

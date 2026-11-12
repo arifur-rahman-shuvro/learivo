@@ -1,6 +1,14 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { Badge, Button, Card, EmptyState, Field, ProgressBar, ProgressRing } from "./components.tsx";
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Field,
+  ProgressBar,
+  ProgressRing,
+} from "./components.tsx";
 import { ThemeSwitcher } from "./ThemeSwitcher.tsx";
 import { ThemeProvider } from "../themes/ThemeProvider.tsx";
 
@@ -96,12 +104,18 @@ describe("components", () => {
         <ProgressBar value={-20} label="Bar" />
       </>,
     );
-    expect(screen.getByRole("progressbar", { name: "Ring" }).getAttribute("aria-valuenow")).toBe("100");
-    expect(screen.getByRole("progressbar", { name: "Bar" }).getAttribute("aria-valuenow")).toBe("0");
+    expect(screen.getByRole("progressbar", { name: "Ring" }).getAttribute("aria-valuenow")).toBe(
+      "100",
+    );
+    expect(screen.getByRole("progressbar", { name: "Bar" }).getAttribute("aria-valuenow")).toBe(
+      "0",
+    );
   });
 
   it("EmptyState renders title, description and action", () => {
-    renderWithTheme(<EmptyState title="Nothing" description="Add something" action={<Button>Add</Button>} />);
+    renderWithTheme(
+      <EmptyState title="Nothing" description="Add something" action={<Button>Add</Button>} />,
+    );
     expect(screen.getByText("Nothing")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Add" })).toBeTruthy();
   });

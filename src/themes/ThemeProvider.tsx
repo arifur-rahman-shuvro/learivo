@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { getTheme, isThemeId, resolveMode } from "./registry.ts";
 import type { Mode, ModePreference, ThemeDefinition, ThemeId } from "./types.ts";
 
@@ -35,7 +43,8 @@ function write(key: string, value: string): void {
 }
 
 function systemMode(): Mode {
-  return typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)").matches
+  return typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-color-scheme: dark)").matches
     ? "dark"
     : "light";
 }

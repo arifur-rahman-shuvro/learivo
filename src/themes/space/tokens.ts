@@ -9,7 +9,8 @@ const style: StyleTokens = {
   radiusPill: "999px",
   borderWidth: "1px",
   shadowCard: "0 0 0 1px rgb(120 140 255 / 0.10), 0 8px 28px rgb(0 0 0 / 0.5)",
-  shadowRaised: "0 0 0 1px rgb(140 160 255 / 0.18), 0 0 32px rgb(94 160 255 / 0.12), 0 16px 40px rgb(0 0 0 / 0.6)",
+  shadowRaised:
+    "0 0 0 1px rgb(140 160 255 / 0.18), 0 0 32px rgb(94 160 255 / 0.12), 0 16px 40px rgb(0 0 0 / 0.6)",
   buttonShadow: "0 0 14px rgb(34 211 238 / 0.35)",
   buttonShadowHover: "0 0 26px rgb(34 211 238 / 0.6)",
   surfaceTexture: "none",

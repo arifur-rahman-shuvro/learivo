@@ -14,30 +14,64 @@ export interface ThemeSlots {
   EmptyArt: () => ReactNode;
 }
 
-const stroke = { fill: "none", stroke: "currentColor", strokeWidth: 1.75, strokeLinecap: "round", strokeLinejoin: "round" } as const;
+const stroke = {
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.75,
+  strokeLinecap: "round",
+  strokeLinejoin: "round",
+} as const;
 
 const DefaultSlots: ThemeSlots = {
   Background: () => null,
   Loader: ({ size = 28 }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" className="lv-spin" role="img" aria-label="Loading">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      className="lv-spin"
+      role="img"
+      aria-label="Loading"
+    >
       <circle cx="12" cy="12" r="9" {...stroke} opacity="0.2" />
       <path d="M12 3a9 9 0 0 1 9 9" {...stroke} />
     </svg>
   ),
   EmptyArt: () => (
     <svg width="120" height="96" viewBox="0 0 120 96" aria-hidden="true">
-      <rect x="18" y="22" width="84" height="56" rx="12" fill="var(--lv-surface-2)" stroke="var(--lv-border-strong)" strokeWidth="1.5" />
+      <rect
+        x="18"
+        y="22"
+        width="84"
+        height="56"
+        rx="12"
+        fill="var(--lv-surface-2)"
+        stroke="var(--lv-border-strong)"
+        strokeWidth="1.5"
+      />
       <rect x="30" y="36" width="40" height="6" rx="3" fill="var(--lv-border-strong)" />
       <rect x="30" y="50" width="60" height="6" rx="3" fill="var(--lv-border)" />
       <circle cx="92" cy="24" r="12" fill="var(--lv-accent)" />
-      <path d="M86.5 24.5l4 4 7-8" fill="none" stroke="var(--lv-accent-contrast)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M86.5 24.5l4 4 7-8"
+        fill="none"
+        stroke="var(--lv-accent-contrast)"
+        strokeWidth="2.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   ),
 };
 
 const ForestSlots: ThemeSlots = {
   Background: () => (
-    <svg className="lv-bg-art" viewBox="0 0 400 800" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <svg
+      className="lv-bg-art"
+      viewBox="0 0 400 800"
+      preserveAspectRatio="xMidYMax slice"
+      aria-hidden="true"
+    >
       {/* Distant tree line */}
       <g fill="var(--lv-accent)" opacity="0.10">
         <path d="M0 800V640l30-70 30 70 30-90 34 100 36-120 40 140 30-80 36 110 34-100 30 80 40-90 30 90V800z" />
@@ -51,7 +85,14 @@ const ForestSlots: ThemeSlots = {
     </svg>
   ),
   Loader: ({ size = 28 }) => (
-    <svg width={size} height={size} viewBox="0 0 24 24" className="lv-sway" role="img" aria-label="Loading">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      className="lv-sway"
+      role="img"
+      aria-label="Loading"
+    >
       <path d="M12 21V11" {...stroke} />
       <path d="M12 12C12 7 8 4.5 4 5c0 4.5 3 7.5 8 7z" fill="var(--lv-accent)" opacity="0.9" />
       <path d="M12 15c0-4 3-6.5 8-6.5 0 4.2-3 6.8-8 6.5z" fill="var(--lv-accent)" opacity="0.55" />
@@ -69,7 +110,12 @@ const ForestSlots: ThemeSlots = {
 
 const SpaceSlots: ThemeSlots = {
   Background: () => (
-    <svg className="lv-bg-art" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <svg
+      className="lv-bg-art"
+      viewBox="0 0 400 800"
+      preserveAspectRatio="xMidYMid slice"
+      aria-hidden="true"
+    >
       <g fill="none" stroke="var(--lv-accent)" opacity="0.10">
         <ellipse cx="330" cy="120" rx="150" ry="46" transform="rotate(-24 330 120)" />
         <ellipse cx="330" cy="120" rx="210" ry="70" transform="rotate(-24 330 120)" />
@@ -79,7 +125,15 @@ const SpaceSlots: ThemeSlots = {
   ),
   Loader: ({ size = 28 }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" role="img" aria-label="Loading">
-      <ellipse cx="12" cy="12" rx="9.5" ry="4" {...stroke} opacity="0.35" transform="rotate(-25 12 12)" />
+      <ellipse
+        cx="12"
+        cy="12"
+        rx="9.5"
+        ry="4"
+        {...stroke}
+        opacity="0.35"
+        transform="rotate(-25 12 12)"
+      />
       <circle cx="12" cy="12" r="2.6" fill="var(--lv-accent)" />
       <g className="lv-orbit">
         <circle cx="21" cy="12" r="1.8" fill="var(--lv-text)" />
@@ -88,7 +142,16 @@ const SpaceSlots: ThemeSlots = {
   ),
   EmptyArt: () => (
     <svg width="120" height="96" viewBox="0 0 120 96" aria-hidden="true">
-      <ellipse cx="60" cy="52" rx="48" ry="14" fill="none" stroke="var(--lv-border-strong)" strokeWidth="1.5" transform="rotate(-18 60 52)" />
+      <ellipse
+        cx="60"
+        cy="52"
+        rx="48"
+        ry="14"
+        fill="none"
+        stroke="var(--lv-border-strong)"
+        strokeWidth="1.5"
+        transform="rotate(-18 60 52)"
+      />
       <circle cx="60" cy="48" r="20" fill="var(--lv-accent)" opacity="0.9" />
       <circle cx="94" cy="40" r="4" fill="var(--lv-text)" />
       <circle cx="22" cy="22" r="1.6" fill="var(--lv-text)" opacity="0.8" />

@@ -59,7 +59,8 @@ describe("accessibility contrast (WCAG AA)", () => {
     });
 
     it(`${label}: accent is at least 3:1 on bg and surface1`, () => {
-      for (const s of [c.bg, c.surface1]) expect(contrastRatio(c.accent, s)).toBeGreaterThanOrEqual(3);
+      for (const s of [c.bg, c.surface1])
+        expect(contrastRatio(c.accent, s)).toBeGreaterThanOrEqual(3);
     });
 
     it(`${label}: control borders and focus ring are at least 3:1 on bg and surface1`, () => {
