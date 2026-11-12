@@ -15,6 +15,10 @@ type Config struct {
 	Env             string // "development", "staging" or "production"
 	AllowedOrigins  []string
 	ShutdownTimeout time.Duration
+	// SupabaseURL is the project URL used to find the token signing keys.
+	SupabaseURL string
+	// SupabaseJWTSecret is optional and only needed for legacy HS256 projects. It is a secret.
+	SupabaseJWTSecret string
 }
 
 // Load reads configuration from the given lookup function (os.LookupEnv in production).
@@ -30,6 +34,9 @@ func Load(lookup func(string) (string, bool)) (Config, error) {
 		Addr:            get("LEARIVO_ADDR", ":8080"),
 		Env:             get("LEARIVO_ENV", "development"),
 		ShutdownTimeout: 10 * time.Second,
+		SupabaseURL:     strings.TrimRight(get("LEARIVO_SUPABASE_URL", ""), "/"),
+
+		SupabaseJWTSecret: get("LEARIVO_SUPABASE_JWT_SECRET", ""),
 	}
 
 	switch cfg.Env {
@@ -51,6 +58,10 @@ func Load(lookup func(string) (string, bool)) (Config, error) {
 
 	if cfg.Env == "production" && len(cfg.AllowedOrigins) == 0 {
 		return Config{}, errors.New("LEARIVO_ALLOWED_ORIGINS is required in production")
+	}
+
+	if cfg.Env == "production" && cfg.SupabaseURL == "" {
+		return Config{}, errors.New("LEARIVO_SUPABASE_URL is required in production")
 	}
 
 	return cfg, nil
