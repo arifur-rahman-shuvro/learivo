@@ -19,3 +19,20 @@ Each phase ends with a written report and owner approval before the next begins.
 - Nothing is called done unless it was actually run and verified.
 - No production database change without the exact SQL being shown and approved first.
 - Secrets live only in GitHub, Cloudflare, Supabase and host settings, never in the repository.
+
+## Status and deviations (updated 2026-11-12)
+
+| Phase | Status                                                                                    |
+| ----- | ----------------------------------------------------------------------------------------- |
+| 0-1   | Done (blueprint)                                                                          |
+| 2     | Done, and the app shell and Home screen were redesigned afterwards at the owner's request |
+| 3     | Done except the items below                                                               |
+| 4-9   | Not started; each phase waits for the owner's approval                                    |
+
+Phase 3 items not done, with reasons:
+
+- **Go service database connection (pgx) and deployment.** No route needs the database yet, and the Go package registry is blocked in the build session, so it is tested in CI instead. Decide the host (a free option such as Render, or Fly.io or Google Cloud Run at launch) before the first API route in Phase 4.
+- **Staging Supabase project.** The free plan allows two projects and ShuvroMed uses one. Until launch, migrations are additive, tested locally and in CI, then verified right after applying.
+- **Error tracking (Sentry).** Needs an account; add it together with the Go deployment.
+
+Deviations from the blueprint: hash routing instead of TanStack Router, no Radix, Zustand or Dexie yet (each is added when its phase needs it), and the Go service replaces Supabase Edge Functions (sections 3, 4 and 8 of the blueprint still say Edge Functions).
