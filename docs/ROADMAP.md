@@ -26,12 +26,12 @@ Each phase ends with a written report and owner approval before the next begins.
 | ----- | ----------------------------------------------------------------------------------------- |
 | 0-1   | Done (blueprint)                                                                          |
 | 2     | Done, and the app shell and Home screen were redesigned afterwards at the owner's request |
-| 3     | Done except the items below                                                               |
+| 3     | Done, except the items below. Go service live on Render free (owner-checked 2026-11-12)   |
 | 4-9   | Not started; each phase waits for the owner's approval                                    |
 
 Phase 3 items not done, with reasons:
 
-- **Go service database connection (pgx) and deployment.** No route needs the database yet, and the Go package registry is blocked in the build session, so it is tested in CI instead. Decide the host (a free option such as Render, or Fly.io or Google Cloud Run at launch) before the first API route in Phase 4.
+- **Go service database connection (pgx).** The service is deployed at learivo-api on Render (free plan). The owner confirmed `/healthz` returns ok and `/v1/me` returns `missing_token` without a token. No route needs the database yet, and the Go package registry is blocked in the build session, so the connection is added with the first database route in Phase 4. Moving to an always-on host is a launch task.
 - **Staging Supabase project.** The free plan allows two projects and ShuvroMed uses one. Until launch, migrations are additive, tested locally and in CI, then verified right after applying.
 - **Error tracking (Sentry).** Needs an account; add it together with the Go deployment.
 
