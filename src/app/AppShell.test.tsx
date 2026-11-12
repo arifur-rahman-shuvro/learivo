@@ -18,7 +18,10 @@ afterEach(() => {
 describe("AppShell", () => {
   it("shows Home with the five navigation items by default", () => {
     renderShell();
-    expect(screen.getByRole("heading", { level: 1, name: "Home" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { level: 1, name: "Your question bank starts here" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Home" }).getAttribute("aria-current")).toBe("page");
     const nav = screen.getByRole("navigation", { name: "Primary" });
     expect(nav.querySelectorAll("button").length).toBe(5);
   });

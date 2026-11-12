@@ -9,7 +9,11 @@ const items: Array<{ id: string; label: string; icon: ReactNode }> = [
   { id: "insights", label: "Insights", icon: <InsightsIcon /> },
 ];
 
-/** Primary navigation: the same five destinations on every device (bottom bar on phones). */
+/**
+ * Primary navigation: the same five destinations on every device.
+ * Bottom tab bar on phones; becomes a vertical sidebar list from the `lg` breakpoint
+ * when the parent gives it room (the shell places it inside the sidebar).
+ */
 export function BottomNav({
   activeId,
   onSelect,
@@ -29,7 +33,10 @@ export function BottomNav({
     onSelect?.(id);
   };
   return (
-    <nav aria-label="Primary" className="lv-card grid grid-flow-col auto-cols-fr gap-1 p-1.5">
+    <nav
+      aria-label="Primary"
+      className="grid grid-flow-col auto-cols-fr gap-1 rounded-card border border-line bg-surface-1 p-1.5 shadow-[var(--lv-shadow-card)] lg:flex lg:flex-col lg:gap-0.5 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none"
+    >
       {shown.map((it) => {
         const current = it.id === active;
         return (
@@ -38,8 +45,8 @@ export function BottomNav({
             type="button"
             aria-current={current ? "page" : undefined}
             onClick={() => setActive(it.id)}
-            className={`flex min-h-[56px] flex-col items-center justify-center gap-0.5 rounded-control text-xs font-semibold ${
-              current ? "bg-accent text-on-accent" : "text-muted hover:bg-surface-2"
+            className={`flex min-h-[56px] flex-col items-center justify-center gap-0.5 rounded-control text-xs font-semibold lg:min-h-11 lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:text-sm ${
+              current ? "bg-accent text-on-accent" : "text-muted hover:bg-surface-2 hover:text-fg"
             }`}
           >
             {it.icon}

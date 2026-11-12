@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import {
   BottomNav,
+  Button,
   EmptyState,
   LogoWordmark,
+  PlusIcon,
   ThemeBackground,
-  ThemeSwitcher,
 } from "../design-system/index.ts";
 import App from "../App.tsx";
+import AppearanceMenu from "./AppearanceMenu.tsx";
+import Home from "./screens/Home.tsx";
 import { moduleForHash, visibleModules } from "./registry.ts";
 
 const LAB_ROUTE = "#/lab";
@@ -21,7 +24,10 @@ function useHash(): [string, (hash: string) => void] {
   return [hash, (next) => (window.location.hash = next)];
 }
 
-/** App shell: navigation is built from the module registry; each module is a placeholder until its phase. */
+/**
+ * App shell. Phones: top bar, content, bottom tab bar. Desktop: left sidebar plus content.
+ * Navigation is built from the module registry; modules without a screen show a status panel.
+ */
 export default function AppShell() {
   const [hash, go] = useHash();
   if (hash === LAB_ROUTE) return <App />;
@@ -31,26 +37,49 @@ export default function AppShell() {
   return (
     <>
       <ThemeBackground />
-      <div className="relative z-10 mx-auto flex min-h-dvh max-w-3xl flex-col gap-4 px-4 pb-28 pt-5 sm:px-6">
-        <header className="flex items-center justify-between">
-          <LogoWordmark />
-          <ThemeSwitcher />
-        </header>
-        <main aria-labelledby="module-title" className="lv-card flex-1">
-          <h1 id="module-title" className="px-6 pt-6 text-2xl font-bold">
-            {current.label}
-          </h1>
-          <EmptyState
-            title={`${current.label} is coming soon`}
-            description={`This screen is built in Phase ${current.builtInPhase} of the roadmap.`}
-          />
-        </main>
-        <div className="fixed inset-x-0 bottom-0 z-20 mx-auto w-full max-w-3xl p-3">
-          <BottomNav
-            ids={modules.map((m) => m.id)}
-            activeId={current.id}
-            onSelect={(id) => go(modules.find((m) => m.id === id)?.route ?? "#/home")}
-          />
+      <div className="relative z-10 mx-auto min-h-dvh max-w-[1280px] lg:grid lg:grid-cols-[260px_1fr]">
+        <aside className="lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-6 lg:border-r lg:border-line lg:px-4 lg:py-6">
+          <div className="hidden px-3 lg:block">
+            <LogoWordmark />
+          </div>
+          <div className="hidden lg:block">
+            <Button icon={<PlusIcon />} className="w-full" onClick={() => go("#/questions")}>
+              Add question
+            </Button>
+          </div>
+          <div className="fixed inset-x-0 bottom-0 z-20 p-3 lg:static lg:p-0">
+            <BottomNav
+              ids={modules.map((m) => m.id)}
+              activeId={current.id}
+              onSelect={(id) => go(modules.find((m) => m.id === id)?.route ?? "#/home")}
+            />
+          </div>
+        </aside>
+
+        <div className="flex min-w-0 flex-col gap-5 px-4 pb-28 pt-4 sm:px-6 lg:px-8 lg:pb-10 lg:pt-5">
+          <header className="flex items-center justify-between">
+            <div className="lg:hidden">
+              <LogoWordmark />
+            </div>
+            <div className="ml-auto">
+              <AppearanceMenu />
+            </div>
+          </header>
+          <main aria-labelledby="module-title">
+            {current.id === "home" ? (
+              <Home onNavigate={go} />
+            ) : (
+              <div className="lv-card p-5 sm:p-7">
+                <h1 id="module-title" className="m-0 text-3xl font-bold">
+                  {current.label}
+                </h1>
+                <EmptyState
+                  title={`${current.label} is being built`}
+                  description={`This screen arrives in Phase ${current.builtInPhase} of the roadmap.`}
+                />
+              </div>
+            )}
+          </main>
         </div>
       </div>
     </>
