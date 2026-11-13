@@ -394,3 +394,57 @@ describe("export and round trip", () => {
     expect(back.rows[0]!.input.source).toBe("+cmd");
   });
 });
+
+describe("import: pasted JSON from a chat", () => {
+  const one = {
+    type: "true_false",
+    stem: "The aorta is an artery",
+    answer: true,
+  };
+  const list = JSON.stringify([one], null, 2);
+
+  it("accepts a ```json code block with sentences around it", () => {
+    const text = `Here are your questions:\n\n\`\`\`json\n${list}\n\`\`\`\n\nLet me know if you want more!`;
+    const r = analyzeImport(text, "json", new Set());
+    expect(r.ok && r.rows).toHaveLength(1);
+    expect(r.ok && r.notice).toMatch(/code block/);
+  });
+
+  it("accepts a list with a sentence in front of it and no code block", () => {
+    const r = analyzeImport(`Sure! ${list} Hope that helps.`, "json", new Set());
+    expect(r.ok && r.rows).toHaveLength(1);
+    expect(r.ok && r.notice).toMatch(/before or after/);
+  });
+
+  it("accepts one question on its own", () => {
+    const r = analyzeImport(JSON.stringify(one), "json", new Set());
+    expect(r.ok && r.rows).toHaveLength(1);
+  });
+
+  it("says where the syntax error is", () => {
+    const r = analyzeImport(
+      '[\n  {"type": "true_false",\n   "stem": "x" "answer": true}\n]',
+      "json",
+      new Set(),
+    );
+    expect(r.ok).toBe(false);
+    expect(!r.ok && r.message).toMatch(/not valid JSON.*line \d+, column \d+/);
+  });
+
+  it("does not change clean JSON and gives no notice", () => {
+    const r = analyzeImport(list, "json", new Set());
+    expect(r.ok && r.notice).toBeUndefined();
+  });
+
+  it("rejects an empty list", () => {
+    const r = analyzeImport("[]", "json", new Set());
+    expect(!r.ok && r.message).toMatch(/no questions/);
+  });
+
+  it("reports an invalid question by its position and keeps the valid ones", () => {
+    const bad = { type: "sba", stem: "No options here" };
+    const r = analyzeImport(JSON.stringify([one, bad]), "json", new Set());
+    expect(r.ok && r.rows).toHaveLength(1);
+    expect(r.ok && r.errors[0]).toMatchObject({ row: 2 });
+  });
+});

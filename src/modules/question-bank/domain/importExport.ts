@@ -30,7 +30,14 @@ export interface ImportRow {
 
 export type ImportReport =
   | { ok: false; message: string }
-  | { ok: true; total: number; rows: ImportRow[]; errors: ImportIssue[] };
+  | {
+      ok: true;
+      total: number;
+      rows: ImportRow[];
+      errors: ImportIssue[];
+      /** Something the importer tidied up, for example a code fence from ChatGPT. */
+      notice?: string;
+    };
 
 // ---------------------------------------------------------------------------
 // Reading values leniently
@@ -210,32 +217,81 @@ const stripBom = (s: string) => (s.charCodeAt(0) === 0xfeff ? s.slice(1) : s);
 /** Undo the apostrophe that spreadsheet-safe export puts in front of =, +, -, @. */
 const unescapeFormula = (s: string) => (/^'[=+\-@\t\r]/.test(s) ? s.slice(1) : s);
 
+/** "line 3, column 5" for a JSON syntax error, when the browser says where it is. */
+function errorPlace(text: string, error: unknown): string {
+  const msg = error instanceof Error ? error.message : "";
+  const lc = /line (\d+) column (\d+)/i.exec(msg);
+  if (lc) return ` (line ${lc[1]}, column ${lc[2]})`;
+  const pos = /position (\d+)/i.exec(msg);
+  if (pos) {
+    const before = text.slice(0, Number(pos[1]));
+    const line = before.split("\n").length;
+    const column = before.length - before.lastIndexOf("\n");
+    return ` (line ${line}, column ${column})`;
+  }
+  return "";
+}
+
+/**
+ * Parses JSON that was copied from a chat: tries the text as it is first, then without a
+ * ```json code fence, then without sentences before or after the list.
+ */
+export function parseLooseJson(
+  text: string,
+): { ok: true; data: unknown; notice?: string } | { ok: false; message: string } {
+  try {
+    return { ok: true, data: JSON.parse(text) };
+  } catch (first) {
+    const fenced = /```[a-zA-Z]*[ \t]*\r?\n?([\s\S]*?)```/.exec(text);
+    const inner = (fenced ? fenced[1]! : text).trim();
+    const start = inner.search(/[[{]/);
+    const end = Math.max(inner.lastIndexOf("]"), inner.lastIndexOf("}"));
+    if (start !== -1 && end > start) {
+      try {
+        const data = JSON.parse(inner.slice(start, end + 1));
+        return {
+          ok: true,
+          data,
+          notice: fenced
+            ? "Removed the code block markers around the JSON."
+            : "Ignored the text before or after the JSON.",
+        };
+      } catch {
+        // fall through to the original error
+      }
+    }
+    return {
+      ok: false,
+      message: `This is not valid JSON${errorPlace(text, first)}. Check for a missing comma, quote or bracket.`,
+    };
+  }
+}
+
 export function parseImportFile(
   content: string,
   format: ImportFormat,
 ):
-  | { ok: true; records: { row: number; raw: Record<string, unknown> }[] }
+  | { ok: true; records: { row: number; raw: Record<string, unknown> }[]; notice?: string }
   | { ok: false; message: string } {
   const text = stripBom(content);
   if (text.trim() === "") return { ok: false, message: "The file is empty." };
 
   if (format === "json") {
-    let data: unknown;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      return {
-        ok: false,
-        message: "This is not valid JSON. Check the file for a missing comma or bracket.",
-      };
-    }
-    const list = Array.isArray(data) ? data : (data as { questions?: unknown })?.questions;
+    const parsed = parseLooseJson(text);
+    if (!parsed.ok) return parsed;
+    const data = parsed.data;
+    const obj =
+      data !== null && typeof data === "object" ? (data as Record<string, unknown>) : null;
+    // One question on its own is accepted as a list of one.
+    const single = obj && !Array.isArray(data) && ("stem" in obj || "question" in obj);
+    const list = Array.isArray(data) ? data : single ? [data] : obj?.questions;
     if (!Array.isArray(list)) {
       return {
         ok: false,
         message: 'Expected a list of questions, or an object with a "questions" list.',
       };
     }
+    if (list.length === 0) return { ok: false, message: "The list has no questions in it." };
     if (list.length > MAX_IMPORT_ROWS) {
       return {
         ok: false,
@@ -244,6 +300,7 @@ export function parseImportFile(
     }
     return {
       ok: true,
+      notice: parsed.notice,
       records: list.map((raw, i) => ({
         row: i + 1,
         raw:
@@ -310,7 +367,7 @@ export function analyzeImport(
     seen.add(hash);
     rows.push({ row, input: r.input, duplicate });
   }
-  return { ok: true, total: file.records.length, rows, errors };
+  return { ok: true, total: file.records.length, rows, errors, notice: file.notice };
 }
 
 // ---------------------------------------------------------------------------
