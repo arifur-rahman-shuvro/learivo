@@ -21,6 +21,7 @@ import { ExportDialog, ImportDialog } from "./ImportExportDialogs.tsx";
 import { ManageDialog } from "./ManageDialog.tsx";
 import { QuestionEditor } from "./QuestionEditor.tsx";
 import { errorText, useBank, useLoad } from "./bank.tsx";
+import { useWorkspace } from "../../workspace/ui/workspace.tsx";
 
 const PAGE = 50;
 
@@ -53,6 +54,8 @@ type BulkPick = "classify" | "tag" | "collection" | null;
 
 export default function QuestionsScreen() {
   const { repo, rev, refresh } = useBank();
+  const ws = useWorkspace();
+  const [marks, setMarks] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState<QuestionQuery>(DEFAULT_QUERY);
   const [searchText, setSearchText] = useState("");
   const search = useDebounced(searchText, 250);
@@ -69,6 +72,33 @@ export default function QuestionsScreen() {
   const [typed, setTyped] = useState("");
   const [bulkBusy, setBulkBusy] = useState(false);
   const [notice, setNotice] = useState<string>();
+
+  useEffect(() => {
+    let alive = true;
+    ws.repo.bookmarks().then(
+      (b) => alive && setMarks(b),
+      () => undefined, // bookmarks are an extra; the list works without them
+    );
+    return () => {
+      alive = false;
+    };
+  }, [ws.repo, ws.rev]);
+
+  async function toggleBookmark(id: string) {
+    const on = !marks.has(id);
+    setMarks((cur) => {
+      const next = new Set(cur);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+    try {
+      await ws.repo.setBookmark(id, on);
+    } catch (e) {
+      setError(errorText(e));
+      ws.refresh();
+    }
+  }
 
   const taxonomy = useLoad((r) => r.taxonomy());
   const tags = useLoad((r) => r.tags());
@@ -551,6 +581,19 @@ export default function QuestionsScreen() {
                       {q.tags.length > 3 && <span>+{q.tags.length - 3}</span>}
                     </span>
                   </button>
+                  {!archive && (
+                    <button
+                      type="button"
+                      aria-pressed={marks.has(q.id)}
+                      aria-label={`${marks.has(q.id) ? "Remove bookmark" : "Bookmark"}: ${q.stem.slice(0, 40)}`}
+                      onClick={() => void toggleBookmark(q.id)}
+                      className={`shrink-0 rounded-control border px-2.5 py-1 text-xs font-semibold ${
+                        marks.has(q.id) ? "border-accent bg-surface-2" : "border-line text-muted"
+                      }`}
+                    >
+                      {marks.has(q.id) ? "Bookmarked" : "Bookmark"}
+                    </button>
+                  )}
                 </li>
               );
             })}

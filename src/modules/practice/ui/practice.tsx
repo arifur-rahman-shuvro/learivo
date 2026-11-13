@@ -77,3 +77,9 @@ export const clock = (sec: number) => {
   const pad = (n: number) => String(n).padStart(2, "0");
   return h > 0 ? `${h}:${pad(m)}:${pad(s % 60)}` : `${pad(m)}:${pad(s % 60)}`;
 };
+
+/**
+ * Lets another screen (Review) open a session it just created in Practice. Practice picks it up
+ * when it opens and clears it.
+ */
+export const handoff: { attemptId: string | null } = { attemptId: null };

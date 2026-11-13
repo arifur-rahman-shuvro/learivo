@@ -149,6 +149,13 @@ export class MemoryRepo implements QuestionRepo {
     return r ? this.record(r) : null;
   }
 
+  async getMany(ids: string[]) {
+    return ids.flatMap((id) => {
+      const r = this.rows.get(id);
+      return r ? [this.record(r)] : [];
+    });
+  }
+
   async create(inputs: QuestionInput[]) {
     const ids: string[] = [];
     for (const raw of inputs) {

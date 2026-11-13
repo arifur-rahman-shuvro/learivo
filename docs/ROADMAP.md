@@ -29,7 +29,8 @@ Each phase ends with a written report and owner approval before the next begins.
 | 3     | Done, except the items below. Go service live on Render free (owner-checked 2026-11-12)   |
 | 4     | Built and tested; waiting for the owner's phone test and approval (see below)             |
 | 5     | Built and tested; M3 applied; waiting for the owner's phone test and approval (see below) |
-| 6-9   | Not started; each phase waits for the owner's approval                                    |
+| 6     | Built and tested; M4 applied; waiting for the owner's phone test and approval (see below) |
+| 7-9   | Not started; each phase waits for the owner's approval                                    |
 
 Phase 3 items not done, with reasons:
 
@@ -55,3 +56,13 @@ Phase 5 notes:
 - Untimed practice measures time only while the session is open on screen. Timed sessions use the wall clock from when they started.
 - Not built in Phase 5: matching, structured and case-study question types (they need a new answer format and a change to the question table), bookmarks and weak-area suggestions (Phase 6), offline sessions (Phase 7).
 - Database advisor (performance, informational): a few foreign-key columns have no covering index yet; harmless at this size, to be reviewed in the QA phase.
+
+Phase 6 notes:
+
+- Review: Due now (spaced-repetition cards rated Again, Hard, Good, Easy), Mistakes, Bookmarks, Notes. Questions answered wrong in a session join the revision queue by themselves.
+- The scheduler follows the published FSRS-4.5 memory model with its default parameters. It is not tuned to the student's own history yet. After Again a card returns in 10 minutes.
+- Insights: overview with a 30-day accuracy trend, accuracy by subject or chapter (weakest first), exam scores over time, study time for 14 days. Every chart has a table view. They are worked out from the latest 5000 answers and 200 finished sessions.
+- Home shows due cards, daily goal (stored in the cloud, 1 to 500), day streak, weak areas (under 70% after 5 or more answers) and recent sessions. A streak that was alive yesterday still counts today.
+- Notes: one note per question, plus free notes. Rich text and note search are not built.
+- Planner basics are limited to the daily goal and streak. A calendar planner and exam countdown are not built.
+- Practice can now draw from bookmarked questions.

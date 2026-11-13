@@ -44,7 +44,7 @@ export function snapshotOf(
 }
 
 /** Which questions a practice session may draw from, beyond the subject, tag or collection. */
-export type PracticeFilter = "all" | "unattempted" | "incorrect";
+export type PracticeFilter = "all" | "unattempted" | "incorrect" | "bookmarked";
 
 export interface Past {
   /** Result of the most recent graded answer to this question. */
@@ -56,7 +56,9 @@ export function applyFilter(
   pool: readonly QuestionRecord[],
   filter: PracticeFilter,
   past: ReadonlyMap<string, Past>,
+  bookmarks: ReadonlySet<string> = new Set(),
 ): QuestionRecord[] {
+  if (filter === "bookmarked") return pool.filter((q) => bookmarks.has(q.id));
   if (filter === "unattempted") return pool.filter((q) => !past.has(q.id));
   if (filter === "incorrect") return pool.filter((q) => past.get(q.id)?.last === "wrong");
   return [...pool];

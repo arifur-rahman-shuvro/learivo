@@ -7,6 +7,8 @@ import { blankQuestion, type QuestionInput } from "../../question-bank/domain/mo
 import { MemoryAttempts } from "../data/memoryAttempts.ts";
 import PracticeScreen from "./PracticeScreen.tsx";
 import { PracticeProvider } from "./practice.tsx";
+import { MemoryWorkspace } from "../../workspace/data/memoryWorkspace.ts";
+import { WorkspaceProvider } from "../../workspace/ui/workspace.tsx";
 
 const tf = (stem: string, answer: boolean): QuestionInput => ({
   ...blankQuestion("true_false"),
@@ -18,17 +20,20 @@ const tf = (stem: string, answer: boolean): QuestionInput => ({
 function setup(questions = [tf("Q one", true), tf("Q two", false), tf("Q three", true)]) {
   const bank = new MemoryRepo();
   const attempts = new MemoryAttempts();
+  const workspace = new MemoryWorkspace();
   const ready = bank.create(questions);
   render(
     <ThemeProvider>
       <BankProvider repo={bank}>
         <PracticeProvider attempts={attempts}>
-          <PracticeScreen />
+          <WorkspaceProvider repo={workspace}>
+            <PracticeScreen />
+          </WorkspaceProvider>
         </PracticeProvider>
       </BankProvider>
     </ThemeProvider>,
   );
-  return { bank, attempts, ready };
+  return { bank, attempts, workspace, ready };
 }
 
 afterEach(cleanup);

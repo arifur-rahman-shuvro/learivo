@@ -6,7 +6,8 @@ import type { Attempt, Exam } from "../data/repo.ts";
 import type { PracticeFilter } from "../domain/session.ts";
 import ExamBuilder from "./ExamBuilder.tsx";
 import Player from "./Player.tsx";
-import { clock, usePractice } from "./practice.tsx";
+import { clock, handoff, usePractice } from "./practice.tsx";
+import { useWorkspace } from "../../workspace/ui/workspace.tsx";
 import Results from "./Results.tsx";
 import { countAvailable, startExam, startPractice, type PracticeSetup } from "./start.ts";
 
@@ -41,7 +42,11 @@ const when = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
 
 export default function PracticeScreen() {
-  const [view, setView] = useState<View>({ name: "home" });
+  const [view, setView] = useState<View>(() => {
+    const id = handoff.attemptId;
+    handoff.attemptId = null;
+    return id ? { name: "play", id } : { name: "home" };
+  });
   if (view.name === "play")
     return (
       <Player
@@ -64,6 +69,7 @@ export default function PracticeScreen() {
 function Home({ onOpen }: { onOpen: (v: View) => void }) {
   const { repo } = useBank();
   const { attempts, rev, refresh } = usePractice();
+  const workspace = useWorkspace().repo;
   const taxonomy = useLoad((r) => r.taxonomy());
   const tags = useLoad((r) => r.tags());
   const collections = useLoad((r) => r.collections());
@@ -95,14 +101,14 @@ function Home({ onOpen }: { onOpen: (v: View) => void }) {
 
   useEffect(() => {
     let alive = true;
-    countAvailable(repo, attempts, setup).then(
+    countAvailable(repo, attempts, setup, workspace).then(
       (n) => alive && setAvailable(n),
       () => alive && setAvailable(null),
     );
     return () => {
       alive = false;
     };
-  }, [repo, attempts, rev, setup.nodeId, setup.tagId, setup.collectionId, setup.filter]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [repo, attempts, workspace, rev, setup.nodeId, setup.tagId, setup.collectionId, setup.filter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const patch = (p: Partial<PracticeSetup>) => setSetup((s) => ({ ...s, ...p }));
 
@@ -231,6 +237,7 @@ function Home({ onOpen }: { onOpen: (v: View) => void }) {
               <option value="all">All</option>
               <option value="unattempted">Not attempted yet</option>
               <option value="incorrect">Last answered wrong</option>
+              <option value="bookmarked">Bookmarked</option>
             </select>
           </label>
           <label className="flex flex-col gap-1.5 text-sm font-semibold">
@@ -289,7 +296,9 @@ function Home({ onOpen }: { onOpen: (v: View) => void }) {
           <Button
             loading={busy === "practice"}
             disabled={available === 0}
-            onClick={() => void begin("practice", () => startPractice(repo, attempts, setup))}
+            onClick={() =>
+              void begin("practice", () => startPractice(repo, attempts, setup, workspace))
+            }
           >
             Start practice
           </Button>

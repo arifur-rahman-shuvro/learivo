@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Response, Snapshot, Verdict } from "../domain/grading.ts";
 import type { ExamRule, Past } from "../domain/session.ts";
+import type { Fact } from "../../workspace/domain/insights.ts";
 import type {
   Attempt,
   AttemptItem,
@@ -246,6 +247,31 @@ export class SupabaseAttempts implements AttemptRepo {
   async remove(attemptId: string) {
     const res = await this.db.from("attempts").delete().eq("id", attemptId);
     if (res.error) fail(res.error);
+  }
+
+  async facts(limit: number): Promise<Fact[]> {
+    const out: Fact[] = [];
+    for (let from = 0; out.length < limit; from += 1000) {
+      const rows = ok(
+        await this.db
+          .from("attempt_items")
+          .select("is_correct, response, path:snapshot->path, attempts!inner(submitted_at, status)")
+          .not("is_correct", "is", null)
+          .not("response", "is", null)
+          .eq("attempts.status", "submitted")
+          .order("answered_at", { ascending: false })
+          .range(from, from + 999),
+      ) as unknown as {
+        is_correct: boolean;
+        path: string[] | null;
+        attempts: { submitted_at: string };
+      }[];
+      for (const r of rows) {
+        out.push({ at: r.attempts.submitted_at, path: r.path ?? [], correct: r.is_correct });
+      }
+      if (rows.length < 1000) break;
+    }
+    return out.slice(0, limit);
   }
 
   async past() {

@@ -4,12 +4,20 @@ import { ThemeProvider } from "../themes/ThemeProvider.tsx";
 import AppShell from "./AppShell.tsx";
 import { AuthProvider } from "../auth/AuthProvider.tsx";
 import { fakeAuth } from "../test/fakeAuth.ts";
+import { MemoryRepo } from "../modules/question-bank/data/memoryRepo.ts";
+import { MemoryAttempts } from "../modules/practice/data/memoryAttempts.ts";
+import { MemoryWorkspace } from "../modules/workspace/data/memoryWorkspace.ts";
+
+// Tests never reach the real database: every screen gets in-memory data.
+const makeRepo = () => new MemoryRepo();
+const makeAttempts = () => new MemoryAttempts();
+const makeWorkspace = () => new MemoryWorkspace();
 
 const renderShell = () =>
   render(
     <ThemeProvider>
       <AuthProvider client={fakeAuth({ id: "u1", email: "sara@example.test" })}>
-        <AppShell />
+        <AppShell makeRepo={makeRepo} makeAttempts={makeAttempts} makeWorkspace={makeWorkspace} />
       </AuthProvider>
     </ThemeProvider>,
   );

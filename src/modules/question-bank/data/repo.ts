@@ -86,6 +86,8 @@ export interface QuestionRepo {
   // Questions
   list(query: QuestionQuery): Promise<Page<QuestionRecord>>;
   get(id: string): Promise<QuestionRecord | null>;
+  /** Several questions at once, in any order. Missing or archived ones are included if they exist. */
+  getMany(ids: string[]): Promise<QuestionRecord[]>;
   create(inputs: QuestionInput[]): Promise<string[]>;
   update(id: string, input: QuestionInput): Promise<void>;
   bulk(ids: string[], action: BulkAction): Promise<void>;

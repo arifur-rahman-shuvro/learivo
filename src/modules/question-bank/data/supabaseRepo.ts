@@ -217,6 +217,17 @@ export class SupabaseRepo implements QuestionRepo {
     return row ? this.toRecord(row) : null;
   }
 
+  async getMany(ids: string[]) {
+    const out: QuestionRecord[] = [];
+    for (const part of chunk([...new Set(ids)], 100)) {
+      const rows = ok(
+        await this.db.from("questions").select(WITH_LINKS).in("id", part),
+      ) as QuestionRow[];
+      out.push(...(await Promise.all(rows.map((r) => this.toRecord(r)))));
+    }
+    return out;
+  }
+
   async create(inputs: QuestionInput[]): Promise<string[]> {
     const nodeIds = new Map<string, string | null>();
     for (const input of inputs) {

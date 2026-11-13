@@ -4,6 +4,8 @@ import { ThemeProvider } from "../../../themes/ThemeProvider.tsx";
 import { MemoryRepo } from "../data/memoryRepo.ts";
 import { BankProvider } from "./bank.tsx";
 import QuestionsScreen from "./QuestionsScreen.tsx";
+import { MemoryWorkspace } from "../../workspace/data/memoryWorkspace.ts";
+import { WorkspaceProvider } from "../../workspace/ui/workspace.tsx";
 import { blankQuestion, type QuestionInput } from "../domain/model.ts";
 
 function tf(stem: string): QuestionInput {
@@ -14,7 +16,9 @@ function renderScreen(repo: MemoryRepo) {
   return render(
     <ThemeProvider>
       <BankProvider repo={repo}>
-        <QuestionsScreen />
+        <WorkspaceProvider repo={new MemoryWorkspace()}>
+          <QuestionsScreen />
+        </WorkspaceProvider>
       </BankProvider>
     </ThemeProvider>,
   );

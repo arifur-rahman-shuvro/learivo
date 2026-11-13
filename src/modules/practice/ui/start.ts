@@ -8,6 +8,7 @@ import {
   snapshotOf,
   type PracticeFilter,
 } from "../domain/session.ts";
+import type { WorkspaceRepo } from "../../workspace/data/repo.ts";
 import { fetchPool, makeInside } from "./practice.tsx";
 
 export interface PracticeSetup {
@@ -29,23 +30,32 @@ export async function countAvailable(
   questions: QuestionRepo,
   attempts: AttemptRepo,
   s: Pick<PracticeSetup, "nodeId" | "tagId" | "collectionId" | "filter">,
+  workspace?: WorkspaceRepo,
 ): Promise<number> {
   const pool = await fetchPool(questions, s);
   if (s.filter === "all") return pool.length;
-  return applyFilter(pool, s.filter, await attempts.past()).length;
+  const [past, marks] = await Promise.all([
+    attempts.past(),
+    workspace ? workspace.bookmarks() : Promise.resolve(new Set<string>()),
+  ]);
+  return applyFilter(pool, s.filter, past, marks).length;
 }
 
 export async function startPractice(
   questions: QuestionRepo,
   attempts: AttemptRepo,
   s: PracticeSetup,
+  workspace?: WorkspaceRepo,
 ): Promise<string> {
-  const [pool, nodes, past] = await Promise.all([
+  const [pool, nodes, past, marks] = await Promise.all([
     fetchPool(questions, s),
     questions.taxonomy(),
     s.filter === "all" ? Promise.resolve(new Map()) : attempts.past(),
+    workspace && s.filter === "bookmarked"
+      ? workspace.bookmarks()
+      : Promise.resolve(new Set<string>()),
   ]);
-  const picked = shuffled(applyFilter(pool, s.filter, past)).slice(0, s.count);
+  const picked = shuffled(applyFilter(pool, s.filter, past, marks)).slice(0, s.count);
   if (picked.length === 0) throw new Error(NO_QUESTIONS);
   return attempts.create({
     kind: "practice",
@@ -102,5 +112,29 @@ export async function startRetry(attempts: AttemptRepo, from: AttemptWithItems):
     marksCorrect: 1,
     marksWrong: 0,
     items: shuffled(items).map((i) => ({ questionId: i.questionId!, snapshot: i.snapshot })),
+  });
+}
+
+/** A practice session from chosen questions, for example the ones the student keeps missing. */
+export async function startFromQuestions(
+  questions: QuestionRepo,
+  attempts: AttemptRepo,
+  ids: string[],
+  title: string,
+): Promise<string> {
+  const [records, nodes] = await Promise.all([questions.getMany(ids), questions.taxonomy()]);
+  const active = records.filter((q) => q.status === "active");
+  if (active.length === 0) throw new Error(NO_QUESTIONS);
+  return attempts.create({
+    kind: "practice",
+    examId: null,
+    title,
+    instantFeedback: true,
+    timeLimitSec: null,
+    marksCorrect: 1,
+    marksWrong: 0,
+    items: shuffled(active)
+      .slice(0, 200)
+      .map((q) => ({ questionId: q.id, snapshot: snapshotOf(q, pathOf(q.nodeId, nodes), true) })),
   });
 }

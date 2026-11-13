@@ -1,4 +1,5 @@
 import type { Past } from "../domain/session.ts";
+import type { Fact } from "../../workspace/domain/insights.ts";
 import type {
   Attempt,
   AttemptItem,
@@ -121,6 +122,24 @@ export class MemoryAttempts implements AttemptRepo {
 
   async remove(attemptId: string) {
     this.attempts.delete(attemptId);
+  }
+
+  async facts(limit: number): Promise<Fact[]> {
+    const done = [...this.attempts.values()]
+      .filter((a) => a.status === "submitted")
+      .sort((a, b) => (b.submittedAt ?? "").localeCompare(a.submittedAt ?? ""));
+    const out: Fact[] = [];
+    for (const a of done) {
+      for (const item of a.items) {
+        if (item.verdict !== "correct" && item.verdict !== "wrong") continue;
+        out.push({
+          at: a.submittedAt!,
+          path: item.snapshot.path,
+          correct: item.verdict === "correct",
+        });
+      }
+    }
+    return out.slice(0, limit);
   }
 
   async past() {

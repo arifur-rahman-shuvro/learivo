@@ -6,6 +6,9 @@ import type { AttemptWithItems } from "../data/repo.ts";
 import { grade, isAnswered, marksFor, tally, type Response } from "../domain/grading.ts";
 import ResponseInput, { stemParts } from "./ResponseInput.tsx";
 import { clock, usePractice } from "./practice.tsx";
+import NoteDialog from "../../workspace/ui/NoteDialog.tsx";
+import { useWorkspace } from "../../workspace/ui/workspace.tsx";
+import type { Note } from "../../workspace/data/repo.ts";
 
 interface Props {
   attemptId: string;
@@ -15,6 +18,10 @@ interface Props {
 
 export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
   const { attempts, refresh } = usePractice();
+  const ws = useWorkspace();
+  const [marks, setMarks] = useState<Set<string>>(new Set());
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [noting, setNoting] = useState(false);
   const [attempt, setAttempt] = useState<AttemptWithItems | null>(null);
   const [error, setError] = useState<string>();
   const [missing, setMissing] = useState(false);
@@ -47,6 +54,21 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
   }, [attempts, attemptId]);
 
   useEffect(() => {
+    let alive = true;
+    Promise.all([ws.repo.bookmarks(), ws.repo.notes()]).then(
+      ([b, n]) => {
+        if (!alive) return;
+        setMarks(b);
+        setNotes(n);
+      },
+      () => undefined, // bookmarks and notes are optional here; practice still works
+    );
+    return () => {
+      alive = false;
+    };
+  }, [ws.repo, ws.rev]);
+
+  useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
@@ -77,6 +99,12 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
           })),
           { ...t, secondsSpent: Math.max(0, spent) },
         );
+        // Missed questions join the revision queue. A failure here must not lose the result.
+        const missed = a.items.flatMap((i, k) =>
+          verdicts[k] === "wrong" && i.questionId ? [i.questionId] : [],
+        );
+        if (missed.length > 0) await ws.repo.addCards(missed).catch(() => undefined);
+        ws.refresh();
         refresh();
         onSubmitted(a.id);
       } catch (e) {
@@ -86,7 +114,7 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
         setConfirm(false);
       }
     },
-    [attempts, refresh, onSubmitted, spent],
+    [attempts, refresh, onSubmitted, spent, ws],
   );
 
   // Time is up: hand in whatever has been answered.
@@ -138,6 +166,25 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
         },
     );
     attempts.patchItem(attemptId, position, { flagged: next }).catch((e) => setError(errorText(e)));
+  }
+
+  const noteFor = item.questionId
+    ? (notes.find((n) => n.questionId === item.questionId) ?? null)
+    : null;
+  async function toggleBookmark(qid: string) {
+    const on = !marks.has(qid);
+    setMarks((cur) => {
+      const next = new Set(cur);
+      if (on) next.add(qid);
+      else next.delete(qid);
+      return next;
+    });
+    try {
+      await ws.repo.setBookmark(qid, on);
+    } catch (e) {
+      setError(errorText(e));
+      ws.refresh();
+    }
   }
 
   const total = attempt.items.length;
@@ -229,6 +276,21 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
             >
               {item.flagged ? "Remove flag" : "Flag for review"}
             </Button>
+            {item.questionId && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-pressed={marks.has(item.questionId)}
+                  onClick={() => void toggleBookmark(item.questionId!)}
+                >
+                  {marks.has(item.questionId) ? "Bookmarked" : "Bookmark"}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setNoting(true)}>
+                  {noteFor ? "Edit note" : "Note"}
+                </Button>
+              </>
+            )}
           </div>
           <div className="flex items-center justify-between gap-2 border-t border-line pt-4">
             <Button variant="secondary" disabled={index === 0} onClick={() => setIndex(index - 1)}>
@@ -274,6 +336,15 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
           </Button>
         </aside>
       </div>
+
+      {noting && item.questionId && (
+        <NoteDialog
+          questionId={item.questionId}
+          about={snap.stem}
+          note={noteFor}
+          onClose={() => setNoting(false)}
+        />
+      )}
 
       <Dialog
         open={confirm}

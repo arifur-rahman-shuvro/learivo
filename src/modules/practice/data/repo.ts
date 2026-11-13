@@ -1,5 +1,6 @@
 import type { Snapshot, Response, Verdict } from "../domain/grading.ts";
 import type { ExamRule, Past } from "../domain/session.ts";
+import type { Fact } from "../../workspace/domain/insights.ts";
 
 export interface Exam {
   id: string;
@@ -91,6 +92,9 @@ export interface AttemptRepo {
   /** Writes the grades and totals and marks the attempt as submitted. */
   submit(attemptId: string, graded: Graded[], totals: Totals): Promise<void>;
   remove(attemptId: string): Promise<void>;
+
+  /** Every answered question from finished sessions, newest first, up to `limit`. */
+  facts(limit: number): Promise<Fact[]>;
 
   /** Result of the latest graded answer for each question that was ever answered. */
   past(): Promise<Map<string, Past>>;

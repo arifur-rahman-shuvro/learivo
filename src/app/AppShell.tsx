@@ -11,8 +11,7 @@ import App from "../App.tsx";
 import { useAuth } from "../auth/AuthProvider.tsx";
 import AuthScreen from "../auth/AuthScreen.tsx";
 import AppearanceMenu from "./AppearanceMenu.tsx";
-import Home from "./screens/Home.tsx";
-import { moduleForHash, visibleModules } from "./registry.ts";
+import { moduleForHash, visibleModules, type ModuleId } from "./registry.ts";
 import { supabase } from "../lib/supabase.ts";
 import { SupabaseRepo } from "../modules/question-bank/data/supabaseRepo.ts";
 import type { QuestionRepo } from "../modules/question-bank/data/repo.ts";
@@ -20,18 +19,34 @@ import { BankProvider } from "../modules/question-bank/ui/bank.tsx";
 import { SupabaseAttempts } from "../modules/practice/data/supabaseAttempts.ts";
 import type { AttemptRepo } from "../modules/practice/data/repo.ts";
 import { PracticeProvider } from "../modules/practice/ui/practice.tsx";
+import { SupabaseWorkspace } from "../modules/workspace/data/supabaseWorkspace.ts";
+import type { WorkspaceRepo } from "../modules/workspace/data/repo.ts";
+import { WorkspaceProvider } from "../modules/workspace/ui/workspace.tsx";
+import HomeDashboard from "../modules/workspace/ui/HomeDashboard.tsx";
 
 const PracticeScreen = lazy(() => import("../modules/practice/ui/PracticeScreen.tsx"));
+const QuestionsScreen = lazy(() => import("../modules/question-bank/ui/QuestionsScreen.tsx"));
+const ReviewScreen = lazy(() => import("../modules/workspace/ui/ReviewScreen.tsx"));
+const InsightsScreen = lazy(() => import("../modules/workspace/ui/InsightsScreen.tsx"));
 
-function PracticeHost({
-  userId,
-  makeRepo,
-  makeAttempts,
-}: {
-  userId: string;
+export interface Repos {
   makeRepo?: (userId: string) => QuestionRepo;
   makeAttempts?: (userId: string) => AttemptRepo;
-}) {
+  makeWorkspace?: (userId: string) => WorkspaceRepo;
+}
+
+/**
+ * Gives every signed-in screen its data: the question bank, practice history and the personal
+ * workspace. One host for all of them, so switching screens keeps what is already loaded.
+ */
+function ModuleHost({
+  userId,
+  module,
+  onNavigate,
+  makeRepo,
+  makeAttempts,
+  makeWorkspace,
+}: Repos & { userId: string; module: ModuleId; onNavigate: (route: string) => void }) {
   const repo = useMemo(
     () => (makeRepo ? makeRepo(userId) : new SupabaseRepo(supabase, userId)),
     [userId, makeRepo],
@@ -40,35 +55,29 @@ function PracticeHost({
     () => (makeAttempts ? makeAttempts(userId) : new SupabaseAttempts(supabase, userId)),
     [userId, makeAttempts],
   );
+  const workspace = useMemo(
+    () => (makeWorkspace ? makeWorkspace(userId) : new SupabaseWorkspace(supabase, userId)),
+    [userId, makeWorkspace],
+  );
   return (
     <BankProvider repo={repo}>
       <PracticeProvider attempts={attempts}>
-        <Suspense fallback={<div role="status" aria-label="Loading" />}>
-          <PracticeScreen />
-        </Suspense>
+        <WorkspaceProvider repo={workspace}>
+          <Suspense fallback={<div role="status" aria-label="Loading" />}>
+            {module === "home" ? (
+              <HomeDashboard onNavigate={onNavigate} />
+            ) : module === "questions" ? (
+              <QuestionsScreen />
+            ) : module === "practice" ? (
+              <PracticeScreen />
+            ) : module === "review" ? (
+              <ReviewScreen onNavigate={onNavigate} />
+            ) : (
+              <InsightsScreen onNavigate={onNavigate} />
+            )}
+          </Suspense>
+        </WorkspaceProvider>
       </PracticeProvider>
-    </BankProvider>
-  );
-}
-
-const QuestionsScreen = lazy(() => import("../modules/question-bank/ui/QuestionsScreen.tsx"));
-
-function QuestionsHost({
-  userId,
-  makeRepo,
-}: {
-  userId: string;
-  makeRepo?: (userId: string) => QuestionRepo;
-}) {
-  const repo = useMemo(
-    () => (makeRepo ? makeRepo(userId) : new SupabaseRepo(supabase, userId)),
-    [userId, makeRepo],
-  );
-  return (
-    <BankProvider repo={repo}>
-      <Suspense fallback={<div role="status" aria-label="Loading" />}>
-        <QuestionsScreen />
-      </Suspense>
     </BankProvider>
   );
 }
@@ -89,13 +98,7 @@ function useHash(): [string, (hash: string) => void] {
  * App shell. Phones: top bar, content, bottom tab bar. Desktop: left sidebar plus content.
  * Navigation is built from the module registry; modules without a screen show a status panel.
  */
-export default function AppShell({
-  makeRepo,
-  makeAttempts,
-}: {
-  makeRepo?: (userId: string) => QuestionRepo;
-  makeAttempts?: (userId: string) => AttemptRepo;
-} = {}) {
+export default function AppShell({ makeRepo, makeAttempts, makeWorkspace }: Repos = {}) {
   const [hash, go] = useHash();
   const { status, user, client } = useAuth();
   if (hash === LAB_ROUTE) return <App />;
@@ -142,12 +145,15 @@ export default function AppShell({
             </div>
           </header>
           <main aria-labelledby="module-title">
-            {current.id === "home" ? (
-              <Home onNavigate={go} />
-            ) : current.id === "questions" && user ? (
-              <QuestionsHost userId={user.id} makeRepo={makeRepo} />
-            ) : current.id === "practice" && user ? (
-              <PracticeHost userId={user.id} makeRepo={makeRepo} makeAttempts={makeAttempts} />
+            {user ? (
+              <ModuleHost
+                userId={user.id}
+                module={current.id}
+                onNavigate={go}
+                makeRepo={makeRepo}
+                makeAttempts={makeAttempts}
+                makeWorkspace={makeWorkspace}
+              />
             ) : (
               <div className="lv-card p-5 sm:p-7">
                 <h1 id="module-title" className="m-0 text-3xl font-bold">
