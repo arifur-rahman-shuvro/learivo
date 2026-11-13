@@ -17,6 +17,39 @@ import { supabase } from "../lib/supabase.ts";
 import { SupabaseRepo } from "../modules/question-bank/data/supabaseRepo.ts";
 import type { QuestionRepo } from "../modules/question-bank/data/repo.ts";
 import { BankProvider } from "../modules/question-bank/ui/bank.tsx";
+import { SupabaseAttempts } from "../modules/practice/data/supabaseAttempts.ts";
+import type { AttemptRepo } from "../modules/practice/data/repo.ts";
+import { PracticeProvider } from "../modules/practice/ui/practice.tsx";
+
+const PracticeScreen = lazy(() => import("../modules/practice/ui/PracticeScreen.tsx"));
+
+function PracticeHost({
+  userId,
+  makeRepo,
+  makeAttempts,
+}: {
+  userId: string;
+  makeRepo?: (userId: string) => QuestionRepo;
+  makeAttempts?: (userId: string) => AttemptRepo;
+}) {
+  const repo = useMemo(
+    () => (makeRepo ? makeRepo(userId) : new SupabaseRepo(supabase, userId)),
+    [userId, makeRepo],
+  );
+  const attempts = useMemo(
+    () => (makeAttempts ? makeAttempts(userId) : new SupabaseAttempts(supabase, userId)),
+    [userId, makeAttempts],
+  );
+  return (
+    <BankProvider repo={repo}>
+      <PracticeProvider attempts={attempts}>
+        <Suspense fallback={<div role="status" aria-label="Loading" />}>
+          <PracticeScreen />
+        </Suspense>
+      </PracticeProvider>
+    </BankProvider>
+  );
+}
 
 const QuestionsScreen = lazy(() => import("../modules/question-bank/ui/QuestionsScreen.tsx"));
 
@@ -58,7 +91,11 @@ function useHash(): [string, (hash: string) => void] {
  */
 export default function AppShell({
   makeRepo,
-}: { makeRepo?: (userId: string) => QuestionRepo } = {}) {
+  makeAttempts,
+}: {
+  makeRepo?: (userId: string) => QuestionRepo;
+  makeAttempts?: (userId: string) => AttemptRepo;
+} = {}) {
   const [hash, go] = useHash();
   const { status, user, client } = useAuth();
   if (hash === LAB_ROUTE) return <App />;
@@ -109,6 +146,8 @@ export default function AppShell({
               <Home onNavigate={go} />
             ) : current.id === "questions" && user ? (
               <QuestionsHost userId={user.id} makeRepo={makeRepo} />
+            ) : current.id === "practice" && user ? (
+              <PracticeHost userId={user.id} makeRepo={makeRepo} makeAttempts={makeAttempts} />
             ) : (
               <div className="lv-card p-5 sm:p-7">
                 <h1 id="module-title" className="m-0 text-3xl font-bold">
