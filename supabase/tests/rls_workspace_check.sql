@@ -123,6 +123,26 @@ insert into check_results select 'deleting a question removes bookmark, note and
   and (select count(*) from public.review_cards) = 0;
 insert into check_results select 'free notes survive', (select count(*) from public.notes) = 2;
 
+-- Home layout (M5): stored on the student's own row, size-limited, never visible to others.
+update public.user_preferences set home_layout = '{"order":["goal","focus"],"hidden":["recent"]}'
+  where user_id = '11111111-1111-1111-1111-111111111111';
+insert into check_results select 'A can save a home layout',
+  (select home_layout->'hidden' from public.user_preferences) = '["recent"]'::jsonb;
+do $$ begin
+  begin
+    update public.user_preferences set home_layout = '[1]'::jsonb;
+    insert into check_results values ('home layout must be an object', false);
+  exception when check_violation then
+    insert into check_results values ('home layout must be an object', true);
+  end;
+  begin
+    update public.user_preferences set home_layout = jsonb_build_object('x', repeat('a', 5000));
+    insert into check_results values ('home layout is size-limited', false);
+  exception when check_violation then
+    insert into check_results values ('home layout is size-limited', true);
+  end;
+end $$;
+
 -- Signed-out visitors see nothing.
 reset role;
 set local role anon;

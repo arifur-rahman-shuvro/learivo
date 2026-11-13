@@ -59,6 +59,8 @@ export interface NewAttempt {
   timeLimitSec: number | null;
   marksCorrect: number;
   marksWrong: number;
+  /** Set when a session started offline and is recorded later; defaults to now. */
+  startedAt?: string;
   /** Each item carries the question it came from, so the history can be recorded. */
   items: { questionId: string; snapshot: Snapshot }[];
 }
@@ -81,6 +83,8 @@ export interface Totals {
   wrong: number;
   unanswered: number;
   secondsSpent: number;
+  /** Set when a session finished offline and is recorded later; defaults to now. */
+  submittedAt?: string;
 }
 
 export interface AttemptRepo {

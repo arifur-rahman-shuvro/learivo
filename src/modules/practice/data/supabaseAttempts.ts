@@ -139,6 +139,7 @@ export class SupabaseAttempts implements AttemptRepo {
           marks_correct: input.marksCorrect,
           marks_wrong: input.marksWrong,
           question_count: input.items.length,
+          ...(input.startedAt ? { started_at: input.startedAt } : {}),
         })
         .select("id")
         .single(),
@@ -232,7 +233,7 @@ export class SupabaseAttempts implements AttemptRepo {
       .from("attempts")
       .update({
         status: "submitted",
-        submitted_at: new Date().toISOString(),
+        submitted_at: totals.submittedAt ?? new Date().toISOString(),
         score: totals.score,
         correct_count: totals.correct,
         wrong_count: totals.wrong,

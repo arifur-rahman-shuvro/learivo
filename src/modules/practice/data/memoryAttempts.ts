@@ -24,15 +24,27 @@ export class MemoryAttempts implements AttemptRepo {
   private seq = 0;
   private clock = Date.now();
 
+  constructor(private readonly idPrefix = "att") {}
+
+  /** Everything held, so it can be kept on a device and restored later. */
+  dump(): { seq: number; attempts: unknown[] } {
+    return { seq: this.seq, attempts: structuredClone([...this.attempts.values()]) };
+  }
+
+  restore(data: { seq: number; attempts: unknown[] }) {
+    this.seq = Math.max(this.seq, data.seq);
+    this.attempts = new Map((data.attempts as Stored[]).map((a) => [a.id, a]));
+  }
+
   private tick() {
-    this.clock += 1000;
+    this.clock = Math.max(this.clock + 1, Date.now());
     return new Date(this.clock).toISOString();
   }
 
   async create(input: NewAttempt) {
     if (input.items.length < 1 || input.items.length > 500)
       throw new Error("A session needs 1 to 500 questions.");
-    const id = `att-${++this.seq}`;
+    const id = `${this.idPrefix}-${++this.seq}`;
     const items: AttemptItem[] = input.items.map((x, position) => ({
       position,
       questionId: x.questionId,
@@ -58,7 +70,7 @@ export class MemoryAttempts implements AttemptRepo {
       wrong: null,
       unanswered: null,
       secondsSpent: 0,
-      startedAt: this.tick(),
+      startedAt: input.startedAt ?? this.tick(),
       submittedAt: null,
       items,
       questionIds: input.items.map((x) => x.questionId),
@@ -111,7 +123,7 @@ export class MemoryAttempts implements AttemptRepo {
     }
     Object.assign(a, {
       status: "submitted" as const,
-      submittedAt: this.tick(),
+      submittedAt: totals.submittedAt ?? this.tick(),
       score: totals.score,
       correct: totals.correct,
       wrong: totals.wrong,

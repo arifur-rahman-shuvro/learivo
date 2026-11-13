@@ -1,3 +1,4 @@
+import { DEFAULT_HOME_LAYOUT, cleanLayout, type HomeLayout } from "../domain/homeLayout.ts";
 import { newCard, type Card } from "../domain/scheduler.ts";
 import {
   DEFAULT_GOAL,
@@ -13,6 +14,7 @@ export class MemoryWorkspace implements WorkspaceRepo {
   private noteMap = new Map<string, Note>();
   private cardMap = new Map<string, Card>();
   private goal = DEFAULT_GOAL;
+  private layout: HomeLayout = DEFAULT_HOME_LAYOUT;
   private seq = 0;
   private clock = Date.now();
 
@@ -82,5 +84,12 @@ export class MemoryWorkspace implements WorkspaceRepo {
   async setDailyGoal(n: number) {
     if (!Number.isInteger(n) || n < 1 || n > 500) throw new Error("Choose a goal from 1 to 500.");
     this.goal = n;
+  }
+
+  async homeLayout() {
+    return structuredClone(this.layout);
+  }
+  async setHomeLayout(layout: HomeLayout) {
+    this.layout = cleanLayout(layout);
   }
 }

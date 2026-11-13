@@ -6,6 +6,7 @@ import { BankProvider } from "./bank.tsx";
 import QuestionsScreen from "./QuestionsScreen.tsx";
 import { MemoryWorkspace } from "../../workspace/data/memoryWorkspace.ts";
 import { WorkspaceProvider } from "../../workspace/ui/workspace.tsx";
+import { sendIntent } from "../../../app/intents.ts";
 import { blankQuestion, type QuestionInput } from "../domain/model.ts";
 
 function tf(stem: string): QuestionInput {
@@ -27,6 +28,19 @@ function renderScreen(repo: MemoryRepo) {
 afterEach(cleanup);
 
 describe("QuestionsScreen", () => {
+  it("opens with the search or form the command palette asked for", async () => {
+    const repo = new MemoryRepo();
+    await repo.create([tf("The aorta is an artery"), tf("The vena cava is a vein")]);
+    sendIntent({ kind: "search", text: "aorta" });
+    renderScreen(repo);
+    await waitFor(() => expect(screen.queryByText("The vena cava is a vein")).toBeNull());
+    expect((screen.getByLabelText("Search questions") as HTMLInputElement).value).toBe("aorta");
+    cleanup();
+    sendIntent({ kind: "import" });
+    renderScreen(repo);
+    expect(await screen.findByRole("tab", { name: "Paste JSON" })).toBeTruthy();
+  });
+
   it("shows the empty state with Add and Import actions", async () => {
     renderScreen(new MemoryRepo());
     expect(await screen.findByText("Add your first questions")).toBeTruthy();

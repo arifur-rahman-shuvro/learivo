@@ -37,6 +37,11 @@ export interface WorkspaceRepo {
 
   dailyGoal(): Promise<number>;
   setDailyGoal(n: number): Promise<void>;
+
+  homeLayout(): Promise<HomeLayout>;
+  setHomeLayout(layout: HomeLayout): Promise<void>;
 }
+
+import type { HomeLayout } from "../domain/homeLayout.ts";
 
 export const DEFAULT_GOAL = 20;

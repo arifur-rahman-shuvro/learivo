@@ -1,3 +1,4 @@
+import { cleanLayout, type HomeLayout } from "../domain/homeLayout.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Card } from "../domain/scheduler.ts";
 import {
@@ -212,6 +213,21 @@ export class SupabaseWorkspace implements WorkspaceRepo {
     const res = await this.db
       .from("user_preferences")
       .update({ daily_goal: n })
+      .eq("user_id", this.userId);
+    if (res.error) fail(res.error);
+  }
+
+  async homeLayout() {
+    const row = ok(await this.db.from("user_preferences").select("home_layout").maybeSingle()) as {
+      home_layout: unknown;
+    } | null;
+    return cleanLayout(row?.home_layout);
+  }
+
+  async setHomeLayout(layout: HomeLayout) {
+    const res = await this.db
+      .from("user_preferences")
+      .update({ home_layout: cleanLayout(layout) })
       .eq("user_id", this.userId);
     if (res.error) fail(res.error);
   }

@@ -1,10 +1,11 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   BottomNav,
   Button,
   EmptyState,
   LogoWordmark,
   PlusIcon,
+  SearchIcon,
   ThemeBackground,
 } from "../design-system/index.ts";
 import App from "../App.tsx";
@@ -12,6 +13,9 @@ import { useAuth } from "../auth/AuthProvider.tsx";
 import AuthScreen from "../auth/AuthScreen.tsx";
 import AppearanceMenu from "./AppearanceMenu.tsx";
 import StatusBanner from "./StatusBanner.tsx";
+import SyncIndicator from "./SyncIndicator.tsx";
+import CommandPalette from "./CommandPalette.tsx";
+import { OfflineProvider, useServices, useOfflineControls } from "../offline/OfflineProvider.tsx";
 import { moduleForHash, visibleModules, type ModuleId } from "./registry.ts";
 import { supabase } from "../lib/supabase.ts";
 import { SupabaseRepo } from "../modules/question-bank/data/supabaseRepo.ts";
@@ -44,18 +48,13 @@ function ModuleHost({
   userId,
   module,
   onNavigate,
-  makeRepo,
-  makeAttempts,
   makeWorkspace,
-}: Repos & { userId: string; module: ModuleId; onNavigate: (route: string) => void }) {
-  const repo = useMemo(
-    () => (makeRepo ? makeRepo(userId) : new SupabaseRepo(supabase, userId)),
-    [userId, makeRepo],
-  );
-  const attempts = useMemo(
-    () => (makeAttempts ? makeAttempts(userId) : new SupabaseAttempts(supabase, userId)),
-    [userId, makeAttempts],
-  );
+}: Pick<Repos, "makeWorkspace"> & {
+  userId: string;
+  module: ModuleId;
+  onNavigate: (route: string) => void;
+}) {
+  const { bank: repo, attempts } = useServices();
   const workspace = useMemo(
     () => (makeWorkspace ? makeWorkspace(userId) : new SupabaseWorkspace(supabase, userId)),
     [userId, makeWorkspace],
@@ -83,6 +82,25 @@ function ModuleHost({
   );
 }
 
+/** Signing out also removes the question copy from this device. */
+function SignOutButton() {
+  const { client } = useAuth();
+  const offline = useOfflineControls();
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={async () => {
+        await offline?.pack.clear().catch(() => undefined);
+        await offline?.sync.clearCaches().catch(() => undefined);
+        await client.signOut();
+      }}
+    >
+      Sign out
+    </Button>
+  );
+}
+
 const LAB_ROUTE = "#/lab";
 
 function useHash(): [string, (hash: string) => void] {
@@ -101,16 +119,35 @@ function useHash(): [string, (hash: string) => void] {
  */
 export default function AppShell({ makeRepo, makeAttempts, makeWorkspace }: Repos = {}) {
   const [hash, go] = useHash();
-  const { status, user, client } = useAuth();
+  const { status, user } = useAuth();
   if (hash === LAB_ROUTE) return <App />;
   if (status === "loading") return <div role="status" aria-label="Loading" className="min-h-dvh" />;
   if (status === "signed-out") return <AuthScreen />;
 
   const current = moduleForHash(hash);
   const modules = visibleModules();
-  return (
+  const withServices = (node: ReactNode) =>
+    user ? (
+      <OfflineProvider
+        userId={user.id}
+        injected={{
+          bank: makeRepo?.(user.id),
+          attempts: makeAttempts?.(user.id),
+        }}
+        live={() => ({
+          bank: new SupabaseRepo(supabase, user.id),
+          attempts: new SupabaseAttempts(supabase, user.id),
+        })}
+      >
+        {node}
+      </OfflineProvider>
+    ) : (
+      node
+    );
+  return withServices(
     <>
       <ThemeBackground />
+      <CommandPalette onNavigate={go} />
       <div className="relative z-10 mx-auto min-h-dvh max-w-[1280px] lg:grid lg:grid-cols-[260px_1fr]">
         <aside className="lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-6 lg:border-r lg:border-line lg:px-4 lg:py-6">
           <div className="hidden px-3 lg:block">
@@ -140,9 +177,20 @@ export default function AppShell({ makeRepo, makeAttempts, makeWorkspace }: Repo
                 {user?.email}
               </span>
               <AppearanceMenu />
-              <Button variant="ghost" size="sm" onClick={() => void client.signOut()}>
-                Sign out
-              </Button>
+              <button
+                type="button"
+                className="lv-btn lv-btn-secondary lv-btn-sm"
+                aria-label="Search and commands"
+                onClick={() => window.dispatchEvent(new Event("learivo:palette"))}
+              >
+                <SearchIcon />
+                <span className="hidden sm:inline">Search</span>
+                <kbd className="hidden rounded border border-line px-1 text-xs text-muted lg:inline">
+                  Ctrl K
+                </kbd>
+              </button>
+              <SyncIndicator />
+              <SignOutButton />
             </div>
           </header>
           <StatusBanner />
@@ -152,8 +200,6 @@ export default function AppShell({ makeRepo, makeAttempts, makeWorkspace }: Repo
                 userId={user.id}
                 module={current.id}
                 onNavigate={go}
-                makeRepo={makeRepo}
-                makeAttempts={makeAttempts}
                 makeWorkspace={makeWorkspace}
               />
             ) : (
@@ -170,6 +216,6 @@ export default function AppShell({ makeRepo, makeAttempts, makeWorkspace }: Repo
           </main>
         </div>
       </div>
-    </>
+    </>,
   );
 }

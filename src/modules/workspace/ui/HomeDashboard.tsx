@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button, ProgressRing } from "../../../design-system/index.ts";
 import Home from "../../../app/screens/Home.tsx";
 import { DEFAULT_QUERY } from "../../question-bank/data/repo.ts";
@@ -6,6 +6,13 @@ import { errorText, useBank } from "../../question-bank/ui/bank.tsx";
 import { DEFAULT_GOAL } from "../data/repo.ts";
 import { activeDaySet, answeredOn, overall, streak, weakAreas } from "../domain/insights.ts";
 import { isDue } from "../domain/scheduler.ts";
+import {
+  DEFAULT_HOME_LAYOUT,
+  visibleSections,
+  type HomeLayout,
+  type HomeSectionId,
+} from "../domain/homeLayout.ts";
+import CustomizeDialog from "./CustomizeDialog.tsx";
 import { useInsightsData } from "./useInsightsData.ts";
 import { useWorkspace } from "./workspace.tsx";
 
@@ -26,6 +33,8 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
   const [total, setTotal] = useState<number | null>(null);
   const [dueCount, setDueCount] = useState(0);
   const [goal, setGoal] = useState(DEFAULT_GOAL);
+  const [layout, setLayout] = useState<HomeLayout>(DEFAULT_HOME_LAYOUT);
+  const [customizing, setCustomizing] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(DEFAULT_GOAL));
   const [error, setError] = useState<string>();
@@ -36,14 +45,16 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
       bank.list({ ...DEFAULT_QUERY, limit: 1 }),
       ws.repo.cards(),
       ws.repo.dailyGoal(),
+      ws.repo.homeLayout().catch(() => DEFAULT_HOME_LAYOUT),
     ]).then(
-      ([page, cards, g]) => {
+      ([page, cards, g, lay]) => {
         if (!alive) return;
         const now = new Date();
         setTotal(page.total);
         setDueCount(cards.filter((c) => isDue(c, now)).length);
         setGoal(g);
         setDraft(String(g));
+        setLayout(lay);
       },
       // Home must still open when the extras cannot load.
       () => alive && setTotal(-1),
@@ -65,6 +76,11 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
     };
   }, [data, today]);
 
+  async function saveLayout(next: HomeLayout) {
+    await ws.repo.setHomeLayout(next);
+    setLayout(next);
+  }
+
   async function saveGoal() {
     const n = Number(draft);
     setError(undefined);
@@ -83,14 +99,8 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
   if (total <= 0) return <Home onNavigate={onNavigate} />;
 
   const done = view?.today ?? 0;
-  return (
-    <div className="flex flex-col gap-5">
-      <header>
-        <h1 id="module-title" className="m-0 text-3xl font-bold">
-          Today
-        </h1>
-      </header>
-
+  const blocks: Record<HomeSectionId, ReactNode> = {
+    focus: (
       <section
         aria-label="Today's focus"
         className="lv-card flex flex-wrap items-center justify-between gap-4 p-5"
@@ -113,7 +123,8 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
           <Button onClick={() => onNavigate("#/practice")}>Start practice</Button>
         )}
       </section>
-
+    ),
+    numbers: (
       <section aria-label="Your numbers" className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Tile label="Questions" value={total.toLocaleString()} />
         <Tile label="Due for revision" value={String(dueCount)} />
@@ -123,77 +134,75 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
           value={view?.all.accuracy == null ? "-" : `${Math.round(view.all.accuracy * 100)}%`}
         />
       </section>
-
-      <div className="grid gap-5 lg:grid-cols-2">
-        <section
-          aria-labelledby="goal-title"
-          className="lv-card flex items-center gap-5 p-5 sm:p-6"
-        >
-          <ProgressRing
-            value={Math.min(100, (done / goal) * 100)}
-            size={88}
-            label="Daily goal progress"
-          />
-          <div className="min-w-0">
-            <h2 id="goal-title" className="m-0 text-lg font-bold">
-              Daily goal
-            </h2>
-            <p className="m-0 mt-1 text-sm text-muted">
-              {done} of {goal} questions today.
-            </p>
-            {editing ? (
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <input
-                  className="lv-input w-24"
-                  type="number"
-                  min={1}
-                  max={500}
-                  aria-label="Questions per day"
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                />
-                <Button size="sm" onClick={() => void saveGoal()}>
-                  Save goal
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
-                  Cancel
-                </Button>
-              </div>
-            ) : (
-              <Button className="mt-2" size="sm" variant="ghost" onClick={() => setEditing(true)}>
-                Change goal
-              </Button>
-            )}
-            {error && (
-              <p role="alert" className="m-0 mt-1 text-sm text-danger">
-                {error}
-              </p>
-            )}
-          </div>
-        </section>
-
-        <section aria-labelledby="weak-title" className="lv-card p-5 sm:p-6">
-          <h2 id="weak-title" className="m-0 mb-2 text-lg font-bold">
-            Weak areas
+    ),
+    goal: (
+      <section aria-labelledby="goal-title" className="lv-card flex items-center gap-5 p-5 sm:p-6">
+        <ProgressRing
+          value={Math.min(100, (done / goal) * 100)}
+          size={88}
+          label="Daily goal progress"
+        />
+        <div className="min-w-0">
+          <h2 id="goal-title" className="m-0 text-lg font-bold">
+            Daily goal
           </h2>
-          {view && view.weak.length > 0 ? (
-            <ul className="m-0 flex list-none flex-col gap-2 p-0">
-              {view.weak.map((a) => (
-                <li key={a.name} className="flex items-baseline justify-between gap-3 text-sm">
-                  <span className="min-w-0 truncate font-semibold">{a.name}</span>
-                  <span className="font-mono text-muted">{Math.round(a.accuracy * 100)}%</span>
-                </li>
-              ))}
-            </ul>
+          <p className="m-0 mt-1 text-sm text-muted">
+            {done} of {goal} questions today.
+          </p>
+          {editing ? (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <input
+                className="lv-input w-24"
+                type="number"
+                min={1}
+                max={500}
+                aria-label="Questions per day"
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+              />
+              <Button size="sm" onClick={() => void saveGoal()}>
+                Save goal
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
+                Cancel
+              </Button>
+            </div>
           ) : (
-            <p className="m-0 text-sm text-muted">
-              Areas where you score under 70% after 5 or more answers show up here.
+            <Button className="mt-2" size="sm" variant="ghost" onClick={() => setEditing(true)}>
+              Change goal
+            </Button>
+          )}
+          {error && (
+            <p role="alert" className="m-0 mt-1 text-sm text-danger">
+              {error}
             </p>
           )}
-        </section>
-      </div>
-
-      {view && view.recent.length > 0 && (
+        </div>
+      </section>
+    ),
+    weak: (
+      <section aria-labelledby="weak-title" className="lv-card p-5 sm:p-6">
+        <h2 id="weak-title" className="m-0 mb-2 text-lg font-bold">
+          Weak areas
+        </h2>
+        {view && view.weak.length > 0 ? (
+          <ul className="m-0 flex list-none flex-col gap-2 p-0">
+            {view.weak.map((a) => (
+              <li key={a.name} className="flex items-baseline justify-between gap-3 text-sm">
+                <span className="min-w-0 truncate font-semibold">{a.name}</span>
+                <span className="font-mono text-muted">{Math.round(a.accuracy * 100)}%</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="m-0 text-sm text-muted">
+            Areas where you score under 70% after 5 or more answers show up here.
+          </p>
+        )}
+      </section>
+    ),
+    recent:
+      view && view.recent.length > 0 ? (
         <section aria-labelledby="recent-title" className="lv-card p-5 sm:p-6">
           <h2 id="recent-title" className="m-0 mb-2 text-lg font-bold">
             Recent sessions
@@ -210,6 +219,47 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
             ))}
           </ul>
         </section>
+      ) : null,
+  };
+  const wide: Record<HomeSectionId, boolean> = {
+    focus: true,
+    numbers: true,
+    goal: false,
+    weak: false,
+    recent: true,
+  };
+  const shown = visibleSections(layout);
+
+  return (
+    <div className="flex flex-col gap-5">
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <h1 id="module-title" className="m-0 text-3xl font-bold">
+          Today
+        </h1>
+        <Button variant="secondary" size="sm" onClick={() => setCustomizing(true)}>
+          Customize
+        </Button>
+      </header>
+      <div className="grid gap-5 lg:grid-cols-2">
+        {shown.map((id) =>
+          blocks[id] ? (
+            <div key={id} className={wide[id] ? "lg:col-span-2" : ""}>
+              {blocks[id]}
+            </div>
+          ) : null,
+        )}
+      </div>
+      {shown.length === 0 && (
+        <p className="m-0 text-sm text-muted">
+          Every section is hidden. Use Customize to show some again.
+        </p>
+      )}
+      {customizing && (
+        <CustomizeDialog
+          layout={layout}
+          onSave={saveLayout}
+          onClose={() => setCustomizing(false)}
+        />
       )}
     </div>
   );

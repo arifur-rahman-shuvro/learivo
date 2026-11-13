@@ -295,4 +295,47 @@ describe("Home dashboard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save goal" }));
     expect(await screen.findByText("Choose a goal from 1 to 500.")).toBeTruthy();
   });
+
+  it("lets the student hide and reorder sections, and keeps the choice", async () => {
+    const { workspace } = await setup(
+      (n) => <HomeDashboard onNavigate={n} />,
+      async ({ bank }) => {
+        await bank.create([tf("Q1")]);
+      },
+    );
+    expect(await screen.findByRole("heading", { name: "Daily goal" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Weak areas" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Customize" }));
+    const dialog = await screen.findByRole("dialog", { name: "Customize Home" });
+    const weak = within(dialog).getByRole("checkbox", { name: "Weak areas" });
+    fireEvent.click(weak);
+    fireEvent.click(within(dialog).getByRole("button", { name: "Move Daily goal up" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save layout" }));
+
+    await waitFor(() => expect(screen.queryByRole("heading", { name: "Weak areas" })).toBeNull());
+    const saved = await workspace.homeLayout();
+    expect(saved.hidden).toEqual(["weak"]);
+    expect(saved.order.slice(0, 3)).toEqual(["focus", "goal", "numbers"]);
+  });
+
+  it("can reset the layout and does not save when cancelled", async () => {
+    const { workspace } = await setup(
+      (n) => <HomeDashboard onNavigate={n} />,
+      async ({ bank, workspace }) => {
+        await bank.create([tf("Q1")]);
+        await workspace.setHomeLayout({
+          order: ["recent", "weak", "goal", "numbers", "focus"],
+          hidden: ["goal"],
+        });
+      },
+    );
+    await screen.findByRole("heading", { name: "Weak areas" });
+    expect(screen.queryByRole("heading", { name: "Daily goal" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Customize" }));
+    const dialog = await screen.findByRole("dialog", { name: "Customize Home" });
+    fireEvent.click(within(dialog).getByRole("button", { name: "Reset" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect((await workspace.homeLayout()).hidden).toEqual(["goal"]);
+  });
 });

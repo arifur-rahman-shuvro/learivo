@@ -52,6 +52,20 @@ export default defineConfig({
   resolve: {
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },
   },
+  build: {
+    rolldownOptions: {
+      output: {
+        // Libraries change rarely, so keeping them in their own files lets the browser (and the
+        // offline cache) reuse them when only the app's own code changes.
+        codeSplitting: {
+          groups: [
+            { name: "supabase", test: /node_modules[\\/]@supabase/ },
+            { name: "react", test: /node_modules[\\/](react|react-dom|scheduler)[\\/]/ },
+          ],
+        },
+      },
+    },
+  },
   test: {
     environment: "jsdom",
     include: ["src/**/*.test.{ts,tsx}"],

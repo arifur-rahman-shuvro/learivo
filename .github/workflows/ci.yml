@@ -73,7 +73,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Apply stub and foundation migration (plain Postgres, stand-in for Supabase auth)
-        run: psql -v ON_ERROR_STOP=1 -q -f supabase/tests/local_stub.sql -f supabase/migrations/20261112000000_foundation.sql -f supabase/migrations/20261112010000_question_bank.sql -f supabase/migrations/20261113000000_practice_exams.sql -f supabase/migrations/20261113100000_workspace.sql
+        run: psql -v ON_ERROR_STOP=1 -q -f supabase/tests/local_stub.sql -f supabase/migrations/20261112000000_foundation.sql -f supabase/migrations/20261112010000_question_bank.sql -f supabase/migrations/20261113000000_practice_exams.sql -f supabase/migrations/20261113100000_workspace.sql -f supabase/migrations/20261114000000_home_layout.sql
       - name: Row-level-security checks
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/rls_check.sql
       - name: Question bank checks

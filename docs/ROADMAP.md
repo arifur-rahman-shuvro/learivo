@@ -29,8 +29,9 @@ Each phase ends with a written report and owner approval before the next begins.
 | 3     | Done, except the items below. Go service live on Render free (owner-checked 2026-11-12)   |
 | 4     | Built and tested; waiting for the owner's phone test and approval (see below)             |
 | 5     | Built and tested; M3 applied; waiting for the owner's phone test and approval (see below) |
-| 6     | Built and tested; M4 applied; waiting for the owner's phone test and approval (see below) |
-| 7-9   | Not started; each phase waits for the owner's approval                                    |
+| 6     | Done; owner phone-tested and approved (2026-11-13)                                        |
+| 7     | Built and tested; M5 applied; waiting for the owner's phone test and approval (see below) |
+| 8-9   | Not started; each phase waits for the owner's approval                                    |
 
 Phase 3 items not done, with reasons:
 
@@ -66,3 +67,14 @@ Phase 6 notes:
 - Notes: one note per question, plus free notes. Rich text and note search are not built.
 - Planner basics are limited to the daily goal and streak. A calendar planner and exam countdown are not built.
 - Practice can now draw from bookmarked questions.
+
+Phase 7 notes:
+
+- Installable app: Learivo can be added to the phone's home screen and opens like an app. A service worker keeps the app files on the device; after one visit with a connection, the app opens with no connection. A banner appears when a new version is ready ("Update now"). Verified in a real browser: with the network off, a reload still shows the app.
+- Offline question copy: the whole active question bank is copied to the device (IndexedDB) after sign-in and refreshed when online. Offline, Questions, Practice and exams read from that copy. Editing the bank, importing, notes, bookmarks and revision cards need a connection. The copy is removed on sign-out, and can be removed or refreshed by hand from the header (Saved / Offline / Syncing menu).
+- Offline sessions: a practice session or exam is saved on the device first and sent to the account when a connection exists, with its original start and finish times. A retry never creates a session twice. Exams must have been opened once online to be available offline. Unsent sessions stay on the device after sign-out so no work is lost.
+- Limits: in-progress sessions live on the device until finished (they do not resume on another device); offline Insights show only on-device sessions plus nothing from the account; there is one whole-bank copy, not separate subject packs; the offline sign-in with a real Supabase session was not tested (the test environment cannot reach it), only the pieces and the offline app shell.
+- Command palette (Ctrl or Cmd + K, or the Search button): go to any screen, add or import questions, start practice or revision, and search every question; picking a question opens Questions filtered to it. It searches the offline copy when offline.
+- Home customization: Customize on Home shows or hides five sections and sets their order; saved to the account (M5: `user_preferences.home_layout`, size-limited, covered by the same row protection).
+- Forest and Space decorative layers already existed from Phase 2 and respect the low-effects setting; no change this phase.
+- Performance: the app's own code in the first load is 78 kB (23 kB compressed); libraries sit in separate cached files; screens load on demand. Not measured on a real phone.

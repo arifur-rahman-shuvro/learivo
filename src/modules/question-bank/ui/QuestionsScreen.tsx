@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useIntent } from "../../../app/intents.ts";
 import {
   Badge,
   Button,
@@ -54,6 +55,11 @@ type BulkPick = "classify" | "tag" | "collection" | null;
 
 export default function QuestionsScreen() {
   const { repo, rev, refresh } = useBank();
+  useIntent((i) => {
+    if (i.kind === "search") setSearchText(i.text);
+    else if (i.kind === "add") setEditing("new");
+    else setPanel("import");
+  });
   const ws = useWorkspace();
   const [marks, setMarks] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState<QuestionQuery>(DEFAULT_QUERY);
