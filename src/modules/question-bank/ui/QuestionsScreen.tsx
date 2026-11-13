@@ -590,8 +590,7 @@ export default function QuestionsScreen() {
                   {!archive && (
                     <button
                       type="button"
-                      aria-pressed={marks.has(q.id)}
-                      aria-label={`${marks.has(q.id) ? "Remove bookmark" : "Bookmark"}: ${q.stem.slice(0, 40)}`}
+                      aria-label={`${marks.has(q.id) ? "Bookmarked" : "Bookmark"}: ${q.stem.slice(0, 40)}`}
                       onClick={() => void toggleBookmark(q.id)}
                       className={`shrink-0 rounded-control border px-2.5 py-1 text-xs font-semibold ${
                         marks.has(q.id) ? "border-accent bg-surface-2" : "border-line text-muted"

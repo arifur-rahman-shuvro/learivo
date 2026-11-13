@@ -31,7 +31,8 @@ Each phase ends with a written report and owner approval before the next begins.
 | 5     | Built and tested; M3 applied; waiting for the owner's phone test and approval (see below) |
 | 6     | Done; owner phone-tested and approved (2026-11-13)                                        |
 | 7     | Built and tested; M5 applied; waiting for the owner's phone test and approval (see below) |
-| 8-9   | Not started; each phase waits for the owner's approval                                    |
+| 8     | Built and checked; M6 applied; waiting for the owner's approval (see below)               |
+| 9     | Not started; waits for the owner's approval                                               |
 
 Phase 3 items not done, with reasons:
 
@@ -78,3 +79,11 @@ Phase 7 notes:
 - Home customization: Customize on Home shows or hides five sections and sets their order; saved to the account (M5: `user_preferences.home_layout`, size-limited, covered by the same row protection).
 - Forest and Space decorative layers already existed from Phase 2 and respect the low-effects setting; no change this phase.
 - Performance: the app's own code in the first load is 78 kB (23 kB compressed); libraries sit in separate cached files; screens load on demand. Not measured on a real phone.
+
+Phase 8 notes (details in docs/RUNBOOK.md):
+
+- Security review: no known vulnerabilities in the libraries the app ships (the one moderate finding is in the lint tool, which is not shipped); no secrets or risky HTML injection in the code; the database protections were re-checked (89 SQL checks across 5 files, all pass, run in CI). New browser security headers (strict content policy, no framing, no sniffing) were added in `public/_headers`. Verified in a real browser on the sign-in screen only: the app, the service worker and the theme script run with no violations. The signed-in screens under these headers still need your phone check after deploy.
+- Accessibility: automated scan (axe, WCAG 2.1 AA) of every screen in three themes, light and dark, plus the open dialogs. It found four small problems (a button label that did not match its text, list markup in the subjects dialog, a repeated page landmark inside dialogs, no skip link), all fixed and re-scanned clean. Automated scans find roughly a third of real problems; a screen-reader pass by a person has not been done.
+- Load test (local Postgres, 50,000 questions and 200,000 answers for one student): browsing, filtering and search stay under 25 ms. Two slow spots were found and fixed in M6: the latest-answers query (170 ms to 3 ms per page, new index) and the answered-before lookup (about 200 requests down to one database function, which also fixed a rare wrong "last result" across page boundaries).
+- Backup and restore: a 250,000-row dump and restore into an empty database matched exactly, including all protections. A weekly encrypted backup job is in place but does nothing until the owner adds two secrets (RUNBOOK). Supabase's own backup plan could not be read from here; check the dashboard.
+- Not done: load test against the real Supabase project, a penetration test, screen-reader testing, and monitoring (Sentry) remain open.

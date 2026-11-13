@@ -52,4 +52,13 @@ describe("AppShell", () => {
     });
     expect(window.location.hash).toBe("#/insights");
   });
+
+  it("has a skip link that moves focus to the page content", async () => {
+    renderShell();
+    await screen.findByRole("navigation", { name: "Primary" });
+    act(() => {
+      screen.getByRole("link", { name: "Skip to content" }).click();
+    });
+    expect(document.activeElement?.id).toBe("main");
+  });
 });

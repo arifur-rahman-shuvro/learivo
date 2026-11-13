@@ -72,7 +72,7 @@ export function Dialog({
         tabIndex={-1}
         className={`absolute flex flex-col border border-line bg-surface-1 shadow-[var(--lv-shadow-raised)] outline-none ${panel}`}
       >
-        <header className="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5">
+        <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5">
           <h2 id={titleId} className="m-0 text-lg font-bold">
             {title}
           </h2>
@@ -84,7 +84,7 @@ export function Dialog({
           >
             Close
           </button>
-        </header>
+        </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
         {footer && (
           <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-line px-5 py-3">

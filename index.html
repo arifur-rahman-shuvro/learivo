@@ -8,15 +8,7 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>Learivo</title>
-    <script>
-      // Apply saved theme before first paint to avoid a flash.
-      try {
-        var t = localStorage.getItem("learivo.theme");
-        var m = localStorage.getItem("learivo.mode");
-        if (t) document.documentElement.setAttribute("data-theme", t);
-        if (m) document.documentElement.setAttribute("data-mode", m);
-      } catch (e) {}
-    </script>
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { Button, Dialog, Spinner } from "../../../design-system/index.ts";
 import { KIND_BY_DEPTH, type TaxonomyNode } from "../data/repo.ts";
 import { errorText, useBank, useLoad } from "./bank.tsx";
@@ -193,7 +193,7 @@ function SubjectsTab() {
       ) : (
         <ul className="m-0 flex list-none flex-col gap-1.5 p-0">
           {ordered.map((n) => (
-            <div key={n.id} className="contents">
+            <Fragment key={n.id}>
               <NameRow
                 name={n.name}
                 depth={depthOf(n)}
@@ -206,7 +206,7 @@ function SubjectsTab() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    aria-label={`Add under ${n.name}`}
+                    aria-label={`Add ${KIND_LABEL[KIND_BY_DEPTH[depthOf(n) + 1]!]!.toLowerCase()} under ${n.name}`}
                     onClick={() => setAddingUnder(addingUnder === n.id ? null : n.id)}
                   >
                     Add {KIND_LABEL[KIND_BY_DEPTH[depthOf(n) + 1]!]!.toLowerCase()}
@@ -224,7 +224,7 @@ function SubjectsTab() {
                   />
                 </li>
               )}
-            </div>
+            </Fragment>
           ))}
         </ul>
       )}

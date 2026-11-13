@@ -1,0 +1,48 @@
+name: Weekly backup
+
+# Saves an encrypted copy of the database every Sunday and keeps it for 30 days.
+# It does nothing until the owner adds two repository secrets (see docs/RUNBOOK.md):
+#   BACKUP_DB_URL     the database connection string
+#   BACKUP_PASSPHRASE a long passphrase used to encrypt the file
+on:
+  schedule:
+    - cron: "0 20 * * 6" # Saturday 20:00 UTC = Sunday 02:00 in Bangladesh
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    env:
+      DB_URL: ${{ secrets.BACKUP_DB_URL }}
+      PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+    steps:
+      - name: Check the secrets exist
+        id: gate
+        run: |
+          if [ -z "$DB_URL" ] || [ -z "$PASSPHRASE" ]; then
+            echo "Backup secrets are not set; nothing to do."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Dump the public and auth schemas
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          docker run --rm -e DB_URL postgres:17 sh -c 'pg_dump "$DB_URL" --format=custom --no-owner --schema=public --schema=auth' > learivo.dump
+          test -s learivo.dump
+      - name: Encrypt it
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$PASSPHRASE" --symmetric --cipher-algo AES256 -o "learivo-$(date -u +%F).dump.gpg" learivo.dump
+          rm learivo.dump
+      - name: Keep the encrypted file for 30 days
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: learivo-backup
+          path: learivo-*.dump.gpg
+          retention-days: 30
+          if-no-files-found: error

@@ -244,3 +244,20 @@ html[data-effects="low"] * {
 html[data-effects="low"] {
   --lv-ring-glow: none;
 }
+
+/* Skip link: hidden until it gets keyboard focus. */
+.lv-skip {
+  position: fixed;
+  left: 0.75rem;
+  top: 0.75rem;
+  z-index: 60;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--lv-radius-control, 0.5rem);
+  background: var(--lv-surface-1);
+  color: var(--lv-text);
+  border: 2px solid var(--lv-accent);
+  transform: translateY(-200%);
+}
+.lv-skip:focus {
+  transform: none;
+}

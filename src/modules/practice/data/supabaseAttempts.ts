@@ -276,33 +276,16 @@ export class SupabaseAttempts implements AttemptRepo {
   }
 
   async past() {
+    // Worked out in the database (M6): one row per question, however many times it was answered.
     const out = new Map<string, Past>();
     for (let from = 0; ; from += 1000) {
-      const rows = ok(
-        await this.db
-          .from("attempt_items")
-          .select("question_id, is_correct, response, attempts!inner(started_at, status)")
-          .not("question_id", "is", null)
-          .not("is_correct", "is", null)
-          .eq("attempts.status", "submitted")
-          .order("question_id")
-          .order("position")
-          .range(from, from + 999),
-      ) as unknown as {
+      const rows = ok(await this.db.rpc("question_history").range(from, from + 999)) as unknown as {
         question_id: string;
-        is_correct: boolean;
-        response: Response | null;
-        attempts: { started_at: string };
+        last_correct: boolean;
+        times: number;
       }[];
-      // Oldest first, so the final write for a question is its latest answer.
-      rows.sort((a, b) => a.attempts.started_at.localeCompare(b.attempts.started_at));
       for (const r of rows) {
-        if (r.response === null) continue; // skipped: neither right nor wrong
-        const prev = out.get(r.question_id);
-        out.set(r.question_id, {
-          last: r.is_correct ? "correct" : "wrong",
-          times: (prev?.times ?? 0) + 1,
-        });
+        out.set(r.question_id, { last: r.last_correct ? "correct" : "wrong", times: r.times });
       }
       if (rows.length < 1000) break;
     }

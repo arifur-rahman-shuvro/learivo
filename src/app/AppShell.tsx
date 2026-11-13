@@ -147,6 +147,17 @@ export default function AppShell({ makeRepo, makeAttempts, makeWorkspace }: Repo
   return withServices(
     <>
       <ThemeBackground />
+      <a
+        href="#main"
+        onClick={(e) => {
+          // The page address is the screen name here, so move focus instead of changing it.
+          e.preventDefault();
+          document.getElementById("main")?.focus();
+        }}
+        className="lv-skip"
+      >
+        Skip to content
+      </a>
       <CommandPalette onNavigate={go} />
       <div className="relative z-10 mx-auto min-h-dvh max-w-[1280px] lg:grid lg:grid-cols-[260px_1fr]">
         <aside className="lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-6 lg:border-r lg:border-line lg:px-4 lg:py-6">
@@ -194,7 +205,7 @@ export default function AppShell({ makeRepo, makeAttempts, makeWorkspace }: Repo
             </div>
           </header>
           <StatusBanner />
-          <main aria-labelledby="module-title">
+          <main id="main" tabIndex={-1} aria-labelledby="module-title" className="outline-none">
             {user ? (
               <ModuleHost
                 userId={user.id}
