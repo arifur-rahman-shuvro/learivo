@@ -28,7 +28,8 @@ Each phase ends with a written report and owner approval before the next begins.
 | 2     | Done, and the app shell and Home screen were redesigned afterwards at the owner's request |
 | 3     | Done, except the items below. Go service live on Render free (owner-checked 2026-11-12)   |
 | 4     | Built and tested; waiting for the owner's phone test and approval (see below)             |
-| 5-9   | Not started; each phase waits for the owner's approval                                    |
+| 5     | Built and tested; M3 applied; waiting for the owner's phone test and approval (see below) |
+| 6-9   | Not started; each phase waits for the owner's approval                                    |
 
 Phase 3 items not done, with reasons:
 
@@ -46,3 +47,11 @@ Phase 4 deviations from the blueprint:
 - Import files are parsed in the browser and inserted in batches of 500. The duplicate policies are Skip and Import anyway; Replace is not built.
 - Search uses a generated full-text column (simple dictionary), which handles Bengali.
 - Not checked in a real browser session against production: the owner must try the screens at https://learivo.pages.dev.
+
+Phase 5 notes:
+
+- Practice sessions and exams are marked in the browser when submitted; each question is stored as a frozen snapshot inside the attempt, so results stay correct if the question is later edited or deleted. A student could in theory edit their own results; this is a private study tool, so that only affects themselves.
+- Marking: multiple select needs exactly the right set; short answer and fill-in-the-blank ignore case, spacing and trailing punctuation; negative marking never takes a score below zero.
+- Untimed practice measures time only while the session is open on screen. Timed sessions use the wall clock from when they started.
+- Not built in Phase 5: matching, structured and case-study question types (they need a new answer format and a change to the question table), bookmarks and weak-area suggestions (Phase 6), offline sessions (Phase 7).
+- Database advisor (performance, informational): a few foreign-key columns have no covering index yet; harmless at this size, to be reviewed in the QA phase.
