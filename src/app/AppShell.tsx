@@ -11,6 +11,7 @@ import App from "../App.tsx";
 import { useAuth } from "../auth/AuthProvider.tsx";
 import AuthScreen from "../auth/AuthScreen.tsx";
 import AppearanceMenu from "./AppearanceMenu.tsx";
+import StatusBanner from "./StatusBanner.tsx";
 import { moduleForHash, visibleModules, type ModuleId } from "./registry.ts";
 import { supabase } from "../lib/supabase.ts";
 import { SupabaseRepo } from "../modules/question-bank/data/supabaseRepo.ts";
@@ -144,6 +145,7 @@ export default function AppShell({ makeRepo, makeAttempts, makeWorkspace }: Repo
               </Button>
             </div>
           </header>
+          <StatusBanner />
           <main aria-labelledby="module-title">
             {user ? (
               <ModuleHost

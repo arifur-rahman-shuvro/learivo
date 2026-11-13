@@ -11,7 +11,9 @@ import AppShell from "./app/AppShell.tsx";
 import { AuthProvider } from "./auth/AuthProvider.tsx";
 import { createSupabaseAuth } from "./auth/supabaseClient.ts";
 import { ThemeProvider } from "./themes/ThemeProvider.tsx";
+import { registerServiceWorker } from "./pwa/pwa.ts";
 
+registerServiceWorker();
 const authClient = createSupabaseAuth();
 const root = document.getElementById("root");
 if (!root) throw new Error("Missing #root element");

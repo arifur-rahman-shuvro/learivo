@@ -6,7 +6,7 @@ import { errorText, useBank } from "../../question-bank/ui/bank.tsx";
 import { DEFAULT_GOAL } from "../data/repo.ts";
 import { activeDaySet, answeredOn, overall, streak, weakAreas } from "../domain/insights.ts";
 import { isDue } from "../domain/scheduler.ts";
-import { useInsightsData } from "./InsightsScreen.tsx";
+import { useInsightsData } from "./useInsightsData.ts";
 import { useWorkspace } from "./workspace.tsx";
 
 function Tile({ label, value }: { label: string; value: string }) {
