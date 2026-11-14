@@ -24,7 +24,10 @@ export function useServices(): Services {
 /** Null when there is no offline support (tests), so the header can hide its controls. */
 export function useOfflineControls() {
   const v = useContext(Ctx);
-  return v && v.pack && v.sync ? { pack: v.pack, sync: v.sync } : null;
+  const pack = v?.pack ?? null;
+  const sync = v?.sync ?? null;
+  // One stable object: a new one on every render made the header re-load forever.
+  return useMemo(() => (pack && sync ? { pack, sync } : null), [pack, sync]);
 }
 
 interface Props {

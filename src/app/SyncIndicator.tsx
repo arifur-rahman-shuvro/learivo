@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Button, Dialog } from "../design-system/index.ts";
 import { useOfflineControls } from "../offline/OfflineProvider.tsx";
 import type { PackStatus } from "../offline/pack.ts";
@@ -28,10 +28,11 @@ export default function SyncIndicator() {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
-  const state = useSyncExternalStore(
-    (fn) => (controls ? controls.sync.subscribe(fn) : () => undefined),
-    () => controls?.sync.getState() ?? IDLE,
+  const subscribe = useCallback(
+    (fn: () => void) => (controls ? controls.sync.subscribe(fn) : () => undefined),
+    [controls],
   );
+  const state = useSyncExternalStore(subscribe, () => controls?.sync.getState() ?? IDLE);
 
   useEffect(() => {
     if (!controls) return;

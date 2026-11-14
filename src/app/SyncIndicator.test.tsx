@@ -1,3 +1,4 @@
+import { Profiler } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { OfflineProvider } from "../offline/OfflineProvider.tsx";
@@ -55,5 +56,23 @@ describe("SyncIndicator", () => {
     expect((screen.getByRole("button", { name: "Sync now" }) as HTMLButtonElement).disabled).toBe(
       true,
     );
+  });
+
+  it("settles: it does not keep redrawing while idle (regression: the app froze)", async () => {
+    const bank = new MemoryRepo();
+    let draws = 0;
+    render(
+      <OfflineProvider userId="u1" live={() => ({ bank, attempts: new MemoryAttempts() })}>
+        <Profiler id="indicator" onRender={() => (draws += 1)}>
+          <SyncIndicator />
+        </Profiler>
+      </OfflineProvider>,
+    );
+    await screen.findByRole("button", { name: /Saved/ });
+    await new Promise((r) => setTimeout(r, 500));
+    const settled = draws;
+    await new Promise((r) => setTimeout(r, 500));
+    expect(draws).toBe(settled);
+    expect(settled).toBeLessThan(10);
   });
 });
