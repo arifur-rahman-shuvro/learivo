@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState } from "react";
-import { SettingsIcon, ThemeSwitcher } from "../design-system/index.ts";
+import { Button, SettingsIcon, ThemeSwitcher } from "../design-system/index.ts";
+import { useDataRepo } from "../offline/OfflineProvider.tsx";
+import DataDialog from "./DataDialog.tsx";
 
-/** Theme and mode live in a small menu, not on every screen. */
+/** Theme, mode and the clear-data tools live in one small menu, not on every screen. */
 export default function AppearanceMenu() {
   const [open, setOpen] = useState(false);
+  const [data, setData] = useState(false);
+  const hasData = useDataRepo() !== null;
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,17 +34,32 @@ export default function AppearanceMenu() {
         className="lv-btn lv-btn-secondary lv-btn-sm"
       >
         <SettingsIcon />
-        Appearance
+        Settings
       </button>
       {open && (
         <div
           role="dialog"
-          aria-label="Appearance"
+          aria-label="Settings"
           className="lv-card lv-card-raised absolute right-0 top-full z-30 mt-2 w-[min(20rem,calc(100vw-2rem))] p-4"
         >
           <ThemeSwitcher />
+          {hasData && (
+            <div className="mt-4 border-t border-line pt-4">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setOpen(false);
+                  setData(true);
+                }}
+              >
+                Your data
+              </Button>
+            </div>
+          )}
         </div>
       )}
+      <DataDialog open={data} onClose={() => setData(false)} />
     </div>
   );
 }

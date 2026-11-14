@@ -87,3 +87,9 @@ Phase 8 notes (details in docs/RUNBOOK.md):
 - Load test (local Postgres, 50,000 questions and 200,000 answers for one student): browsing, filtering and search stay under 25 ms. Two slow spots were found and fixed in M6: the latest-answers query (170 ms to 3 ms per page, new index) and the answered-before lookup (about 200 requests down to one database function, which also fixed a rare wrong "last result" across page boundaries).
 - Backup and restore: a 250,000-row dump and restore into an empty database matched exactly, including all protections. A weekly encrypted backup job is in place but does nothing until the owner adds two secrets (RUNBOOK). Supabase's own backup plan could not be read from here; check the dashboard.
 - Not done: load test against the real Supabase project, a penetration test, screen-reader testing, and monitoring (Sentry) remain open.
+
+Follow-up (2026-11-14), owner request: delete and clear data.
+
+- Questions screen: "Delete" now appears for selected questions on the main list (before, questions had to be archived first). Typing DELETE confirms.
+- Settings menu (was "Appearance") has a new "Your data" button: shows counts, then three permanent actions behind a typed DELETE: clear practice history, delete all questions (with their bookmarks, notes and revision cards; finished sessions keep their own copy), delete everything (also exams, subjects, tags, collections). The account and appearance settings stay. Large banks are removed in batches (about 125 ms per 500 questions locally), so very large deletes can take a minute. The copy kept on the device is cleared too.
+- Not added: deleting the account itself, and deleting a single question from inside the editor (select it in the list and tap Delete).

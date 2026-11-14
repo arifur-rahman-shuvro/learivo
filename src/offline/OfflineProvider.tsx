@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
 import type { QuestionRepo } from "../modules/question-bank/data/repo.ts";
+import type { DataRepo } from "../modules/data/data/repo.ts";
 import type { AttemptRepo } from "../modules/practice/data/repo.ts";
 import { OfflineAwareRepo } from "./pack.ts";
 import { SyncedAttempts } from "./syncedAttempts.ts";
@@ -11,6 +12,8 @@ export interface Services {
   /** Present only in the real app. Tests inject plain in-memory repositories. */
   pack: OfflineAwareRepo | null;
   sync: SyncedAttempts | null;
+  /** Clearing data. Null when there is no real account behind the app (tests). */
+  data: DataRepo | null;
 }
 
 const Ctx = createContext<Services | null>(null);
@@ -19,6 +22,11 @@ export function useServices(): Services {
   const v = useContext(Ctx);
   if (!v) throw new Error("useServices must be used inside <OfflineProvider>.");
   return v;
+}
+
+/** The tool for clearing the student's data, or null when it is not available. */
+export function useDataRepo(): DataRepo | null {
+  return useContext(Ctx)?.data ?? null;
 }
 
 /** Null when there is no offline support (tests), so the header can hide its controls. */
@@ -33,9 +41,9 @@ export function useOfflineControls() {
 interface Props {
   userId: string;
   /** Builds the live (network) repositories. */
-  live: () => { bank: QuestionRepo; attempts: AttemptRepo };
+  live: () => { bank: QuestionRepo; attempts: AttemptRepo; data?: DataRepo };
   /** Tests pass in-memory repositories here to skip the device copy and syncing. */
-  injected?: { bank?: QuestionRepo; attempts?: AttemptRepo };
+  injected?: { bank?: QuestionRepo; attempts?: AttemptRepo; data?: DataRepo };
   children: ReactNode;
 }
 
@@ -54,6 +62,7 @@ export function OfflineProvider({ userId, live, injected, children }: Props) {
       attempts: injected?.attempts ?? sync!,
       pack,
       sync,
+      data: injected?.data ?? real?.data ?? null,
     };
     // `live` and `injected` are stable per user in practice; rebuilding on them would drop state.
     // eslint-disable-next-line react-hooks/exhaustive-deps

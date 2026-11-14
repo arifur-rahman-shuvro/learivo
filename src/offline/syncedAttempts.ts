@@ -296,6 +296,18 @@ export class SyncedAttempts implements AttemptRepo {
     return this.remote.deleteExam(id);
   }
 
+  /** Forgets every session still waiting on this device (used when the student clears their data). */
+  async discardLocal() {
+    await this.ready();
+    this.local = new MemoryAttempts("local");
+    this.pending = [];
+    this.aliases = {};
+    this.done.clear();
+    await this.save();
+    await this.clearCaches();
+    this.refreshWaiting();
+  }
+
   /** Clears what is kept for exams on sign-out. Sessions still waiting to be sent are kept. */
   async clearCaches() {
     await this.store.del(this.examKey);

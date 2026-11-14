@@ -408,6 +408,9 @@ export default function QuestionsScreen() {
               >
                 Archive
               </Button>
+              <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
+                Delete
+              </Button>
             </>
           )}
           {archive && (
@@ -660,8 +663,9 @@ export default function QuestionsScreen() {
       >
         <div className="flex flex-col gap-3">
           <p className="m-0">
-            This permanently deletes {selected.size} question{selected.size === 1 ? "" : "s"} and
-            their history. It cannot be undone.
+            This permanently deletes {selected.size} question{selected.size === 1 ? "" : "s"}, with
+            their bookmarks, notes and revision cards. Sessions you finished keep their own copy of
+            the question. It cannot be undone.
           </p>
           <label className="flex flex-col gap-1.5 text-sm font-semibold">
             Type DELETE to confirm

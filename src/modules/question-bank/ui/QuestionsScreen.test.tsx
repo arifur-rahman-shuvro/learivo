@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ThemeProvider } from "../../../themes/ThemeProvider.tsx";
 import { MemoryRepo } from "../data/memoryRepo.ts";
+import { DEFAULT_QUERY } from "../data/repo.ts";
 import { BankProvider } from "./bank.tsx";
 import QuestionsScreen from "./QuestionsScreen.tsx";
 import { MemoryWorkspace } from "../../workspace/data/memoryWorkspace.ts";
@@ -28,6 +29,23 @@ function renderScreen(repo: MemoryRepo) {
 afterEach(cleanup);
 
 describe("QuestionsScreen", () => {
+  it("deletes selected questions straight from the list, after typing DELETE", async () => {
+    const repo = new MemoryRepo();
+    await repo.create([tf("Delete me"), tf("Keep me")]);
+    renderScreen(repo);
+    fireEvent.click(await screen.findByLabelText(/Select: Delete me/));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    const confirm = await screen.findByRole("button", { name: "Delete 1 question" });
+    expect((confirm as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText("Type DELETE to confirm"), {
+      target: { value: "DELETE" },
+    });
+    fireEvent.click(confirm);
+    await waitFor(() => expect(screen.queryByText("Delete me")).toBeNull());
+    expect(screen.getByText("Keep me")).toBeTruthy();
+    expect((await repo.list({ ...DEFAULT_QUERY })).total).toBe(1);
+  });
+
   it("opens with the search or form the command palette asked for", async () => {
     const repo = new MemoryRepo();
     await repo.create([tf("The aorta is an artery"), tf("The vena cava is a vein")]);

@@ -21,6 +21,7 @@ import { supabase } from "../lib/supabase.ts";
 import { SupabaseRepo } from "../modules/question-bank/data/supabaseRepo.ts";
 import type { QuestionRepo } from "../modules/question-bank/data/repo.ts";
 import { BankProvider } from "../modules/question-bank/ui/bank.tsx";
+import { SupabaseData } from "../modules/data/data/supabaseData.ts";
 import { SupabaseAttempts } from "../modules/practice/data/supabaseAttempts.ts";
 import type { AttemptRepo } from "../modules/practice/data/repo.ts";
 import { PracticeProvider } from "../modules/practice/ui/practice.tsx";
@@ -137,6 +138,7 @@ export default function AppShell({ makeRepo, makeAttempts, makeWorkspace }: Repo
         live={() => ({
           bank: new SupabaseRepo(supabase, user.id),
           attempts: new SupabaseAttempts(supabase, user.id),
+          data: new SupabaseData(supabase, user.id),
         })}
       >
         {node}
