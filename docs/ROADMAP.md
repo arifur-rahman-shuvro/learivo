@@ -93,3 +93,10 @@ Follow-up (2026-11-14), owner request: delete and clear data.
 - Questions screen: "Delete" now appears for selected questions on the main list (before, questions had to be archived first). Typing DELETE confirms.
 - Settings menu (was "Appearance") has a new "Your data" button: shows counts, then three permanent actions behind a typed DELETE: clear practice history, delete all questions (with their bookmarks, notes and revision cards; finished sessions keep their own copy), delete everything (also exams, subjects, tags, collections). The account and appearance settings stay. Large banks are removed in batches (about 125 ms per 500 questions locally), so very large deletes can take a minute. The copy kept on the device is cleared too.
 - Not added: deleting the account itself, and deleting a single question from inside the editor (select it in the list and tap Delete).
+
+## Follow-up: five-option questions and partial marking (M7)
+- Short answer removed. sba / single_choice / multi_select / true_false always have exactly 5 options (enforced in the app and by the database).
+- True/false: a lead-in question plus 5 statements, each with its own True/False key. 0.2 marks per statement correctly marked.
+- Multiple answer with k correct: each correct pick earns 1/k; a wrong pick cancels one correct pick (ticking everything earns 0).
+- Negative marking uses the same units (a wrong statement costs 1/5 of the penalty, a wrong pick 1/k).
+- Insights and the revision queue treat "partly correct" as not fully correct.

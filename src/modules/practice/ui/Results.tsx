@@ -40,7 +40,7 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
       const name = i.snapshot.path[0] ?? "Unclassified";
       const row = map.get(name) ?? { right: 0, total: 0 };
       row.total += 1;
-      if (i.verdict === "correct") row.right += 1;
+      row.right += i.credit ?? (i.verdict === "correct" ? 1 : 0);
       map.set(name, row);
     }
     return [...map.entries()].sort((x, y) => y[1].total - x[1].total);
@@ -57,12 +57,18 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
   const items = a.items.filter(
     (i) =>
       show === "all" ||
-      (show === "wrong" && i.verdict === "wrong") ||
+      (show === "wrong" && (i.verdict === "wrong" || i.verdict === "partial")) ||
       (show === "unanswered" && i.verdict === "unanswered") ||
       (show === "flagged" && i.flagged),
   );
-  const answered = (a.correct ?? 0) + (a.wrong ?? 0);
-  const percent = a.questionCount === 0 ? 0 : ((a.correct ?? 0) / a.questionCount) * 100;
+  const answered = (a.correct ?? 0) + (a.partial ?? 0) + (a.wrong ?? 0);
+  const earned = a.items.reduce((n, i) => n + (i.credit ?? (i.verdict === "correct" ? 1 : 0)), 0);
+  const percent = a.questionCount === 0 ? 0 : (earned / a.questionCount) * 100;
+  const answeredCredit = a.items.reduce(
+    (n, i) =>
+      i.verdict === "unanswered" ? n : n + (i.credit ?? (i.verdict === "correct" ? 1 : 0)),
+    0,
+  );
   const missed = a.items.some((i) => i.verdict !== "correct" && i.questionId !== null);
 
   async function retry() {
@@ -105,11 +111,12 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
           {[
             ["Score", `${a.score ?? 0} / ${a.questionCount * a.marksCorrect}`],
             ["Correct", String(a.correct ?? 0)],
+            ["Partly correct", String(a.partial ?? 0)],
             ["Wrong", String(a.wrong ?? 0)],
             ["Skipped", String(a.unanswered ?? 0)],
             [
               "Accuracy",
-              answered === 0 ? "-" : `${Math.round(((a.correct ?? 0) / answered) * 100)}%`,
+              answered === 0 ? "-" : `${Math.round((answeredCredit / answered) * 100)}%`,
             ],
             ["Time", clock(a.secondsSpent)],
           ].map(([k, v]) => (
@@ -181,16 +188,21 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
                     tone={
                       i.verdict === "correct"
                         ? "success"
-                        : i.verdict === "wrong"
-                          ? "danger"
-                          : "neutral"
+                        : i.verdict === "partial"
+                          ? "warning"
+                          : i.verdict === "wrong"
+                            ? "danger"
+                            : "neutral"
                     }
                   >
                     {i.verdict === "correct"
                       ? "Correct"
-                      : i.verdict === "wrong"
-                        ? "Wrong"
-                        : "Skipped"}
+                      : i.verdict === "partial"
+                        ? "Partly correct"
+                        : i.verdict === "wrong"
+                          ? "Wrong"
+                          : "Skipped"}
+                    {i.verdict !== "unanswered" && i.marks !== null ? ` · ${i.marks}` : ""}
                   </Badge>
                 </button>
                 {isOpen && (

@@ -47,8 +47,7 @@ function saveDraft(q: QuestionInput | null) {
 function tidy(q: QuestionInput): QuestionInput {
   const a = q.answer;
   let answer: AnswerSpec = a;
-  if ("accepted" in a) answer = { accepted: a.accepted.map((x) => x.trim()).filter(Boolean) };
-  else if ("blanks" in a)
+  if ("blanks" in a)
     answer = {
       blanks: a.blanks.map((b) => ({ accepted: b.accepted.map((x) => x.trim()).filter(Boolean) })),
     };

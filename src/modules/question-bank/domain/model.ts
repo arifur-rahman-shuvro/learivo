@@ -5,7 +5,6 @@ export const QUESTION_TYPES = [
   "single_choice",
   "multi_select",
   "true_false",
-  "short_answer",
   "fill_blank",
 ] as const;
 export type QuestionType = (typeof QUESTION_TYPES)[number];
@@ -15,7 +14,6 @@ export const TYPE_LABELS: Record<QuestionType, string> = {
   single_choice: "Single choice",
   multi_select: "Multiple select",
   true_false: "True or false",
-  short_answer: "Short answer",
   fill_blank: "Fill in the blank",
 };
 
@@ -27,14 +25,21 @@ export interface Option {
   correct: boolean;
 }
 
-/** The stored shape of an answer. Which fields exist depends on the question type. */
+/**
+ * The stored shape of an answer. Which fields exist depends on the question type.
+ * For true_false, each option is a statement and `correct` means "this statement is true".
+ */
 export type AnswerSpec =
-  | { options: Option[] } // sba, single_choice, multi_select
-  | { answer: boolean } // true_false
-  | { accepted: string[] } // short_answer
+  | { options: Option[] } // sba, single_choice, multi_select, true_false
   | { blanks: { accepted: string[] }[] }; // fill_blank
 
-export const MAX_OPTIONS = 10;
+/** Every choice-based question has exactly this many options (or statements). */
+export const OPTION_COUNT = 5;
+/** Types whose answer is a list of OPTION_COUNT options. */
+export const OPTION_TYPES = ["sba", "single_choice", "multi_select", "true_false"] as const;
+export const isOptionType = (t: QuestionType) => (OPTION_TYPES as readonly string[]).includes(t);
+
+export const MAX_OPTIONS = OPTION_COUNT;
 export const BLANK_PATTERN = /\{\{\d+\}\}/g;
 
 /** A question as the app creates, edits, imports and exports it. */
@@ -81,25 +86,17 @@ export function answerIssues(qtype: QuestionType, stem: string, answer: unknown)
   const issues: Issue[] = [];
   const bad = (message: string) => issues.push({ field: "answer", message });
 
-  if (qtype === "sba" || qtype === "single_choice" || qtype === "multi_select") {
+  if (isOptionType(qtype)) {
     const options = Array.isArray(a.options) ? (a.options as Partial<Option>[]) : [];
-    if (options.length < 2) bad("Add at least 2 options.");
-    else if (options.length > MAX_OPTIONS) bad(`Use at most ${MAX_OPTIONS} options.`);
+    const noun = qtype === "true_false" ? "statements" : "options";
+    if (options.length !== OPTION_COUNT) bad(`Use exactly ${OPTION_COUNT} ${noun}.`);
     else if (options.some((o) => typeof o.text !== "string" || !nonEmpty(o.text)))
-      bad("Every option needs text.");
-    const correct = options.filter((o) => o.correct === true).length;
-    if (qtype === "multi_select") {
-      if (options.length >= 2 && correct < 1) bad("Mark at least one correct option.");
-    } else if (options.length >= 2 && correct !== 1) {
+      bad(qtype === "true_false" ? "Every statement needs text." : "Every option needs text.");
+    else if (qtype === "multi_select") {
+      if (!options.some((o) => o.correct === true)) bad("Mark at least one correct option.");
+    } else if (qtype !== "true_false" && options.filter((o) => o.correct === true).length !== 1) {
       bad("Mark exactly one correct option.");
     }
-  } else if (qtype === "true_false") {
-    if (typeof a.answer !== "boolean") bad("Choose true or false.");
-  } else if (qtype === "short_answer") {
-    const accepted = Array.isArray(a.accepted) ? (a.accepted as unknown[]) : [];
-    if (accepted.length < 1 || accepted.length > 20) bad("Add 1 to 20 accepted answers.");
-    else if (accepted.some((x) => typeof x !== "string" || !nonEmpty(x)))
-      bad("Accepted answers cannot be empty.");
   } else if (qtype === "fill_blank") {
     const blanks = Array.isArray(a.blanks) ? (a.blanks as { accepted?: unknown }[]) : [];
     const inStem = (stem.match(BLANK_PATTERN) ?? []).length;
@@ -141,35 +138,27 @@ export function validateQuestion(raw: unknown): ValidationResult {
 }
 
 function cleanAnswer(qtype: QuestionType, a: AnswerSpec): AnswerSpec {
+  void qtype;
   if ("options" in a) {
     return {
       options: a.options.map((o) => ({ text: o.text.trim(), correct: o.correct === true })),
     };
   }
-  if ("accepted" in a) return { accepted: a.accepted.map((x) => x.trim()) };
-  if ("blanks" in a)
-    return { blanks: a.blanks.map((b) => ({ accepted: b.accepted.map((x) => x.trim()) })) };
-  void qtype;
-  return { answer: a.answer };
+  return { blanks: a.blanks.map((b) => ({ accepted: b.accepted.map((x) => x.trim()) })) };
 }
 
 /** An empty question for the editor of a given type. */
 export function blankQuestion(qtype: QuestionType = "sba"): QuestionInput {
   const answer: AnswerSpec =
-    qtype === "true_false"
-      ? { answer: true }
-      : qtype === "short_answer"
-        ? { accepted: [""] }
-        : qtype === "fill_blank"
-          ? { blanks: [{ accepted: [""] }] }
-          : {
-              options: [
-                { text: "", correct: true },
-                { text: "", correct: false },
-                { text: "", correct: false },
-                { text: "", correct: false },
-              ],
-            };
+    qtype === "fill_blank"
+      ? { blanks: [{ accepted: [""] }] }
+      : {
+          // One correct option to start with, except true or false where each statement is its own.
+          options: Array.from({ length: OPTION_COUNT }, (_, i) => ({
+            text: "",
+            correct: qtype === "true_false" ? false : i === 0,
+          })),
+        };
   return {
     qtype,
     stem: "",

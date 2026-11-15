@@ -6,6 +6,7 @@ import { MemoryRepo } from "../modules/question-bank/data/memoryRepo.ts";
 import { blankQuestion } from "../modules/question-bank/domain/model.ts";
 import { MemoryAttempts } from "../modules/practice/data/memoryAttempts.ts";
 import SyncIndicator from "./SyncIndicator.tsx";
+import { TF_ANSWER } from "../test/fixtures.ts";
 
 const setOnline = (value: boolean) => {
   Object.defineProperty(navigator, "onLine", { value, configurable: true });
@@ -15,7 +16,7 @@ const setOnline = (value: boolean) => {
 async function renderIndicator() {
   const bank = new MemoryRepo();
   await bank.create([
-    { ...blankQuestion("true_false"), stem: "Heart pumps blood", answer: { answer: true } },
+    { ...blankQuestion("true_false"), stem: "Heart pumps blood", answer: TF_ANSWER },
   ]);
   render(
     <OfflineProvider userId="u1" live={() => ({ bank, attempts: new MemoryAttempts() })}>

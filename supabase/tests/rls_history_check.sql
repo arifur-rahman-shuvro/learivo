@@ -9,10 +9,10 @@ insert into auth.users (id, email) values
   ('22222222-2222-2222-2222-222222222222', 'b@example.test');
 
 insert into public.questions (id, user_id, qtype, stem, answer_spec) values
-  ('c0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'true_false', 'Q1', '{"answer":true}'),
-  ('c0000000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'true_false', 'Q2', '{"answer":true}'),
-  ('c0000000-0000-0000-0000-000000000003', '11111111-1111-1111-1111-111111111111', 'true_false', 'Q3', '{"answer":true}'),
-  ('c0000000-0000-0000-0000-000000000004', '11111111-1111-1111-1111-111111111111', 'true_false', 'Q4', '{"answer":true}');
+  ('c0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'true_false', 'Q1', '{"options":[{"text":"o1","correct":true},{"text":"o2","correct":false},{"text":"o3","correct":true},{"text":"o4","correct":false},{"text":"o5","correct":false}]}'),
+  ('c0000000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'true_false', 'Q2', '{"options":[{"text":"o1","correct":true},{"text":"o2","correct":false},{"text":"o3","correct":true},{"text":"o4","correct":false},{"text":"o5","correct":false}]}'),
+  ('c0000000-0000-0000-0000-000000000003', '11111111-1111-1111-1111-111111111111', 'true_false', 'Q3', '{"options":[{"text":"o1","correct":true},{"text":"o2","correct":false},{"text":"o3","correct":true},{"text":"o4","correct":false},{"text":"o5","correct":false}]}'),
+  ('c0000000-0000-0000-0000-000000000004', '11111111-1111-1111-1111-111111111111', 'true_false', 'Q4', '{"options":[{"text":"o1","correct":true},{"text":"o2","correct":false},{"text":"o3","correct":true},{"text":"o4","correct":false},{"text":"o5","correct":false}]}');
 
 -- Older session: Q1 wrong, Q2 wrong, Q3 skipped. Newer session: Q1 right. A third session is unfinished: Q4.
 insert into public.attempts (id, user_id, kind, title, status, question_count, score, correct_count, wrong_count, unanswered_count, seconds_spent, started_at, submitted_at) values

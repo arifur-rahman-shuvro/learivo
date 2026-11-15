@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { contentHash } from "../domain/hash.ts";
 import { blankQuestion, type QuestionInput } from "../domain/model.ts";
+import { TF_ANSWER } from "../../../test/fixtures.ts";
 import { toTsQuery } from "./supabaseRepo.ts";
 import { MemoryRepo } from "./memoryRepo.ts";
 import { DEFAULT_QUERY, pathOf, subtreeIds, type QuestionQuery } from "./repo.ts";
@@ -9,6 +10,7 @@ const q = (over: Partial<QuestionQuery> = {}): QuestionQuery => ({ ...DEFAULT_QU
 const tf = (stem: string, over: Partial<QuestionInput> = {}): QuestionInput => ({
   ...blankQuestion("true_false"),
   stem,
+  answer: TF_ANSWER,
   ...over,
 });
 
@@ -85,16 +87,16 @@ describe("MemoryRepo behaves like the database", () => {
         tags: ["drugs"],
       }),
       {
-        ...blankQuestion("short_answer"),
-        stem: "Name the largest artery",
-        answer: { accepted: ["aorta"] },
+        ...blankQuestion("fill_blank"),
+        stem: "The largest artery is the {{1}}",
+        answer: { blanks: [{ accepted: ["aorta"] }] },
         difficulty: 3,
       },
     ]);
     expect((await repo.list(q({ search: "warf" }))).total).toBe(1);
     expect((await repo.list(q({ search: "warf anti" }))).total).toBe(1);
     expect((await repo.list(q({ search: "warf zzz" }))).total).toBe(0);
-    expect((await repo.list(q({ qtypes: ["short_answer"] }))).items[0]!.stem).toContain("artery");
+    expect((await repo.list(q({ qtypes: ["fill_blank"] }))).items[0]!.stem).toContain("artery");
     expect((await repo.list(q({ difficulties: [2] }))).total).toBe(1);
     const [tag] = await repo.tags();
     expect((await repo.list(q({ tagId: tag!.id }))).total).toBe(1);

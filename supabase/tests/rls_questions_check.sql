@@ -21,20 +21,20 @@ insert into public.taxonomy_nodes (id, user_id, kind, name) values
 insert into public.taxonomy_nodes (id, user_id, parent_id, kind, name) values
   ('a0000000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'a0000000-0000-0000-0000-000000000001', 'chapter', 'Thorax');
 
--- Each of the six question types can be stored.
+-- Each question type can be stored (five options for the option types).
 insert into public.questions (id, user_id, qtype, stem, answer_spec, taxonomy_node_id) values
   ('b0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'sba', 'Which drug inhibits vitamin K dependent factors?',
-   '{"options":[{"text":"Aspirin","correct":false},{"text":"Warfarin","correct":true},{"text":"Heparin","correct":false}]}',
+   '{"options":[{"text":"o1","correct":false},{"text":"o2","correct":true},{"text":"o3","correct":false},{"text":"o4","correct":false},{"text":"o5","correct":false}]}',
    'a0000000-0000-0000-0000-000000000002'),
   ('b0000000-0000-0000-0000-000000000002', '11111111-1111-1111-1111-111111111111', 'single_choice', 'Pick one',
-   '{"options":[{"text":"x","correct":true},{"text":"y","correct":false}]}', null),
+   '{"options":[{"text":"o1","correct":true},{"text":"o2","correct":false},{"text":"o3","correct":false},{"text":"o4","correct":false},{"text":"o5","correct":false}]}', null),
   ('b0000000-0000-0000-0000-000000000003', '11111111-1111-1111-1111-111111111111', 'multi_select', 'Pick all that apply',
-   '{"options":[{"text":"x","correct":true},{"text":"y","correct":true},{"text":"z","correct":false}]}', null),
-  ('b0000000-0000-0000-0000-000000000004', '11111111-1111-1111-1111-111111111111', 'true_false', 'The heart has four chambers.', '{"answer":true}', null),
-  ('b0000000-0000-0000-0000-000000000005', '11111111-1111-1111-1111-111111111111', 'short_answer', 'Name the largest artery.', '{"accepted":["aorta"]}', null),
+   '{"options":[{"text":"o1","correct":true},{"text":"o2","correct":true},{"text":"o3","correct":false},{"text":"o4","correct":false},{"text":"o5","correct":false}]}', null),
+  ('b0000000-0000-0000-0000-000000000004', '11111111-1111-1111-1111-111111111111', 'true_false', 'Heart',
+   '{"options":[{"text":"o1","correct":true},{"text":"o2","correct":false},{"text":"o3","correct":true},{"text":"o4","correct":false},{"text":"o5","correct":false}]}', null),
   ('b0000000-0000-0000-0000-000000000006', '11111111-1111-1111-1111-111111111111', 'fill_blank', 'The {{1}} pumps blood.', '{"blanks":[{"accepted":["heart"]}]}', null);
 
-insert into check_results select 'all six question types are accepted', (select count(*) from public.questions) = 6;
+insert into check_results select 'all five question types are accepted', (select count(*) from public.questions) = 5;
 
 -- Server-controlled fields.
 insert into check_results select 'new question starts at version 1 with a hash',
@@ -50,13 +50,16 @@ declare spec jsonb; t text; i int := 0;
 begin
   for t, spec in
     select * from (values
-      ('sba', '{"options":[{"text":"a","correct":true},{"text":"b","correct":true}]}'::jsonb),
-      ('sba', '{"options":[{"text":"a","correct":false},{"text":"b","correct":false}]}'),
+      ('sba', '{"options":[{"text":"o1","correct":true},{"text":"o2","correct":true},{"text":"o3","correct":false},{"text":"o4","correct":false},{"text":"o5","correct":false}]}'::jsonb),
+      ('sba', '{"options":[{"text":"o1","correct":false},{"text":"o2","correct":false},{"text":"o3","correct":false},{"text":"o4","correct":false},{"text":"o5","correct":false}]}'),
       ('sba', '{"options":[{"text":"only","correct":true}]}'),
-      ('sba', '{"options":[{"text":"","correct":true},{"text":"b","correct":false}]}'),
-      ('multi_select', '{"options":[{"text":"a","correct":false},{"text":"b","correct":false}]}'),
-      ('true_false', '{"answer":"yes"}'),
-      ('short_answer', '{"accepted":[]}'),
+      ('sba', '{"options":[{"text":"o1","correct":true},{"text":"o2","correct":false},{"text":"o3","correct":false},{"text":"o4","correct":false}]}'),
+      ('sba', '{"options":[{"text":"","correct":true},{"text":"b","correct":false},{"text":"c","correct":false},{"text":"d","correct":false},{"text":"e","correct":false}]}'),
+      ('multi_select', '{"options":[{"text":"o1","correct":false},{"text":"o2","correct":false},{"text":"o3","correct":false},{"text":"o4","correct":false},{"text":"o5","correct":false}]}'),
+      ('multi_select', '{"options":[{"text":"o1","correct":true},{"text":"o2","correct":false},{"text":"o3","correct":false},{"text":"o4","correct":false},{"text":"o5","correct":false},{"text":"o6","correct":false}]}'),
+      ('true_false', '{"answer":true}'),
+      ('true_false', '{"options":[{"text":"o1","correct":true},{"text":"o2","correct":true},{"text":"o3","correct":true},{"text":"o4","correct":true}]}'),
+      ('short_answer', '{"accepted":["x"]}'),
       ('fill_blank', '{"blanks":[]}'),
       ('sba', '[]')
     ) v(a, b)
@@ -121,7 +124,7 @@ end $$;
 
 -- Full-text search covers the statement and the explanation, and follows edits.
 insert into check_results select 'full-text search finds a word in the statement',
-  (select count(*) = 1 from public.questions where search @@ plainto_tsquery('simple', 'artery'));
+  (select count(*) = 1 from public.questions where search @@ plainto_tsquery('simple', 'pumps'));
 insert into check_results select 'full-text search sees the edited statement',
   (select count(*) = 1 from public.questions where search @@ plainto_tsquery('simple', 'edited'));
 insert into check_results select 'full-text search does not match absent words',
@@ -178,7 +181,7 @@ begin
 
   begin
     insert into public.questions (user_id, qtype, stem, answer_spec)
-      values ('11111111-1111-1111-1111-111111111111', 'true_false', 'planted', '{"answer":true}');
+      values ('11111111-1111-1111-1111-111111111111', 'true_false', 'planted', '{"options":[{"text":"o1","correct":true},{"text":"o2","correct":false},{"text":"o3","correct":true},{"text":"o4","correct":false},{"text":"o5","correct":false}]}');
     insert into check_results values ('B cannot insert a question as A', false);
   exception when insufficient_privilege then
     insert into check_results values ('B cannot insert a question as A', true);
@@ -187,7 +190,7 @@ begin
   -- B cannot attach their question to A's taxonomy node or collection (composite keys).
   begin
     insert into public.questions (user_id, qtype, stem, answer_spec, taxonomy_node_id)
-      values ('22222222-2222-2222-2222-222222222222', 'true_false', 'cross', '{"answer":true}', 'a0000000-0000-0000-0000-000000000001');
+      values ('22222222-2222-2222-2222-222222222222', 'true_false', 'cross', '{"options":[{"text":"o1","correct":true},{"text":"o2","correct":false},{"text":"o3","correct":true},{"text":"o4","correct":false},{"text":"o5","correct":false}]}', 'a0000000-0000-0000-0000-000000000001');
     insert into check_results values ('B cannot classify under A taxonomy node', false);
   exception when foreign_key_violation then
     insert into check_results values ('B cannot classify under A taxonomy node', true);
@@ -196,7 +199,7 @@ end $$;
 
 -- A question can be moved to another student only if a client could change user_id: it cannot.
 insert into public.questions (id, user_id, qtype, stem, answer_spec)
-  values ('b0000000-0000-0000-0000-0000000000b1', '22222222-2222-2222-2222-222222222222', 'true_false', 'B own', '{"answer":false}');
+  values ('b0000000-0000-0000-0000-0000000000b1', '22222222-2222-2222-2222-222222222222', 'true_false', 'B own', '{"options":[{"text":"o1","correct":true},{"text":"o2","correct":false},{"text":"o3","correct":true},{"text":"o4","correct":false},{"text":"o5","correct":false}]}');
 do $$
 begin
   begin

@@ -5,8 +5,13 @@ import { MemoryRepo } from "../data/memoryRepo.ts";
 import { BankProvider } from "./bank.tsx";
 import { ImportDialog } from "./ImportExportDialogs.tsx";
 import { blankQuestion } from "../domain/model.ts";
+import { TF_ANSWER } from "../../../test/fixtures.ts";
 
-const q = (stem: string, answer = true) => ({ type: "true_false", stem, answer });
+const q = (stem: string) => ({
+  type: "true_false",
+  stem,
+  options: ["a", "b", "c", "d", "e"].map((text, i) => ({ text, correct: i === 0 })),
+});
 
 function open(repo = new MemoryRepo()) {
   render(
@@ -41,7 +46,7 @@ describe("Smart import", () => {
   it("pastes JSON from ChatGPT in a code block, shows a preview, imports and summarises", async () => {
     const repo = open();
     paste(
-      `Here you go:\n\`\`\`json\n${JSON.stringify([q("First pasted"), q("Second pasted", false)])}\n\`\`\``,
+      `Here you go:\n\`\`\`json\n${JSON.stringify([q("First pasted"), q("Second pasted")])}\n\`\`\``,
     );
     check();
     expect(await screen.findByText(/Removed the code block markers/)).toBeTruthy();
@@ -66,7 +71,7 @@ describe("Smart import", () => {
   it("separates valid, duplicate and invalid questions and lets the student skip duplicates", async () => {
     const repo = new MemoryRepo();
     await repo.create([
-      { ...blankQuestion("true_false"), stem: "Already here", answer: { answer: true } },
+      { ...blankQuestion("true_false"), stem: "Already here", answer: TF_ANSWER },
     ]);
     open(repo);
     paste(
@@ -91,7 +96,7 @@ describe("Smart import", () => {
 
   it("can import duplicates anyway", async () => {
     const repo = new MemoryRepo();
-    await repo.create([{ ...blankQuestion("true_false"), stem: "Same", answer: { answer: true } }]);
+    await repo.create([{ ...blankQuestion("true_false"), stem: "Same", answer: TF_ANSWER }]);
     open(repo);
     paste(JSON.stringify([q("Same")]));
     check();

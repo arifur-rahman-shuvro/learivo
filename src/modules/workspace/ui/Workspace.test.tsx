@@ -12,12 +12,13 @@ import { WorkspaceProvider } from "./workspace.tsx";
 import ReviewScreen from "./ReviewScreen.tsx";
 import InsightsScreen from "./InsightsScreen.tsx";
 import HomeDashboard from "./HomeDashboard.tsx";
+import { TF_ANSWER } from "../../../test/fixtures.ts";
 
-const tf = (stem: string, answer = true, path: string[] = []) => ({
+const tf = (stem: string, path: string[] = []) => ({
   ...blankQuestion("true_false"),
   stem,
   explanation: `Because ${stem}`,
-  answer: { answer },
+  answer: TF_ANSWER,
   path,
 });
 
@@ -71,24 +72,30 @@ async function finished(
         qtype: "true_false",
         stem: x.stem,
         explanation: "",
-        answer: { answer: true },
+        answer: TF_ANSWER,
         difficulty: null,
         path: x.path ?? [],
       },
     })),
   });
   for (const [i, x] of items.entries())
-    await attempts.patchItem(id, i, { response: { value: x.right } });
+    await attempts.patchItem(id, i, {
+      response: {
+        marks: x.right ? [true, false, true, false, false] : [false, true, false, true, true],
+      },
+    });
   await attempts.submit(
     id,
     items.map((x, position) => ({
       position,
       verdict: x.right ? "correct" : "wrong",
+      credit: x.right ? 1 : 0,
       marks: x.right ? 1 : 0,
     })),
     {
       score: items.filter((x) => x.right).length,
       correct: items.filter((x) => x.right).length,
+      partial: 0,
       wrong: items.filter((x) => !x.right).length,
       unanswered: 0,
       secondsSpent: 120,
@@ -201,14 +208,14 @@ describe("Practice with the workspace", () => {
   it("bookmarks a question while practising, and a wrong answer joins revision", async () => {
     const { workspace, seeded: id } = await setup(
       () => <PracticeScreen />,
-      async ({ bank }) => (await bank.create([tf("Only question", true)]))[0]!,
+      async ({ bank }) => (await bank.create([tf("Only question")]))[0]!,
     );
     await waitFor(() => expect(screen.getByText(/question(s)? available/)).toBeTruthy());
     fireEvent.click(await screen.findByRole("button", { name: "Start practice" }));
     await screen.findByText(/Question 1 of 1/);
     fireEvent.click(screen.getByRole("button", { name: "Bookmark" }));
     await waitFor(async () => expect((await workspace.bookmarks()).has(id)).toBe(true));
-    fireEvent.click(screen.getByLabelText("False")); // wrong
+    fireEvent.click(screen.getAllByLabelText("False")[0]!); // statement 1 is True, so this is wrong
     fireEvent.click(screen.getByRole("button", { name: "Finish" }));
     fireEvent.click(
       within(await screen.findByRole("dialog")).getByRole("button", { name: "Submit" }),

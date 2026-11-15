@@ -11,16 +11,22 @@ import {
 
 const none = new Set<string>();
 
+/** Five options "o1".."o5"; keys say which are correct. */
+const five = (keys: boolean[], texts?: string[]) => ({
+  options: keys.map((correct, i) => ({ text: texts?.[i] ?? `o${i + 1}`, correct })),
+});
+const K = (...pos: number[]) => [1, 2, 3, 4, 5].map((n) => pos.includes(n));
+const tfq = (stem: string, over: Partial<QuestionInput> = {}): QuestionInput => ({
+  ...blankQuestion("true_false"),
+  stem,
+  answer: five(K(2)),
+  ...over,
+});
+
 const sba = (over: Partial<QuestionInput> = {}): QuestionInput => ({
   ...blankQuestion("sba"),
   stem: "Which drug inhibits vitamin K dependent factors?",
-  answer: {
-    options: [
-      { text: "Aspirin", correct: false },
-      { text: "Warfarin", correct: true },
-      { text: "Heparin", correct: false },
-    ],
-  },
+  answer: five(K(2), ["Aspirin", "Warfarin", "Heparin", "Clopidogrel", "Rivaroxaban"]),
   ...over,
 });
 
@@ -61,23 +67,7 @@ describe("validateQuestion", () => {
   });
 
   it("requires exactly one correct option for single-answer types", () => {
-    const two = sba({
-      answer: {
-        options: [
-          { text: "a", correct: true },
-          { text: "b", correct: true },
-        ],
-      },
-    });
-    const none_ = sba({
-      answer: {
-        options: [
-          { text: "a", correct: false },
-          { text: "b", correct: false },
-        ],
-      },
-    });
-    for (const q of [two, none_]) {
+    for (const q of [sba({ answer: five(K(1, 2)) }), sba({ answer: five(K()) })]) {
       const r = validateQuestion(q);
       expect(!r.ok && r.issues.some((i) => i.message === "Mark exactly one correct option.")).toBe(
         true,
@@ -86,62 +76,29 @@ describe("validateQuestion", () => {
   });
 
   it("allows several correct options for multiple select but needs one", () => {
-    const ok = {
-      ...sba(),
-      qtype: "multi_select" as const,
-      answer: {
-        options: [
-          { text: "a", correct: true },
-          { text: "b", correct: true },
-        ],
-      },
-    };
+    const ok = { ...sba(), qtype: "multi_select" as const, answer: five(K(1, 2)) };
     expect(validateQuestion(ok).ok).toBe(true);
-    const bad = {
-      ...ok,
-      answer: {
-        options: [
-          { text: "a", correct: false },
-          { text: "b", correct: false },
-        ],
-      },
-    };
-    expect(validateQuestion(bad).ok).toBe(false);
+    expect(validateQuestion({ ...ok, answer: five(K()) }).ok).toBe(false);
   });
 
-  it("rejects too few options and empty option text", () => {
-    expect(validateQuestion(sba({ answer: { options: [{ text: "a", correct: true }] } })).ok).toBe(
-      false,
-    );
-    expect(
-      validateQuestion(
-        sba({
-          answer: {
-            options: [
-              { text: "a", correct: true },
-              { text: " ", correct: false },
-            ],
-          },
-        }),
-      ).ok,
-    ).toBe(false);
+  it("needs exactly five options, each with text", () => {
+    const four = { options: five(K(1)).options.slice(0, 4) };
+    const six = { options: [...five(K(1)).options, { text: "o6", correct: false }] };
+    expect(validateQuestion(sba({ answer: four })).ok).toBe(false);
+    expect(validateQuestion(sba({ answer: six })).ok).toBe(false);
+    expect(validateQuestion(sba({ answer: five(K(1), ["a", "b", " ", "d", "e"]) })).ok).toBe(false);
+    const r = validateQuestion(sba({ answer: four }));
+    expect(!r.ok && r.issues[0]!.message).toBe("Use exactly 5 options.");
   });
 
-  it("checks true or false, short answer and fill in the blank", () => {
+  it("checks true or false (five keyed statements) and fill in the blank", () => {
+    expect(validateQuestion(tfq("Heart has-", { answer: five(K(2, 3)) })).ok).toBe(true);
+    // all five statements false is a legal key
+    expect(validateQuestion(tfq("Heart has-", { answer: five(K()) })).ok).toBe(true);
+    expect(validateQuestion(tfq("x", { answer: {} as never })).ok).toBe(false);
     expect(
-      validateQuestion({ ...blankQuestion("true_false"), stem: "Heart has 4 chambers." }).ok,
-    ).toBe(true);
-    expect(
-      validateQuestion({ ...blankQuestion("true_false"), stem: "x", answer: {} as never }).ok,
+      validateQuestion(tfq("x", { answer: { options: five(K()).options.slice(0, 3) } })).ok,
     ).toBe(false);
-    expect(
-      validateQuestion({
-        ...blankQuestion("short_answer"),
-        stem: "Largest artery?",
-        answer: { accepted: ["aorta"] },
-      }).ok,
-    ).toBe(true);
-    expect(validateQuestion({ ...blankQuestion("short_answer"), stem: "q" }).ok).toBe(false);
     const fb = {
       ...blankQuestion("fill_blank"),
       stem: "The {{1}} pumps blood.",
@@ -165,14 +122,24 @@ describe("import: JSON", () => {
       {
         type: "sba",
         stem: "Q1?",
-        options: ["A", "B", "C"],
+        options: ["A", "B", "C", "D", "E"],
         correct: 2,
         subject: "Anatomy",
         chapter: "Thorax",
         tags: ["high-yield"],
         difficulty: 3,
       },
-      { type: "true_or_false", stem: "Q2", answer: "yes" },
+      {
+        type: "true_or_false",
+        stem: "Heart has-",
+        options: [
+          { text: "5 chambers", correct: false },
+          { text: "Pumps blood", correct: true },
+          { text: "Is 2 in number", correct: false },
+          { text: "Has valves", correct: true },
+          { text: "Is a bone", correct: false },
+        ],
+      },
       {
         type: "multi_select",
         stem: "Q3",
@@ -180,14 +147,15 @@ describe("import: JSON", () => {
           { text: "a", correct: true },
           { text: "b", correct: true },
           { text: "c", correct: false },
+          { text: "d", correct: false },
+          { text: "e", correct: false },
         ],
       },
-      { type: "short_answer", stem: "Q4", answer: "aorta|the aorta" },
       { type: "fill_blank", stem: "The {{1}} and {{2}}", answer: "heart|cardiac;lung" },
     ],
   });
 
-  it("reads all six forms and the taxonomy path", () => {
+  it("reads all five forms and the taxonomy path", () => {
     const r = analyzeImport(json, "json", none);
     expect(r.ok && r.errors).toEqual([]);
     if (!r.ok) throw new Error("not ok");
@@ -195,27 +163,31 @@ describe("import: JSON", () => {
       "sba",
       "true_false",
       "multi_select",
-      "short_answer",
       "fill_blank",
     ]);
     expect(r.rows[0]!.input.path).toEqual(["Anatomy", "Thorax"]);
-    expect(r.rows[0]!.input.answer).toEqual({
-      options: [
-        { text: "A", correct: false },
-        { text: "B", correct: true },
-        { text: "C", correct: false },
-      ],
-    });
-    expect(r.rows[1]!.input.answer).toEqual({ answer: true });
-    expect(r.rows[3]!.input.answer).toEqual({ accepted: ["aorta", "the aorta"] });
-    expect(r.rows[4]!.input.answer).toEqual({
+    expect(r.rows[0]!.input.answer).toEqual(five(K(2), ["A", "B", "C", "D", "E"]));
+    expect(r.rows[1]!.input.answer).toEqual(
+      five(K(2, 4), ["5 chambers", "Pumps blood", "Is 2 in number", "Has valves", "Is a bone"]),
+    );
+    expect(r.rows[3]!.input.answer).toEqual({
       blanks: [{ accepted: ["heart", "cardiac"] }, { accepted: ["lung"] }],
     });
   });
 
+  it("no longer accepts short answer questions", () => {
+    const r = analyzeImport(
+      JSON.stringify([{ type: "short_answer", stem: "x", answer: "aorta" }]),
+      "json",
+      none,
+    );
+    expect(r.ok && r.rows).toHaveLength(0);
+    expect(r.ok && r.errors[0]!.message).toContain("Type must be one of");
+  });
+
   it("accepts a bare list", () => {
     const r = analyzeImport(
-      JSON.stringify([{ type: "true_false", stem: "x", answer: false }]),
+      JSON.stringify([{ type: "true_false", stem: "x", options: five(K(1)).options }]),
       "json",
       none,
     );
@@ -224,10 +196,10 @@ describe("import: JSON", () => {
 
   it("explains problems with the row number and keeps the good rows", () => {
     const bad = JSON.stringify([
-      { type: "sba", stem: "ok", options: ["a", "b"], correct: 1 },
-      { type: "sba", stem: "", options: ["a", "b"], correct: 1 },
+      { type: "sba", stem: "ok", options: ["a", "b", "c", "d", "e"], correct: 1 },
+      { type: "sba", stem: "", options: ["a", "b", "c", "d", "e"], correct: 1 },
       { type: "poem", stem: "x" },
-      { type: "sba", stem: "two correct", options: ["a", "b"], correct: "1;2" },
+      { type: "sba", stem: "two correct", options: ["a", "b", "c", "d", "e"], correct: "1;2" },
     ]);
     const r = analyzeImport(bad, "json", none);
     if (!r.ok) throw new Error("not ok");
@@ -253,7 +225,7 @@ describe("import: JSON", () => {
 
   it("reports a taxonomy gap", () => {
     const r = rawToQuestion(
-      { type: "true_false", stem: "x", answer: true, subject: "A", topic: "T" },
+      { type: "true_false", stem: "x", options: five(K(1)).options, subject: "A", topic: "T" },
       7,
     );
     expect(!r.ok && r.errors[0]).toMatchObject({ row: 7, field: "topic" });
@@ -264,9 +236,9 @@ describe("import: duplicates", () => {
   it("flags questions already in the bank and repeats inside the file", () => {
     const existing = new Set([contentHash("Already here", "true_false")]);
     const file = JSON.stringify([
-      { type: "true_false", stem: "already  HERE", answer: true },
-      { type: "true_false", stem: "New one", answer: true },
-      { type: "true_false", stem: "new one", answer: false },
+      { type: "true_false", stem: "already  HERE", options: five(K(1)).options },
+      { type: "true_false", stem: "New one", options: five(K(1)).options },
+      { type: "true_false", stem: "new one", options: five(K()).options },
     ]);
     const r = analyzeImport(file, "json", existing);
     if (!r.ok) throw new Error("not ok");
@@ -276,49 +248,50 @@ describe("import: duplicates", () => {
 
 describe("import: CSV", () => {
   const csv = [
-    "type,stem,explanation,option1,option2,option3,correct,answer,difficulty,subject,chapter,tags,exam_year",
-    'sba,"Which is, correctly, a drug?",Because.,Aspirin,Warfarin,Heparin,2,,2,Pharmacology,Blood,a;b,2024',
-    "true_false,The heart has 4 chambers,,,,,,true,,,,,",
-    "short_answer,Largest artery?,,,,,,aorta|the aorta,,,,,",
+    "type,stem,explanation,option1,option2,option3,option4,option5,correct,difficulty,subject,chapter,tags,exam_year",
+    'sba,"Which is, correctly, a drug?",Because.,Aspirin,Warfarin,Heparin,Statin,Insulin,2,2,Pharmacology,Blood,a;b,2024',
+    "true_false,Heart has-,,5 chambers,Pumps blood,Is a bone,Has valves,Is red,2;4,,,,,",
     "",
-    "multi_select,Pick,,x,y,z,1;3,,,,,,",
+    "multi_select,Pick,,x,y,z,w,v,1;3,,,,,",
   ].join("\n");
 
   it("reads columns, quoted commas and blank lines, with line numbers", () => {
     const r = analyzeImport(csv, "csv", none);
     if (!r.ok) throw new Error("not ok");
     expect(r.errors).toEqual([]);
-    expect(r.rows.map((x) => x.row)).toEqual([2, 3, 4, 6]);
+    expect(r.rows.map((x) => x.row)).toEqual([2, 3, 5]);
     expect(r.rows[0]!.input.stem).toBe("Which is, correctly, a drug?");
-    expect(r.rows[0]!.input.answer).toEqual({
-      options: [
-        { text: "Aspirin", correct: false },
-        { text: "Warfarin", correct: true },
-        { text: "Heparin", correct: false },
-      ],
-    });
+    expect(r.rows[0]!.input.answer).toEqual(
+      five(K(2), ["Aspirin", "Warfarin", "Heparin", "Statin", "Insulin"]),
+    );
     expect(r.rows[0]!.input).toMatchObject({
       difficulty: 2,
       examYear: 2024,
       path: ["Pharmacology", "Blood"],
       tags: ["a", "b"],
     });
-    expect(r.rows[3]!.input.answer).toEqual({
-      options: [
-        { text: "x", correct: true },
-        { text: "y", correct: false },
-        { text: "z", correct: true },
-      ],
-    });
+    // for true/false the correct column lists the statements that are True
+    expect(r.rows[1]!.input.answer).toEqual(
+      five(K(2, 4), ["5 chambers", "Pumps blood", "Is a bone", "Has valves", "Is red"]),
+    );
+    expect(r.rows[2]!.input.answer).toEqual(five(K(1, 3), ["x", "y", "z", "w", "v"]));
   });
 
   it("copes with a byte order mark and upper-case headers", () => {
-    const r = analyzeImport("﻿Type,Stem,Answer\ntrue_false,Hello?,false", "csv", none);
-    expect(r.ok && r.rows[0]!.input.answer).toEqual({ answer: false });
+    const r = analyzeImport(
+      "\ufeffType,Stem,Option1,Option2,Option3,Option4,Option5,Correct\nsba,Hello?,a,b,c,d,e,3",
+      "csv",
+      none,
+    );
+    expect(r.ok && r.rows[0]!.input.answer).toEqual(five(K(3), ["a", "b", "c", "d", "e"]));
   });
 
   it("reports a row with a bad answer by line number", () => {
-    const r = analyzeImport("type,stem,option1,option2,correct\nsba,Q,a,b,", "csv", none);
+    const r = analyzeImport(
+      "type,stem,option1,option2,option3,option4,option5,correct\nsba,Q,a,b,c,d,e,",
+      "csv",
+      none,
+    );
     expect(r.ok && r.errors[0]).toMatchObject({ row: 2, field: "answer" });
   });
 });
@@ -335,19 +308,8 @@ describe("export and round trip", () => {
       examYear: 2023,
       explanation: "Because, reasons.\nSecond line.",
     }),
-    {
-      ...blankQuestion("multi_select"),
-      stem: "Pick",
-      answer: {
-        options: [
-          { text: "a", correct: true },
-          { text: "b", correct: true },
-          { text: "c", correct: false },
-        ],
-      },
-    },
-    { ...blankQuestion("true_false"), stem: "T?", answer: { answer: false } },
-    { ...blankQuestion("short_answer"), stem: "S?", answer: { accepted: ["one", "two"] } },
+    { ...blankQuestion("multi_select"), stem: "Pick", answer: five(K(1, 2)) },
+    tfq("T?", { answer: five(K(1, 3, 5)) }),
     {
       ...blankQuestion("fill_blank"),
       stem: "A {{1}} B {{2}}",
@@ -371,18 +333,8 @@ describe("export and round trip", () => {
 
   it("protects spreadsheets from formulas and still round-trips", () => {
     const risky = [
-      {
-        ...blankQuestion("true_false"),
-        stem: '=HYPERLINK("http://evil")',
-        answer: { answer: true },
-        source: "+cmd",
-      },
-      {
-        ...blankQuestion("true_false"),
-        stem: "-5 is negative",
-        answer: { answer: true },
-        tags: ["@me"],
-      },
+      tfq('=HYPERLINK("http://evil")', { source: "+cmd" }),
+      tfq("-5 is negative", { tags: ["@me"] }),
     ];
     const out = exportCsv(risky);
     expect(out).toContain("'=HYPERLINK");
@@ -399,7 +351,7 @@ describe("import: pasted JSON from a chat", () => {
   const one = {
     type: "true_false",
     stem: "The aorta is an artery",
-    answer: true,
+    options: five(K(1)).options,
   };
   const list = JSON.stringify([one], null, 2);
 
@@ -423,7 +375,7 @@ describe("import: pasted JSON from a chat", () => {
 
   it("says where the syntax error is", () => {
     const r = analyzeImport(
-      '[\n  {"type": "true_false",\n   "stem": "x" "answer": true}\n]',
+      '[\n  {"type": "true_false",\n   "stem": "x" "options": []}\n]',
       "json",
       new Set(),
     );

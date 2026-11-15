@@ -24,6 +24,8 @@ export interface AttemptItem {
   response: Response | null;
   flagged: boolean;
   verdict: Verdict | null;
+  /** Share of full credit earned, 0 to 1. */
+  credit: number | null;
   marks: number | null;
 }
 
@@ -40,6 +42,7 @@ export interface Attempt {
   questionCount: number;
   score: number | null;
   correct: number | null;
+  partial: number | null;
   wrong: number | null;
   unanswered: number | null;
   secondsSpent: number;
@@ -74,12 +77,14 @@ export interface ItemPatch {
 export interface Graded {
   position: number;
   verdict: Verdict;
+  credit: number;
   marks: number;
 }
 
 export interface Totals {
   score: number;
   correct: number;
+  partial: number;
   wrong: number;
   unanswered: number;
   secondsSpent: number;

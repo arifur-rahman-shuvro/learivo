@@ -12,7 +12,7 @@ set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
 
 insert into public.questions (id, user_id, qtype, stem, answer_spec) values
-  ('b0000000-0000-0000-0000-000000000009', '11111111-1111-1111-1111-111111111111', 'true_false', 'Insulin lowers blood sugar.', '{"answer":true}');
+  ('b0000000-0000-0000-0000-000000000009', '11111111-1111-1111-1111-111111111111', 'true_false', 'Insulin lowers blood sugar.', '{"options":[{"text":"o1","correct":true},{"text":"o2","correct":false},{"text":"o3","correct":true},{"text":"o4","correct":false},{"text":"o5","correct":false}]}');
 insert into public.bookmarks (user_id, question_id)
   values ('11111111-1111-1111-1111-111111111111', 'b0000000-0000-0000-0000-000000000009');
 insert into public.notes (user_id, question_id, body)

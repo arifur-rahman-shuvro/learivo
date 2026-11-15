@@ -164,11 +164,21 @@ export class SyncedAttempts implements AttemptRepo {
         }
       }
       const graded: Graded[] = a.items.flatMap((i) =>
-        i.verdict ? [{ position: i.position, verdict: i.verdict, marks: i.marks ?? 0 }] : [],
+        i.verdict
+          ? [
+              {
+                position: i.position,
+                verdict: i.verdict,
+                credit: i.credit ?? 0,
+                marks: i.marks ?? 0,
+              },
+            ]
+          : [],
       );
       await this.remote.submit(remoteId, graded, {
         score: a.score ?? 0,
         correct: a.correct ?? 0,
+        partial: a.partial ?? 0,
         wrong: a.wrong ?? 0,
         unanswered: a.unanswered ?? 0,
         secondsSpent: a.secondsSpent,

@@ -44,6 +44,7 @@ const EXAMPLE: QuestionInput = {
       { text: "Warfarin", correct: true },
       { text: "Heparin", correct: false },
       { text: "Clopidogrel", correct: false },
+      { text: "Rivaroxaban", correct: false },
     ],
   },
   explanation: "Warfarin blocks vitamin K epoxide reductase.",
@@ -72,7 +73,10 @@ const CHAT_PROMPT = `Write the questions as JSON only, with no text before or af
     "stem": "The question text",
     "options": [
       { "text": "Option A", "correct": false },
-      { "text": "Option B", "correct": true }
+      { "text": "Option B", "correct": true },
+      { "text": "Option C", "correct": false },
+      { "text": "Option D", "correct": false },
+      { "text": "Option E", "correct": false }
     ],
     "explanation": "Why the answer is right",
     "difficulty": 2,
@@ -81,10 +85,11 @@ const CHAT_PROMPT = `Write the questions as JSON only, with no text before or af
     "tags": ["tag"]
   }
 ]
-"type" is one of: sba, single_choice, multi_select, true_false, short_answer, fill_blank.
-For true_false use "answer": true or false. For short_answer use "accepted": ["answer", "other accepted answer"].
-For fill_blank write {{1}}, {{2}} in the stem and use "blanks": [["answer for 1"], ["answer for 2"]].
-Every option type needs at least 2 options and exactly one correct option (multi_select needs one or more).`;
+"type" is one of: sba, single_choice, multi_select, true_false, fill_blank.
+Every sba, single_choice, multi_select and true_false question has EXACTLY 5 options.
+For sba and single_choice exactly one option is correct; multi_select has one or more correct options.
+For true_false the stem is a lead-in (for example "Heart has-") and the 5 options are statements; set "correct": true for each statement that is true and false for each that is false.
+For fill_blank write {{1}}, {{2}} in the stem and use "blanks": [["answer for 1"], ["answer for 2"]].`;
 
 function Tile({
   value,
@@ -301,7 +306,9 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
                 spellCheck={false}
                 autoCapitalize="off"
                 autoCorrect="off"
-                placeholder={'[\n  { "type": "true_false", "stem": "…", "answer": true }\n]'}
+                placeholder={
+                  '[\n  { "type": "true_false", "stem": "…", "options": [{ "text": "…", "correct": true }] }\n]'
+                }
                 value={pasted}
                 onChange={(e) => setPasted(e.target.value)}
               />

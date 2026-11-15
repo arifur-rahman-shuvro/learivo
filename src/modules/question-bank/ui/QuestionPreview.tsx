@@ -21,21 +21,14 @@ export function QuestionPreview({ question: q }: { question: QuestionInput }) {
                 {String.fromCharCode(65 + i)}
               </span>
               <span className="flex-1">{o.text || "(empty)"}</span>
-              {o.correct && <span className="text-xs font-semibold text-success">Correct</span>}
+              {q.qtype === "true_false" ? (
+                <span className="text-xs font-semibold">{o.correct ? "True" : "False"}</span>
+              ) : (
+                o.correct && <span className="text-xs font-semibold text-success">Correct</span>
+              )}
             </li>
           ))}
         </ul>
-      )}
-      {"answer" in q.answer && (
-        <p className="m-0 text-sm">
-          Correct answer: <strong>{q.answer.answer ? "True" : "False"}</strong>
-        </p>
-      )}
-      {"accepted" in q.answer && (
-        <p className="m-0 text-sm">
-          Accepted answers:{" "}
-          <strong>{q.answer.accepted.filter(Boolean).join(", ") || "none yet"}</strong>
-        </p>
       )}
       {"blanks" in q.answer && (
         <ol className="m-0 flex list-none flex-col gap-1 p-0 text-sm">

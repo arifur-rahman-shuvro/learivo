@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Response, Snapshot, Verdict } from "../domain/grading.ts";
+import { isAnswered, type Response, type Snapshot, type Verdict } from "../domain/grading.ts";
 import type { ExamRule, Past } from "../domain/session.ts";
 import type { Fact } from "../../workspace/domain/insights.ts";
 import type {
@@ -28,6 +28,7 @@ interface AttemptRow {
   question_count: number;
   score: number | string | null;
   correct_count: number | null;
+  partial_count: number | null;
   wrong_count: number | null;
   unanswered_count: number | null;
   seconds_spent: number;
@@ -42,6 +43,7 @@ interface ItemRow {
   response: Response | null;
   flagged: boolean;
   is_correct: boolean | null;
+  credit: number | string | null;
   marks: number | string | null;
   answered_at: string | null;
 }
@@ -77,7 +79,7 @@ function ok<T>(r: { data: T | null; error: Failure | null }): T {
 const num = (v: number | string | null) => (v === null ? null : Number(v));
 
 const ATTEMPT_COLUMNS =
-  "id, kind, exam_id, title, status, instant_feedback, time_limit_sec, marks_correct, marks_wrong, question_count, score, correct_count, wrong_count, unanswered_count, seconds_spent, started_at, submitted_at";
+  "id, kind, exam_id, title, status, instant_feedback, time_limit_sec, marks_correct, marks_wrong, question_count, score, correct_count, partial_count, wrong_count, unanswered_count, seconds_spent, started_at, submitted_at";
 
 function toAttempt(r: AttemptRow): Attempt {
   return {
@@ -93,6 +95,7 @@ function toAttempt(r: AttemptRow): Attempt {
     questionCount: r.question_count,
     score: num(r.score),
     correct: r.correct_count,
+    partial: r.partial_count,
     wrong: r.wrong_count,
     unanswered: r.unanswered_count,
     secondsSpent: r.seconds_spent,
@@ -101,9 +104,16 @@ function toAttempt(r: AttemptRow): Attempt {
   };
 }
 
-function toVerdict(correct: boolean | null, response: Response | null): Verdict | null {
+function toVerdict(
+  correct: boolean | null,
+  credit: number | null,
+  response: Response | null,
+): Verdict | null {
   if (correct === true) return "correct";
-  if (correct === false) return response === null ? "unanswered" : "wrong";
+  if (correct === false) {
+    if (response === null || !isAnswered(response)) return "unanswered";
+    return credit !== null && credit > 0 ? "partial" : "wrong";
+  }
   return null;
 }
 
@@ -171,7 +181,7 @@ export class SupabaseAttempts implements AttemptRepo {
       await this.db
         .from("attempt_items")
         .select(
-          "position, question_id, snapshot, response, flagged, is_correct, marks, answered_at",
+          "position, question_id, snapshot, response, flagged, is_correct, credit, marks, answered_at",
         )
         .eq("attempt_id", id)
         .order("position")
@@ -183,7 +193,8 @@ export class SupabaseAttempts implements AttemptRepo {
       snapshot: r.snapshot,
       response: r.response,
       flagged: r.flagged,
-      verdict: toVerdict(r.is_correct, r.response),
+      verdict: toVerdict(r.is_correct, num(r.credit), r.response),
+      credit: num(r.credit),
       marks: num(r.marks),
     }));
     return { ...toAttempt(head), items };
@@ -223,6 +234,7 @@ export class SupabaseAttempts implements AttemptRepo {
         .from("attempt_items")
         .update({
           is_correct: g.verdict === "unanswered" ? false : g.verdict === "correct",
+          credit: g.credit,
           marks: g.marks,
         })
         .eq("attempt_id", attemptId)
@@ -236,6 +248,7 @@ export class SupabaseAttempts implements AttemptRepo {
         submitted_at: totals.submittedAt ?? new Date().toISOString(),
         score: totals.score,
         correct_count: totals.correct,
+        partial_count: totals.partial,
         wrong_count: totals.wrong,
         unanswered_count: totals.unanswered,
         seconds_spent: totals.secondsSpent,

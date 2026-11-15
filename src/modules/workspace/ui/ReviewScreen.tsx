@@ -422,7 +422,7 @@ function DueNow({
     difficulty: q.difficulty,
     path: [],
   };
-  const verdict = shown ? grade(q.qtype, q.answer, response) : null;
+  const verdict = shown ? grade(q.qtype, q.answer, response).verdict : null;
   const suggested: Rating = verdict === "correct" ? 3 : 1;
   const times = preview(card, new Date());
 

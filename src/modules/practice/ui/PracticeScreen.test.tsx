@@ -10,14 +10,23 @@ import { PracticeProvider } from "./practice.tsx";
 import { MemoryWorkspace } from "../../workspace/data/memoryWorkspace.ts";
 import { WorkspaceProvider } from "../../workspace/ui/workspace.tsx";
 
-const tf = (stem: string, answer: boolean): QuestionInput => ({
-  ...blankQuestion("true_false"),
+/** A single-best-answer question with five options; "Right answer" is the key. */
+const tf = (stem: string): QuestionInput => ({
+  ...blankQuestion("sba"),
   stem,
   explanation: `Because ${stem}`,
-  answer: { answer },
+  answer: {
+    options: [
+      { text: "Right answer", correct: true },
+      { text: "Wrong answer 1", correct: false },
+      { text: "Wrong answer 2", correct: false },
+      { text: "Wrong answer 3", correct: false },
+      { text: "Wrong answer 4", correct: false },
+    ],
+  },
 });
 
-function setup(questions = [tf("Q one", true), tf("Q two", false), tf("Q three", true)]) {
+function setup(questions = [tf("Q one"), tf("Q two"), tf("Q three")]) {
   const bank = new MemoryRepo();
   const attempts = new MemoryAttempts();
   const workspace = new MemoryWorkspace();
@@ -58,9 +67,9 @@ describe("Practice", () => {
     const { ready } = setup();
     await ready;
     await startPractice();
-    // First question appears; answer True, then check it.
+    // First question appears; pick the right answer, then check it.
     await screen.findByText(/Question 1 of 3/);
-    fireEvent.click(screen.getByLabelText("True"));
+    fireEvent.click(screen.getByLabelText(/Right answer/));
     fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
     expect(await screen.findByText("Explanation")).toBeTruthy();
     // Submit with the rest unanswered.
@@ -77,7 +86,7 @@ describe("Practice", () => {
   });
 
   it("builds an exam, sits it with negative marking and shows the score", async () => {
-    const { ready, attempts } = setup([tf("Only question", true)]);
+    const { ready, attempts } = setup([tf("Only question")]);
     await ready;
     fireEvent.click(
       (await screen.findAllByRole("button", { name: /New exam|Create an exam/ }))[0]!,
@@ -95,7 +104,7 @@ describe("Practice", () => {
     await screen.findByText(/Question 1 of 1/);
     // Exams give no feedback while sitting: there is no Check answer button.
     expect(screen.queryByRole("button", { name: "Check answer" })).toBeNull();
-    fireEvent.click(screen.getByLabelText("False"));
+    fireEvent.click(screen.getByLabelText(/Wrong answer 1/));
     fireEvent.click(screen.getByRole("button", { name: "Finish" }));
     fireEvent.click(
       within(await screen.findByRole("dialog")).getByRole("button", { name: "Submit" }),
@@ -107,11 +116,11 @@ describe("Practice", () => {
   });
 
   it("offers to resume an unfinished session and can retry missed questions", async () => {
-    const { ready, attempts } = setup([tf("Retry me", true)]);
+    const { ready, attempts } = setup([tf("Retry me")]);
     await ready;
     await startPractice(1);
     await screen.findByText(/Question 1 of 1/);
-    fireEvent.click(screen.getByLabelText("False")); // wrong
+    fireEvent.click(screen.getByLabelText(/Wrong answer 1/)); // wrong
     fireEvent.click(screen.getByRole("button", { name: "Save and leave" }));
     expect(await screen.findByText("Continue where you left off")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Resume" }));
@@ -126,5 +135,42 @@ describe("Practice", () => {
     expect(list.map((a) => a.title)).toContain("Retry: missed questions");
     // The history now knows this question was last answered wrong.
     expect([...(await attempts.past()).values()][0]).toEqual({ last: "wrong", times: 1 });
+  });
+
+  it("marks a true/false question statement by statement: 3 of 5 right earns 0.6", async () => {
+    const stmt = (text: string, correct: boolean) => ({ text, correct });
+    const heart: QuestionInput = {
+      ...blankQuestion("true_false"),
+      stem: "Heart has-",
+      answer: {
+        options: [
+          stmt("5 chambers", false),
+          stmt("Pumps blood", true),
+          stmt("Is 2 in number", false),
+          stmt("Has valves", true),
+          stmt("Is a bone", false),
+        ],
+      },
+    };
+    const { ready, attempts } = setup([heart]);
+    await ready;
+    await startPractice(1);
+    await screen.findByText(/Question 1 of 1/);
+    const statements = screen.getAllByRole("group");
+    expect(statements).toHaveLength(5);
+    // statements 1, 2 and 3 are answered correctly; 4 and 5 are left alone
+    fireEvent.click(within(statements[0]!).getByLabelText("False"));
+    fireEvent.click(within(statements[1]!).getByLabelText("True"));
+    fireEvent.click(within(statements[2]!).getByLabelText("False"));
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+    fireEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", { name: "Submit" }),
+    );
+    await screen.findByRole("heading", { name: "Results" });
+    const [done] = await attempts.list(1);
+    expect(done).toMatchObject({ partial: 1, correct: 0, wrong: 0, score: 0.6 });
+    const summary = screen.getByRole("region", { name: "Summary" });
+    expect(within(summary).getByText("Partly correct").nextSibling?.textContent).toBe("1");
+    expect(within(summary).getByText("Score").nextSibling?.textContent).toBe("0.6 / 1");
   });
 });

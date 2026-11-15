@@ -22,7 +22,7 @@ export function shuffled<T>(items: readonly T[], rand: () => number = Math.rando
   return out;
 }
 
-/** Copies a question for a session. Options may be shuffled; true or false stays as is. */
+/** Copies a question for a session. Options may be shuffled, except true/false statements, which keep their order. */
 export function snapshotOf(
   q: QuestionRecord,
   path: string[],
@@ -30,7 +30,7 @@ export function snapshotOf(
   rand: () => number = Math.random,
 ): Snapshot {
   const answer =
-    shuffleOptions && "options" in q.answer
+    shuffleOptions && q.qtype !== "true_false" && "options" in q.answer
       ? { options: shuffled(q.answer.options, rand) }
       : q.answer;
   return {

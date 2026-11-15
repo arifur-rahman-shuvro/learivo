@@ -4,79 +4,131 @@ import { applyFilter, checkRules, drawByRules, mulberry32, shuffled } from "./se
 import type { QuestionRecord } from "../../question-bank/data/repo.ts";
 import { blankQuestion } from "../../question-bank/domain/model.ts";
 
-const opts = {
-  options: [
-    { text: "A", correct: false },
-    { text: "B", correct: true },
-    { text: "C", correct: true },
-  ],
-};
+const five = (keys: boolean[]) => ({
+  options: keys.map((correct, i) => ({ text: `Option ${i + 1}`, correct })),
+});
+const marks = (o: ReturnType<typeof grade>, mc = 1, mw = 0) => marksFor(o, mc, mw);
 
 describe("grade", () => {
-  it("single choice: the one correct option", () => {
-    const one = {
-      options: [
-        { text: "x", correct: false },
-        { text: "y", correct: true },
-      ],
-    };
-    expect(grade("sba", one, { choices: [1] })).toBe("correct");
-    expect(grade("sba", one, { choices: [0] })).toBe("wrong");
-    expect(grade("sba", one, { choices: [] })).toBe("unanswered");
-    expect(grade("sba", one, null)).toBe("unanswered");
+  it("single best answer: all or nothing", () => {
+    const one = five([false, true, false, false, false]);
+    expect(grade("sba", one, { choices: [1] })).toMatchObject({ verdict: "correct", credit: 1 });
+    expect(grade("sba", one, { choices: [0] })).toMatchObject({ verdict: "wrong", credit: 0 });
+    expect(grade("sba", one, { choices: [] }).verdict).toBe("unanswered");
+    expect(grade("sba", one, null).verdict).toBe("unanswered");
   });
-  it("multi select needs exactly the right set", () => {
-    expect(grade("multi_select", opts, { choices: [2, 1] })).toBe("correct");
-    expect(grade("multi_select", opts, { choices: [1] })).toBe("wrong");
-    expect(grade("multi_select", opts, { choices: [0, 1, 2] })).toBe("wrong");
+
+  it("multiple answer with 2 correct: both = 1, one = 0.5", () => {
+    const a = five([true, true, false, false, false]);
+    expect(marks(grade("multi_select", a, { choices: [0, 1] }))).toBe(1);
+    const half = grade("multi_select", a, { choices: [1] });
+    expect(half.verdict).toBe("partial");
+    expect(marks(half)).toBe(0.5);
   });
-  it("true or false", () => {
-    expect(grade("true_false", { answer: false }, { value: false })).toBe("correct");
-    expect(grade("true_false", { answer: false }, { value: true })).toBe("wrong");
+
+  it("multiple answer with 3 correct: one = 0.33, two = 0.67, all = 1", () => {
+    const a = five([true, true, true, false, false]);
+    expect(marks(grade("multi_select", a, { choices: [2] }))).toBe(0.33);
+    expect(marks(grade("multi_select", a, { choices: [0, 2] }))).toBe(0.67);
+    expect(marks(grade("multi_select", a, { choices: [2, 1, 0] }))).toBe(1);
   });
-  it("short answer ignores case, spacing and trailing punctuation", () => {
-    const a = { accepted: ["Left  ventricle", "LV"] };
-    expect(grade("short_answer", a, { text: " left ventricle. " })).toBe("correct");
-    expect(grade("short_answer", a, { text: "lv" })).toBe("correct");
-    expect(grade("short_answer", a, { text: "atrium" })).toBe("wrong");
-    expect(grade("short_answer", a, { text: "   " })).toBe("unanswered");
+
+  it("multiple answer: a wrong pick cancels a right one, and ticking everything earns nothing", () => {
+    const a = five([true, true, false, false, false]);
+    expect(marks(grade("multi_select", a, { choices: [0, 3] }))).toBe(0);
+    const all = grade("multi_select", a, { choices: [0, 1, 2, 3, 4] });
+    expect(all.credit).toBe(0);
+    expect(all.verdict).toBe("wrong");
   });
+
+  it("true or false: five statements, 0.2 each", () => {
+    const a = five([false, true, false, true, true]);
+    const answer = (m: boolean[]) => grade("true_false", a, { marks: m });
+    expect(marks(answer([false, true, false, true, true]))).toBe(1);
+    expect(answer([false, true, false, true, true]).verdict).toBe("correct");
+    // three right, two wrong
+    const three = answer([false, true, false, false, false]);
+    expect(marks(three)).toBe(0.6);
+    expect(three.verdict).toBe("partial");
+    expect(marks(answer([true, false, true, false, false]))).toBe(0);
+    expect(answer([true, false, true, false, false]).verdict).toBe("wrong");
+  });
+
+  it("true or false: statements left unmarked earn and lose nothing", () => {
+    const a = five([true, true, true, true, true]);
+    const o = grade("true_false", a, { marks: [true, true, null, null, false] });
+    expect(marksFor(o, 1, 0)).toBe(0.4);
+    expect(marksFor(o, 1, 1)).toBe(0.2);
+    expect(grade("true_false", a, { marks: [null, null, null, null, null] }).verdict).toBe(
+      "unanswered",
+    );
+  });
+
   it("fill in the blank needs every blank", () => {
     const a = { blanks: [{ accepted: ["aorta"] }, { accepted: ["vena cava", "IVC"] }] };
-    expect(grade("fill_blank", a, { blanks: ["Aorta", "ivc"] })).toBe("correct");
-    expect(grade("fill_blank", a, { blanks: ["Aorta", "x"] })).toBe("wrong");
-    expect(grade("fill_blank", a, { blanks: ["", ""] })).toBe("unanswered");
+    expect(grade("fill_blank", a, { blanks: ["Aorta", "ivc"] }).verdict).toBe("correct");
+    expect(grade("fill_blank", a, { blanks: ["Aorta", "x"] }).verdict).toBe("wrong");
+    expect(grade("fill_blank", a, { blanks: ["", ""] }).verdict).toBe("unanswered");
   });
+
   it("a response of the wrong shape is wrong, not a crash", () => {
-    expect(grade("true_false", { answer: true }, { text: "true" })).toBe("wrong");
+    const o = grade("true_false", five([true, true, true, true, true]), { choices: [1] });
+    expect(o.verdict).toBe("wrong");
   });
+
   it("normalizes answers", () => {
     expect(normalizeAnswer("  Aorta!! ")).toBe("aorta");
     expect(isAnswered({ blanks: ["", " "] })).toBe(false);
+    expect(isAnswered({ marks: [null, false] })).toBe(true);
   });
 });
 
-describe("tally", () => {
+describe("tally and negative marking", () => {
+  const right = { verdict: "correct", credit: 1, penalty: 0 } as const;
+  const wrong = { verdict: "wrong", credit: 0, penalty: 1 } as const;
+  const skip = { verdict: "unanswered", credit: 0, penalty: 0 } as const;
+
   it("scores with negative marking and never goes below zero", () => {
-    const t = tally(["correct", "wrong", "wrong", "unanswered"], 1, 0.25);
+    const t = tally([right, wrong, wrong, skip], 1, 0.25);
     expect(t).toMatchObject({ correct: 1, wrong: 2, unanswered: 1, score: 0.5, maxScore: 4 });
     expect(t.accuracy).toBeCloseTo(1 / 3);
-    expect(tally(["wrong", "wrong"], 1, 1).score).toBe(0);
+    expect(tally([wrong, wrong], 1, 1).score).toBe(0);
+  });
+  it("counts partly correct answers and adds up their marks", () => {
+    const a = five([true, true, false, false, false]);
+    const outcomes = [
+      grade("multi_select", a, { choices: [0] }),
+      grade("true_false", five([true, true, true, true, true]), {
+        marks: [true, true, true, false, false],
+      }),
+    ];
+    const t = tally(outcomes, 1, 0);
+    expect(t).toMatchObject({ partial: 2, correct: 0, score: 1.1 });
+  });
+  it("negative marking follows the same units", () => {
+    // one wrong pick in a 2-answer question costs half of the wrong-answer penalty
+    const o = grade("multi_select", five([true, true, false, false, false]), { choices: [0, 3] });
+    expect(marksFor(o, 1, 0.5)).toBe(-0.25);
+    // two wrong statements of five cost 0.4 of the penalty
+    const tf = grade("true_false", five([true, true, true, true, true]), {
+      marks: [true, true, true, false, false],
+    });
+    expect(marksFor(tf, 1, 1)).toBe(0.2);
   });
   it("handles an attempt with no answers", () => {
-    expect(tally(["unanswered"], 1, 0).accuracy).toBe(0);
+    expect(tally([skip], 1, 0).accuracy).toBe(0);
   });
   it("marks per item", () => {
-    expect(marksFor("correct", 2, 0.5)).toBe(2);
-    expect(marksFor("wrong", 2, 0.5)).toBe(-0.5);
-    expect(marksFor("unanswered", 2, 0.5)).toBe(0);
+    expect(marksFor(right, 2, 0.5)).toBe(2);
+    expect(marksFor(wrong, 2, 0.5)).toBe(-0.5);
+    expect(marksFor(skip, 2, 0.5)).toBe(0);
   });
 });
 
 function q(id: string, nodeId: string | null): QuestionRecord {
   return {
     ...blankQuestion("true_false"),
-    answer: { answer: true },
+    answer: five([true, false, true, false, false]),
     stem: id,
     id,
     nodeId,

@@ -12,7 +12,7 @@ set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}', true);
 
 insert into public.questions (id, user_id, qtype, stem, answer_spec) values
-  ('b0000000-0000-0000-0000-000000000004', '11111111-1111-1111-1111-111111111111', 'true_false', 'The heart has four chambers.', '{"answer":true}');
+  ('b0000000-0000-0000-0000-000000000004', '11111111-1111-1111-1111-111111111111', 'true_false', 'The heart has four chambers.', '{"options":[{"text":"o1","correct":true},{"text":"o2","correct":false},{"text":"o3","correct":true},{"text":"o4","correct":false},{"text":"o5","correct":false}]}');
 insert into public.exams (id, user_id, title) values
   ('e0000000-0000-0000-0000-000000000001', '11111111-1111-1111-1111-111111111111', 'Midterm');
 insert into public.attempts (id, user_id, kind, exam_id, title, question_count) values
@@ -58,6 +58,22 @@ do $$ begin
     insert into check_results values ('submitted without timestamp is refused', false);
   exception when others then
     insert into check_results values ('submitted without timestamp is refused', true);
+  end;
+end $$;
+do $$ begin
+  update public.attempt_items set credit = 0.6 where position = 0;
+  insert into check_results values ('partial credit 0.6 is stored', true);
+  begin
+    update public.attempt_items set credit = 1.5;
+    insert into check_results values ('credit above 1 is refused', false);
+  exception when check_violation then
+    insert into check_results values ('credit above 1 is refused', true);
+  end;
+  begin
+    update public.attempts set partial_count = -1;
+    insert into check_results values ('negative partial count is refused', false);
+  exception when check_violation then
+    insert into check_results values ('negative partial count is refused', true);
   end;
 end $$;
 delete from public.exams;

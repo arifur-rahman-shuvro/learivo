@@ -7,12 +7,13 @@ import type { NewAttempt } from "../modules/practice/data/repo.ts";
 import { OFFLINE_MESSAGE, OfflineAwareRepo, PackRepo, buildPack } from "./pack.ts";
 import { MemoryStore } from "./store.ts";
 import { SyncedAttempts } from "./syncedAttempts.ts";
+import { TF_ANSWER } from "../test/fixtures.ts";
 
 const tf = (stem: string, path: string[] = [], tags: string[] = []): QuestionInput => ({
   ...blankQuestion("true_false"),
   stem,
   explanation: `Because ${stem}`,
-  answer: { answer: true },
+  answer: TF_ANSWER,
   path,
   tags,
 });
@@ -135,7 +136,7 @@ const session = (): NewAttempt => ({
         qtype: "true_false",
         stem: "Heart pumps blood",
         explanation: "",
-        answer: { answer: true },
+        answer: TF_ANSWER,
         difficulty: null,
         path: ["Anatomy"],
       },
@@ -145,10 +146,11 @@ const session = (): NewAttempt => ({
 
 async function finish(repo: SyncedAttempts) {
   const id = await repo.create(session());
-  await repo.patchItem(id, 0, { response: { kind: "true_false", value: true } as never });
-  await repo.submit(id, [{ position: 0, verdict: "correct", marks: 1 }], {
+  await repo.patchItem(id, 0, { response: { marks: [true, false, true, false, false] } });
+  await repo.submit(id, [{ position: 0, verdict: "correct", credit: 1, marks: 1 }], {
     score: 1,
     correct: 1,
+    partial: 0,
     wrong: 0,
     unanswered: 0,
     secondsSpent: 12,

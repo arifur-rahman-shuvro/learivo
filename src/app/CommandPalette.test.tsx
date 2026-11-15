@@ -6,6 +6,7 @@ import { blankQuestion } from "../modules/question-bank/domain/model.ts";
 import { MemoryAttempts } from "../modules/practice/data/memoryAttempts.ts";
 import CommandPalette from "./CommandPalette.tsx";
 import { useIntent, type Intent } from "./intents.ts";
+import { TF_ANSWER } from "../test/fixtures.ts";
 
 function Probe({ onIntent }: { onIntent: (i: Intent) => void }) {
   useIntent(onIntent);
@@ -15,8 +16,8 @@ function Probe({ onIntent }: { onIntent: (i: Intent) => void }) {
 async function setup() {
   const bank = new MemoryRepo();
   await bank.create([
-    { ...blankQuestion("true_false"), stem: "Heart pumps blood", answer: { answer: true } },
-    { ...blankQuestion("true_false"), stem: "Femur is a bone", answer: { answer: true } },
+    { ...blankQuestion("true_false"), stem: "Heart pumps blood", answer: TF_ANSWER },
+    { ...blankQuestion("true_false"), stem: "Femur is a bone", answer: TF_ANSWER },
   ]);
   const onNavigate = vi.fn();
   const onIntent = vi.fn();

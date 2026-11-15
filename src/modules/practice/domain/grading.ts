@@ -3,11 +3,11 @@ import type { AnswerSpec, QuestionType } from "../../question-bank/domain/model.
 /** What a student answered. Which field is used depends on the question type. */
 export type Response =
   | { choices: number[] } // sba, single_choice, multi_select: indexes into the options shown
-  | { value: boolean } // true_false
-  | { text: string } // short_answer
+  | { marks: (boolean | null)[] } // true_false: for each statement true, false, or null if not answered
   | { blanks: string[] }; // fill_blank
 
-export type Verdict = "correct" | "wrong" | "unanswered";
+/** correct: full marks. partial: some of the marks. wrong: none. unanswered: left blank. */
+export type Verdict = "correct" | "partial" | "wrong" | "unanswered";
 
 /** A frozen copy of a question, taken when it was drawn into a session or exam. */
 export interface Snapshot {
@@ -39,69 +39,123 @@ const matches = (given: string, accepted: readonly string[]) => {
 export function isAnswered(r: Response | null | undefined): boolean {
   if (!r) return false;
   if ("choices" in r) return r.choices.length > 0;
-  if ("value" in r) return typeof r.value === "boolean";
-  if ("text" in r) return r.text.trim() !== "";
+  if ("marks" in r) return r.marks.some((m) => typeof m === "boolean");
   return r.blanks.some((b) => b.trim() !== "");
 }
 
-/** Marks one response. Multiple select needs exactly the right set; fill-blank needs every blank. */
+/** How one question went. credit and penalty are fractions of the question's marks (0 to 1). */
+export interface Outcome {
+  verdict: Verdict;
+  /** Share of the question's marks earned. */
+  credit: number;
+  /** Share of the negative marking that applies. */
+  penalty: number;
+}
+
+const round4 = (n: number) => Math.round(n * 10000) / 10000;
+const NONE: Outcome = { verdict: "unanswered", credit: 0, penalty: 0 };
+
+function outcome(credit: number, penalty: number): Outcome {
+  const c = round4(Math.min(1, Math.max(0, credit)));
+  return {
+    verdict: c >= 1 ? "correct" : c > 0 ? "partial" : "wrong",
+    credit: c,
+    penalty: round4(Math.min(1, penalty)),
+  };
+}
+
+/**
+ * Marks one response.
+ *
+ * - Single answer: all or nothing.
+ * - Multiple answers, k of them correct: each correct pick earns 1/k, and each wrong pick takes
+ *   1/k away (never below zero), so ticking everything earns nothing.
+ * - True or false, one mark spread over the statements (0.2 each for five): each statement that
+ *   is marked correctly earns its share. A statement left unmarked earns nothing and loses nothing.
+ * - Fill in the blank: every blank must be right.
+ *
+ * Negative marking (set per exam) applies to the same units: a wrong single answer, each wrong
+ * pick in multiple answer (1/k), and each wrong statement in true or false.
+ */
 export function grade(
   qtype: QuestionType,
   answer: AnswerSpec,
   response: Response | null | undefined,
-): Verdict {
-  if (!isAnswered(response)) return "unanswered";
+): Outcome {
+  if (!isAnswered(response)) return NONE;
   const r = response!;
-  const ok = (() => {
-    if ("options" in answer && "choices" in r) {
-      const right = answer.options.flatMap((o, i) => (o.correct ? [i] : []));
-      const given = [...new Set(r.choices)].sort((a, b) => a - b);
-      if (qtype === "multi_select") {
-        return right.length === given.length && right.every((x, i) => x === given[i]);
-      }
-      return given.length === 1 && right.includes(given[0]!);
+
+  if ("options" in answer && "choices" in r && qtype !== "true_false") {
+    const right = new Set(answer.options.flatMap((o, i) => (o.correct ? [i] : [])));
+    const given = [...new Set(r.choices)];
+    if (qtype === "multi_select") {
+      const k = right.size;
+      const good = given.filter((i) => right.has(i)).length;
+      const bad = given.length - good;
+      return outcome((good - bad) / k, bad / k);
     }
-    if ("answer" in answer && "value" in r) return answer.answer === r.value;
-    if ("accepted" in answer && "text" in r) return matches(r.text, answer.accepted);
-    if ("blanks" in answer && "blanks" in r) {
-      return answer.blanks.every((b, i) => matches(r.blanks[i] ?? "", b.accepted));
-    }
-    return false;
-  })();
-  return ok ? "correct" : "wrong";
+    const ok = given.length === 1 && right.has(given[0]!);
+    return outcome(ok ? 1 : 0, ok ? 0 : 1);
+  }
+
+  if ("options" in answer && "marks" in r && qtype === "true_false") {
+    const n = answer.options.length;
+    let good = 0;
+    let bad = 0;
+    answer.options.forEach((o, i) => {
+      const m = r.marks[i];
+      if (typeof m !== "boolean") return;
+      if (m === o.correct) good++;
+      else bad++;
+    });
+    return outcome(good / n, bad / n);
+  }
+
+  if ("blanks" in answer && "blanks" in r) {
+    const ok = answer.blanks.every((b, i) => matches(r.blanks[i] ?? "", b.accepted));
+    return outcome(ok ? 1 : 0, ok ? 0 : 1);
+  }
+  return outcome(0, 1);
 }
 
 export interface Tally {
   correct: number;
+  partial: number;
   wrong: number;
   unanswered: number;
   /** Never below zero: negative marking cannot take a student under 0. */
   score: number;
   maxScore: number;
+  /** Share of the answered questions' marks that were earned (0 to 1). */
   accuracy: number;
 }
 
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+/** Marks earned by one question, before the total is kept above zero. */
+export function marksFor(o: Outcome, marksCorrect: number, marksWrong: number): number {
+  return round2(o.credit * marksCorrect - o.penalty * marksWrong);
+}
+
 export function tally(
-  verdicts: readonly Verdict[],
+  outcomes: readonly Outcome[],
   marksCorrect: number,
   marksWrong: number,
 ): Tally {
-  const correct = verdicts.filter((v) => v === "correct").length;
-  const wrong = verdicts.filter((v) => v === "wrong").length;
-  const unanswered = verdicts.length - correct - wrong;
-  const raw = correct * marksCorrect - wrong * marksWrong;
-  const answered = correct + wrong;
+  const count = (v: Verdict) => outcomes.filter((o) => o.verdict === v).length;
+  const raw = outcomes.reduce(
+    (sum, o) => sum + o.credit * marksCorrect - o.penalty * marksWrong,
+    0,
+  );
+  const answered = outcomes.filter((o) => o.verdict !== "unanswered");
   return {
-    correct,
-    wrong,
-    unanswered,
-    score: Math.max(0, Math.round(raw * 100) / 100),
-    maxScore: Math.round(verdicts.length * marksCorrect * 100) / 100,
-    accuracy: answered === 0 ? 0 : correct / answered,
+    correct: count("correct"),
+    partial: count("partial"),
+    wrong: count("wrong"),
+    unanswered: count("unanswered"),
+    score: Math.max(0, round2(raw)),
+    maxScore: round2(outcomes.length * marksCorrect),
+    accuracy:
+      answered.length === 0 ? 0 : answered.reduce((s, o) => s + o.credit, 0) / answered.length,
   };
-}
-
-/** Marks earned by one item, for the results list. */
-export function marksFor(v: Verdict, marksCorrect: number, marksWrong: number): number {
-  return v === "correct" ? marksCorrect : v === "wrong" ? -marksWrong : 0;
 }

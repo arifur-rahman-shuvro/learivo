@@ -52,6 +52,7 @@ export class MemoryAttempts implements AttemptRepo {
       response: null,
       flagged: false,
       verdict: null,
+      credit: null,
       marks: null,
     }));
     this.attempts.set(id, {
@@ -67,6 +68,7 @@ export class MemoryAttempts implements AttemptRepo {
       questionCount: items.length,
       score: null,
       correct: null,
+      partial: null,
       wrong: null,
       unanswered: null,
       secondsSpent: 0,
@@ -118,6 +120,7 @@ export class MemoryAttempts implements AttemptRepo {
       const item = a.items[g.position];
       if (item) {
         item.verdict = g.verdict;
+        item.credit = g.credit;
         item.marks = g.marks;
       }
     }
@@ -126,6 +129,7 @@ export class MemoryAttempts implements AttemptRepo {
       submittedAt: totals.submittedAt ?? this.tick(),
       score: totals.score,
       correct: totals.correct,
+      partial: totals.partial,
       wrong: totals.wrong,
       unanswered: totals.unanswered,
       secondsSpent: totals.secondsSpent,
@@ -143,7 +147,7 @@ export class MemoryAttempts implements AttemptRepo {
     const out: Fact[] = [];
     for (const a of done) {
       for (const item of a.items) {
-        if (item.verdict !== "correct" && item.verdict !== "wrong") continue;
+        if (!item.verdict || item.verdict === "unanswered") continue;
         out.push({
           at: a.submittedAt!,
           path: item.snapshot.path,
@@ -162,9 +166,12 @@ export class MemoryAttempts implements AttemptRepo {
     for (const a of done) {
       a.items.forEach((item, i) => {
         const qid = a.questionIds[i];
-        if (!qid || (item.verdict !== "correct" && item.verdict !== "wrong")) return;
+        if (!qid || !item.verdict || item.verdict === "unanswered") return;
         const prev = out.get(qid);
-        out.set(qid, { last: item.verdict, times: (prev?.times ?? 0) + 1 });
+        out.set(qid, {
+          last: item.verdict === "correct" ? "correct" : "wrong",
+          times: (prev?.times ?? 0) + 1,
+        });
       });
     }
     return out;

@@ -70,14 +70,6 @@ function readInt(v: unknown): number | null {
   return Number.isInteger(n) ? n : Number.NaN;
 }
 
-function readBool(v: unknown): boolean | null {
-  if (typeof v === "boolean") return v;
-  const s = str(v).toLowerCase();
-  if (["true", "t", "yes", "y", "1"].includes(s)) return true;
-  if (["false", "f", "no", "n", "0"].includes(s)) return false;
-  return null;
-}
-
 function splitList(v: unknown, sep: RegExp): string[] {
   if (Array.isArray(v)) return v.map(str).filter(Boolean);
   return str(v)
@@ -117,16 +109,6 @@ function readOptions(raw: Record<string, unknown>): { text: string; correct: boo
 }
 
 function readAnswer(qtype: QuestionType, raw: Record<string, unknown>): AnswerSpec {
-  if (qtype === "true_false") {
-    const b = readBool(raw.answer);
-    return { answer: b as boolean };
-  }
-  if (qtype === "short_answer") {
-    const accepted = Array.isArray(raw.accepted)
-      ? raw.accepted.map(str)
-      : splitList(raw.answer, /\|/);
-    return { accepted };
-  }
   if (qtype === "fill_blank") {
     if (Array.isArray(raw.blanks)) {
       return {
@@ -378,8 +360,6 @@ export function analyzeImport(
 export function questionToRecord(q: QuestionInput): Record<string, unknown> {
   const rec: Record<string, unknown> = { type: q.qtype, stem: q.stem, explanation: q.explanation };
   if ("options" in q.answer) rec.options = q.answer.options;
-  if ("answer" in q.answer) rec.answer = q.answer.answer;
-  if ("accepted" in q.answer) rec.accepted = q.answer.accepted;
   if ("blanks" in q.answer) rec.blanks = q.answer.blanks.map((b) => b.accepted);
   TAXONOMY_KINDS.forEach((k, i) => {
     if (q.path[i]) rec[k] = q.path[i];
@@ -426,9 +406,7 @@ function csvRow(q: QuestionInput): Record<string, string | number> {
   if ("options" in a) {
     a.options.forEach((o, i) => (row[`option${i + 1}`] = o.text));
     row.correct = a.options.flatMap((o, i) => (o.correct ? [i + 1] : [])).join(";");
-  } else if ("answer" in a) row.answer = String(a.answer);
-  else if ("accepted" in a) row.answer = a.accepted.join("|");
-  else row.answer = a.blanks.map((b) => b.accepted.join("|")).join(";");
+  } else row.answer = a.blanks.map((b) => b.accepted.join("|")).join(";");
   row.difficulty = q.difficulty ?? "";
   TAXONOMY_KINDS.forEach((k, i) => (row[k] = q.path[i] ?? ""));
   row.tags = q.tags.join(";");

@@ -94,14 +94,19 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
           a.id,
           verdicts.map((v, position) => ({
             position,
-            verdict: v,
+            verdict: v.verdict,
+            credit: v.credit,
             marks: marksFor(v, a.marksCorrect, a.marksWrong),
           })),
           { ...t, secondsSpent: Math.max(0, spent) },
         );
         // Missed questions join the revision queue. A failure here must not lose the result.
         const missed = a.items.flatMap((i, k) =>
-          verdicts[k] === "wrong" && i.questionId ? [i.questionId] : [],
+          verdicts[k]!.verdict !== "correct" &&
+          verdicts[k]!.verdict !== "unanswered" &&
+          i.questionId
+            ? [i.questionId]
+            : [],
         );
         if (missed.length > 0) await ws.repo.addCards(missed).catch(() => undefined);
         ws.refresh();

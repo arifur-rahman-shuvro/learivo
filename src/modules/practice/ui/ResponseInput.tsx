@@ -22,6 +22,59 @@ export default function ResponseInput({ snapshot, response, onChange, locked, re
   const { qtype, answer } = snapshot;
   const verdict = reveal ? grade(qtype, answer, response) : null;
 
+  if ("options" in answer && qtype === "true_false") {
+    const given = response && "marks" in response ? response.marks : [];
+    const set = (i: number, v: boolean) => {
+      const next = answer.options.map((_, k) => (k === i ? v : (given[k] ?? null)));
+      onChange({ marks: next });
+    };
+    return (
+      <div className="flex flex-col gap-2">
+        <p className="m-0 text-sm text-muted">Mark each statement True or False.</p>
+        {answer.options.map((o, i) => {
+          const value = given[i] ?? null;
+          return (
+            <fieldset
+              key={i}
+              className={`m-0 flex min-w-0 flex-col gap-2 rounded-control border p-3 ${
+                reveal ? (value === o.correct ? "border-success" : "border-danger") : "border-line"
+              }`}
+            >
+              <legend className="sr-only">Statement {i + 1}</legend>
+              <p className="m-0 break-words">
+                <span className="font-semibold text-muted">{i + 1}.</span> {o.text}
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {[true, false].map((v) => (
+                  <label
+                    key={String(v)}
+                    className={`flex cursor-pointer items-center justify-center gap-2 rounded-control border px-3 py-2 font-semibold ${
+                      value === v ? "border-accent bg-surface-2" : "border-line"
+                    } ${locked ? "cursor-default" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name={`tf-${i}`}
+                      checked={value === v}
+                      disabled={locked}
+                      onChange={() => set(i, v)}
+                      className="size-4 accent-[var(--lv-accent)]"
+                    />
+                    {v ? "True" : "False"}
+                  </label>
+                ))}
+              </div>
+              {reveal && (
+                <p className="m-0 text-sm font-semibold">Answer: {o.correct ? "True" : "False"}</p>
+              )}
+            </fieldset>
+          );
+        })}
+        {verdict && <Verdict v={verdict.verdict} />}
+      </div>
+    );
+  }
+
   if ("options" in answer) {
     const multi = qtype === "multi_select";
     const chosen = response && "choices" in response ? response.choices : [];
@@ -66,69 +119,8 @@ export default function ResponseInput({ snapshot, response, onChange, locked, re
             </label>
           );
         })}
-        {verdict && <Verdict v={verdict} />}
+        {verdict && <Verdict v={verdict.verdict} />}
       </fieldset>
-    );
-  }
-
-  if ("answer" in answer) {
-    const value = response && "value" in response ? response.value : null;
-    return (
-      <fieldset className="m-0 flex min-w-0 flex-col gap-2 border-0 p-0">
-        <legend className="sr-only">True or false</legend>
-        <div className="grid grid-cols-2 gap-2">
-          {[true, false].map((v) => {
-            const picked = value === v;
-            const tone = reveal
-              ? answer.answer === v
-                ? "border-success bg-surface-2"
-                : picked
-                  ? "border-danger"
-                  : "border-line"
-              : picked
-                ? "border-accent bg-surface-2"
-                : "border-line";
-            return (
-              <label
-                key={String(v)}
-                className={`flex cursor-pointer items-center justify-center gap-2 rounded-control border px-3.5 py-3 font-semibold ${tone}`}
-              >
-                <input
-                  type="radio"
-                  name="tf"
-                  checked={picked}
-                  disabled={locked}
-                  onChange={() => onChange({ value: v })}
-                  className="size-4 accent-[var(--lv-accent)]"
-                />
-                {v ? "True" : "False"}
-              </label>
-            );
-          })}
-        </div>
-        {verdict && <Verdict v={verdict} />}
-      </fieldset>
-    );
-  }
-
-  if ("accepted" in answer) {
-    const text = response && "text" in response ? response.text : "";
-    return (
-      <div className="flex flex-col gap-2">
-        <label htmlFor="short-answer" className="text-sm font-semibold">
-          Your answer
-        </label>
-        <input
-          id="short-answer"
-          className="lv-input"
-          value={text}
-          disabled={locked}
-          autoComplete="off"
-          onChange={(e) => onChange(e.target.value.trim() === "" ? null : { text: e.target.value })}
-        />
-        {verdict && <Verdict v={verdict} />}
-        {reveal && <p className="m-0 text-sm text-muted">Accepted: {answer.accepted.join(", ")}</p>}
-      </div>
     );
   }
 
@@ -156,13 +148,20 @@ export default function ResponseInput({ snapshot, response, onChange, locked, re
           {reveal && <p className="m-0 text-sm text-muted">Accepted: {b.accepted.join(", ")}</p>}
         </div>
       ))}
-      {verdict && <Verdict v={verdict} />}
+      {verdict && <Verdict v={verdict.verdict} />}
     </div>
   );
 }
 
-function Verdict({ v }: { v: "correct" | "wrong" | "unanswered" }) {
-  const text = v === "correct" ? "Correct" : v === "wrong" ? "Not quite" : "Not answered";
+function Verdict({ v }: { v: "correct" | "partial" | "wrong" | "unanswered" }) {
+  const text =
+    v === "correct"
+      ? "Correct"
+      : v === "partial"
+        ? "Partly correct"
+        : v === "wrong"
+          ? "Not quite"
+          : "Not answered";
   return (
     <p role="status" className="m-0 text-sm font-semibold">
       {text}
