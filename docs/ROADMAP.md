@@ -124,3 +124,10 @@ Follow-up (2026-11-14), owner request: delete and clear data.
 ## Owner phone check
 
 - 2026-11-15: owner reported that everything (5-option marking, Phase 9, smart import prompts) was tested on the phone and passed.
+
+## Follow-up: account menu and profile (M11)
+
+- The top bar now has one avatar button instead of Settings, the email and Sign out. It opens a menu with the student's name and email, **Your profile**, **Appearance**, **Settings** and **Sign out**. It works with the keyboard (arrow keys, Escape returns focus to the avatar).
+- Your profile: a name (up to 40 characters) and one of 8 avatar colours. The avatar is a person glyph until a name is saved, then shows initials. Stored on the student's own `profiles` row (M11 adds `avatar`; row-level security already limited it to the owner).
+- Appearance: theme and mode. Settings: Your data (counts and clearing) and the search shortcut note. The signed-out screen keeps a small Appearance button.
+- Not built: uploading a photo (Learivo stores no images), changing the sign-in email or password from the menu.

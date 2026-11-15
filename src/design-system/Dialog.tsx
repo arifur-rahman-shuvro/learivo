@@ -87,9 +87,9 @@ export function Dialog({
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
         {footer && (
-          <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-line px-5 py-3">
+          <div className="flex flex-wrap items-center justify-end gap-2 border-t border-line px-5 py-3">
             {footer}
-          </footer>
+          </div>
         )}
       </div>
     </div>

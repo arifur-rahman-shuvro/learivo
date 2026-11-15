@@ -11,11 +11,13 @@ import {
 import App from "../App.tsx";
 import { useAuth } from "../auth/AuthProvider.tsx";
 import AuthScreen from "../auth/AuthScreen.tsx";
-import AppearanceMenu from "./AppearanceMenu.tsx";
+import AccountMenu from "./AccountMenu.tsx";
+import { SupabaseProfile } from "../modules/profile/data/supabaseProfile.ts";
+import type { ProfileRepo } from "../modules/profile/data/repo.ts";
 import StatusBanner from "./StatusBanner.tsx";
 import SyncIndicator from "./SyncIndicator.tsx";
 import CommandPalette from "./CommandPalette.tsx";
-import { OfflineProvider, useServices, useOfflineControls } from "../offline/OfflineProvider.tsx";
+import { OfflineProvider, useServices } from "../offline/OfflineProvider.tsx";
 import { moduleForHash, visibleModules, type ModuleId } from "./registry.ts";
 import { supabase } from "../lib/supabase.ts";
 import { SupabaseRepo } from "../modules/question-bank/data/supabaseRepo.ts";
@@ -39,6 +41,7 @@ export interface Repos {
   makeRepo?: (userId: string) => QuestionRepo;
   makeAttempts?: (userId: string) => AttemptRepo;
   makeWorkspace?: (userId: string) => WorkspaceRepo;
+  makeProfile?: (userId: string) => ProfileRepo;
 }
 
 /**
@@ -83,23 +86,13 @@ function ModuleHost({
   );
 }
 
-/** Signing out also removes the question copy from this device. */
-function SignOutButton() {
-  const { client } = useAuth();
-  const offline = useOfflineControls();
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={async () => {
-        await offline?.pack.clear().catch(() => undefined);
-        await offline?.sync.clearCaches().catch(() => undefined);
-        await client.signOut();
-      }}
-    >
-      Sign out
-    </Button>
+/** Builds the profile store once per student, so the menu does not reload it on every render. */
+function AccountHost({ userId, makeProfile }: Pick<Repos, "makeProfile"> & { userId: string }) {
+  const repo = useMemo(
+    () => (makeProfile ? makeProfile(userId) : new SupabaseProfile(supabase, userId)),
+    [userId, makeProfile],
   );
+  return <AccountMenu repo={repo} />;
 }
 
 const LAB_ROUTE = "#/lab";
@@ -118,7 +111,12 @@ function useHash(): [string, (hash: string) => void] {
  * App shell. Phones: top bar, content, bottom tab bar. Desktop: left sidebar plus content.
  * Navigation is built from the module registry; modules without a screen show a status panel.
  */
-export default function AppShell({ makeRepo, makeAttempts, makeWorkspace }: Repos = {}) {
+export default function AppShell({
+  makeRepo,
+  makeAttempts,
+  makeWorkspace,
+  makeProfile,
+}: Repos = {}) {
   const [hash, go] = useHash();
   const { status, user } = useAuth();
   if (hash === LAB_ROUTE) return <App />;
@@ -186,10 +184,6 @@ export default function AppShell({ makeRepo, makeAttempts, makeWorkspace }: Repo
               <LogoWordmark />
             </div>
             <div className="ml-auto flex items-center gap-2">
-              <span className="hidden max-w-[16rem] truncate text-sm text-muted sm:inline">
-                {user?.email}
-              </span>
-              <AppearanceMenu />
               <button
                 type="button"
                 className="lv-btn lv-btn-secondary lv-btn-sm"
@@ -203,7 +197,7 @@ export default function AppShell({ makeRepo, makeAttempts, makeWorkspace }: Repo
                 </kbd>
               </button>
               <SyncIndicator />
-              <SignOutButton />
+              {user && <AccountHost userId={user.id} makeProfile={makeProfile} />}
             </div>
           </header>
           <StatusBanner />

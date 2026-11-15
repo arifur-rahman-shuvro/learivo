@@ -5,3 +5,4 @@ export { ThemeSwitcher } from "./ThemeSwitcher.tsx";
 export { BottomNav } from "./BottomNav.tsx";
 export { Dialog } from "./Dialog.tsx";
 export { RichText, type TermSplitter } from "./RichText.tsx";
+export { Avatar } from "./Avatar.tsx";

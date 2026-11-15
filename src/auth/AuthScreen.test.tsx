@@ -5,12 +5,13 @@ import AppShell from "../app/AppShell.tsx";
 import { AuthProvider } from "./AuthProvider.tsx";
 import { fakeAuth } from "../test/fakeAuth.ts";
 import type { AuthClient } from "./types.ts";
+import { MemoryProfile } from "../modules/profile/data/memoryProfile.ts";
 
 const renderApp = (client: AuthClient) =>
   render(
     <ThemeProvider>
       <AuthProvider client={client}>
-        <AppShell />
+        <AppShell makeProfile={() => new MemoryProfile()} />
       </AuthProvider>
     </ThemeProvider>,
   );
@@ -51,6 +52,7 @@ describe("auth gate and sign-in", () => {
     type("Password", "secret123");
     fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
     expect(await screen.findByRole("navigation", { name: "Primary" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Account menu" }));
     expect(screen.getByText("sara@example.test")).toBeTruthy();
     expect(client.calls).toContain("signIn:sara@example.test");
   });
@@ -71,7 +73,8 @@ describe("auth gate and sign-in", () => {
   it("signs out back to the sign-in screen", async () => {
     renderApp(fakeAuth({ id: "u1", email: "sara@example.test" }));
     await screen.findByRole("navigation", { name: "Primary" });
-    fireEvent.click(screen.getByRole("button", { name: "Sign out" }));
+    fireEvent.click(screen.getByRole("button", { name: "Account menu" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Sign out" }));
     expect(await screen.findByRole("heading", { name: "Sign in to Learivo" })).toBeTruthy();
   });
 });
