@@ -20,18 +20,18 @@ Each phase ends with a written report and owner approval before the next begins.
 - No production database change without the exact SQL being shown and approved first.
 - Secrets live only in GitHub, Cloudflare, Supabase and host settings, never in the repository.
 
-## Status and deviations (updated 2026-11-12)
+## Status and deviations (updated 2026-11-15)
 
 | Phase | Status                                                                                    |
 | ----- | ----------------------------------------------------------------------------------------- |
 | 0-1   | Done (blueprint)                                                                          |
 | 2     | Done, and the app shell and Home screen were redesigned afterwards at the owner's request |
 | 3     | Done, except the items below. Go service live on Render free (owner-checked 2026-11-12)   |
-| 4     | Built and tested; waiting for the owner's phone test and approval (see below)             |
-| 5     | Built and tested; M3 applied; waiting for the owner's phone test and approval (see below) |
+| 4     | Done; owner phone-tested and approved (2026-11-13)                                        |
+| 5     | Done; owner phone-tested and approved (2026-11-13)                                        |
 | 6     | Done; owner phone-tested and approved (2026-11-13)                                        |
-| 7     | Built and tested; M5 applied; waiting for the owner's phone test and approval (see below) |
-| 8     | Built and checked; M6 applied; waiting for the owner's approval (see below)               |
+| 7     | Done; M5 applied; owner checked everything (2026-11-15)                                   |
+| 8     | Done; M6 applied; owner checked everything (2026-11-15). Open items listed below          |
 | 9     | Not started; waits for the owner's approval                                               |
 
 Phase 3 items not done, with reasons:
