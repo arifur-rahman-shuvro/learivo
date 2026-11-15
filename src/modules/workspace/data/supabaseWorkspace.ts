@@ -1,3 +1,4 @@
+import { cleanExamTarget, type ExamTarget } from "../domain/examTarget.ts";
 import { cleanLayout, type HomeLayout } from "../domain/homeLayout.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Card } from "../domain/scheduler.ts";
@@ -213,6 +214,22 @@ export class SupabaseWorkspace implements WorkspaceRepo {
     const res = await this.db
       .from("user_preferences")
       .update({ daily_goal: n })
+      .eq("user_id", this.userId);
+    if (res.error) fail(res.error);
+  }
+
+  async examTarget() {
+    const row = ok(
+      await this.db.from("user_preferences").select("exam_title, exam_date").maybeSingle(),
+    ) as { exam_title: string; exam_date: string | null } | null;
+    return cleanExamTarget({ title: row?.exam_title, date: row?.exam_date });
+  }
+
+  async setExamTarget(target: ExamTarget) {
+    const t = cleanExamTarget(target);
+    const res = await this.db
+      .from("user_preferences")
+      .update({ exam_title: t.title, exam_date: t.date })
       .eq("user_id", this.userId);
     if (res.error) fail(res.error);
   }

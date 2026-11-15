@@ -4,6 +4,13 @@ import Home from "../../../app/screens/Home.tsx";
 import { DEFAULT_QUERY } from "../../question-bank/data/repo.ts";
 import { errorText, useBank } from "../../question-bank/ui/bank.tsx";
 import { DEFAULT_GOAL } from "../data/repo.ts";
+import {
+  NO_EXAM,
+  cleanExamTarget,
+  daysUntil,
+  paceFor,
+  type ExamTarget,
+} from "../domain/examTarget.ts";
 import { activeDaySet, answeredOn, overall, streak, weakAreas } from "../domain/insights.ts";
 import { isDue } from "../domain/scheduler.ts";
 import {
@@ -38,6 +45,10 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(DEFAULT_GOAL));
   const [error, setError] = useState<string>();
+  const [exam, setExam] = useState<ExamTarget>(NO_EXAM);
+  const [examEditing, setExamEditing] = useState(false);
+  const [examTitle, setExamTitle] = useState("");
+  const [examDate, setExamDate] = useState("");
 
   useEffect(() => {
     let alive = true;
@@ -46,8 +57,9 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
       ws.repo.cards(),
       ws.repo.dailyGoal(),
       ws.repo.homeLayout().catch(() => DEFAULT_HOME_LAYOUT),
+      ws.repo.examTarget().catch(() => NO_EXAM),
     ]).then(
-      ([page, cards, g, lay]) => {
+      ([page, cards, g, lay, ex]) => {
         if (!alive) return;
         const now = new Date();
         setTotal(page.total);
@@ -55,6 +67,9 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
         setGoal(g);
         setDraft(String(g));
         setLayout(lay);
+        setExam(ex);
+        setExamTitle(ex.title);
+        setExamDate(ex.date ?? "");
       },
       // Home must still open when the extras cannot load.
       () => alive && setTotal(-1),
@@ -79,6 +94,21 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
   async function saveLayout(next: HomeLayout) {
     await ws.repo.setHomeLayout(next);
     setLayout(next);
+  }
+
+  async function saveExam(clear = false) {
+    setError(undefined);
+    try {
+      const next = clear ? NO_EXAM : cleanExamTarget({ title: examTitle, date: examDate });
+      if (!clear && next.date === null) throw new Error("Choose the exam date.");
+      await ws.repo.setExamTarget(next);
+      setExam(next);
+      setExamTitle(next.title);
+      setExamDate(next.date ?? "");
+      setExamEditing(false);
+    } catch (e) {
+      setError(errorText(e));
+    }
   }
 
   async function saveGoal() {
@@ -220,6 +250,68 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
           </ul>
         </section>
       ) : null,
+    exam: (
+      <section aria-labelledby="exam-title" className="lv-card flex flex-col gap-2 p-5 sm:p-6">
+        <h2 id="exam-title" className="m-0 text-lg font-bold">
+          Exam countdown
+        </h2>
+        {examEditing ? (
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="flex min-w-0 flex-col gap-1">
+              <label htmlFor="exam-name" className="text-sm font-semibold">
+                Exam name
+              </label>
+              <input
+                id="exam-name"
+                className="lv-input"
+                maxLength={120}
+                value={examTitle}
+                onChange={(e) => setExamTitle(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor="exam-date" className="text-sm font-semibold">
+                Exam date
+              </label>
+              <input
+                id="exam-date"
+                type="date"
+                className="lv-input"
+                value={examDate}
+                onChange={(e) => setExamDate(e.target.value)}
+              />
+            </div>
+            <Button size="sm" onClick={() => void saveExam()}>
+              Save exam
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setExamEditing(false)}>
+              Cancel
+            </Button>
+          </div>
+        ) : exam.date ? (
+          <>
+            <ExamLine exam={exam} total={total} today={today} />
+            <div className="flex gap-2">
+              <Button size="sm" variant="ghost" onClick={() => setExamEditing(true)}>
+                Change exam
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => void saveExam(true)}>
+                Remove exam
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="m-0 text-sm text-muted">Set your next exam to count the days down.</p>
+            <div>
+              <Button size="sm" variant="secondary" onClick={() => setExamEditing(true)}>
+                Set exam date
+              </Button>
+            </div>
+          </>
+        )}
+      </section>
+    ),
   };
   const wide: Record<HomeSectionId, boolean> = {
     focus: true,
@@ -227,6 +319,7 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
     goal: false,
     weak: false,
     recent: true,
+    exam: false,
   };
   const shown = visibleSections(layout);
 
@@ -262,5 +355,31 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
         />
       )}
     </div>
+  );
+}
+
+function ExamLine({ exam, total, today }: { exam: ExamTarget; total: number; today: Date }) {
+  const days = daysUntil(exam.date!, today);
+  const name = exam.title || "Your exam";
+  if (days < 0)
+    return (
+      <p className="m-0">
+        {name} was {-days} day{days === -1 ? "" : "s"} ago.
+      </p>
+    );
+  if (days === 0) return <p className="m-0 text-xl font-bold">{name} is today.</p>;
+  const pace = paceFor(total, days);
+  return (
+    <>
+      <p className="m-0 text-3xl font-bold">
+        {days} day{days === 1 ? "" : "s"}
+      </p>
+      <p className="m-0 text-sm text-muted">
+        until {name}
+        {pace
+          ? `. About ${pace} question${pace === 1 ? "" : "s"} a day covers your ${total}.`
+          : "."}
+      </p>
+    </>
   );
 }

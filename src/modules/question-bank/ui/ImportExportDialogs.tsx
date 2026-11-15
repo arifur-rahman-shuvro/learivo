@@ -10,6 +10,8 @@ import {
 } from "../domain/importExport.ts";
 import { blankQuestion, type QuestionInput } from "../domain/model.ts";
 import { errorText, useBank } from "./bank.tsx";
+import { contentHash } from "../domain/hash.ts";
+import { DEFAULT_QUERY, type QuestionRepo } from "../data/repo.ts";
 import { QuestionPreview } from "./QuestionPreview.tsx";
 
 const BATCH = 500;
@@ -59,6 +61,7 @@ type Source = "paste" | "upload";
 interface Outcome {
   imported: number;
   skippedDuplicates: number;
+  replaced: number;
   skippedInvalid: number;
   /** Set when the import stopped part-way. */
   failure?: string;
@@ -91,6 +94,19 @@ For sba and single_choice exactly one option is correct; multi_select has one or
 For true_false the stem is a lead-in (for example "Heart has-") and the 5 options are statements; set "correct": true for each statement that is true and false for each that is false.
 For fill_blank write {{1}}, {{2}} in the stem and use "blanks": [["answer for 1"], ["answer for 2"]].`;
 
+/** Finds the bank question behind each content hash, so a replace can update it in place. */
+async function bankIdsByHash(repo: QuestionRepo): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  for (const status of ["active", "archived"] as const) {
+    for (let offset = 0; ; offset += 200) {
+      const page = await repo.list({ ...DEFAULT_QUERY, status, offset, limit: 200 });
+      for (const q of page.items) out.set(contentHash(q.stem, q.qtype), q.id);
+      if (page.items.length < 200) break;
+    }
+  }
+  return out;
+}
+
 function Tile({
   value,
   label,
@@ -122,7 +138,7 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
   const [fileName, setFileName] = useState("");
   const [loaded, setLoaded] = useState<{ text: string; format: ImportFormat } | null>(null);
   const [report, setReport] = useState<ImportReport | null>(null);
-  const [skipDuplicates, setSkipDuplicates] = useState(true);
+  const [policy, setPolicy] = useState<"skip" | "keep" | "replace">("skip");
   const [progress, setProgress] = useState(0);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [shown, setShown] = useState(5);
@@ -189,7 +205,9 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
   }
 
   const rows = report?.ok ? report.rows : [];
-  const toImport = rows.filter((r) => !(skipDuplicates && r.duplicate));
+  const toImport = rows.filter((r) => (policy === "keep" ? true : r.duplicate === null));
+  const toReplace = policy === "replace" ? rows.filter((r) => r.duplicate === "bank") : [];
+  const total = toImport.length + toReplace.length;
   const inBank = rows.filter((r) => r.duplicate === "bank").length;
   const inFile = rows.filter((r) => r.duplicate === "file").length;
   const duplicates = inBank + inFile;
@@ -201,22 +219,38 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
     setError(undefined);
     setProgress(0);
     let done = 0;
+    let replaced = 0;
     let failure: string | undefined;
     try {
+      if (toReplace.length > 0) {
+        const ids = await bankIdsByHash(repo);
+        for (const row of toReplace) {
+          const id = ids.get(contentHash(row.input.stem, row.input.qtype));
+          if (id) {
+            await repo.update(id, row.input);
+            replaced += 1;
+          } else {
+            await repo.create([row.input]);
+            done += 1;
+          }
+          setProgress(Math.round(((done + replaced) / total) * 100));
+        }
+      }
       for (let i = 0; i < toImport.length; i += BATCH) {
         const batch = toImport.slice(i, i + BATCH).map((r) => r.input);
         await repo.create(batch);
         done += batch.length;
-        setProgress(Math.round((done / toImport.length) * 100));
+        setProgress(Math.round(((done + replaced) / total) * 100));
       }
     } catch (e) {
       failure = errorText(e);
     }
-    if (done > 0) refresh();
+    if (done + replaced > 0) refresh();
     setOutcome({
       imported: done,
-      attempted: toImport.length,
-      skippedDuplicates: skipDuplicates ? duplicates : 0,
+      replaced,
+      attempted: toImport.length + toReplace.length,
+      skippedDuplicates: policy === "keep" ? 0 : duplicates - toReplace.length,
       skippedInvalid: report.errors.length,
       failure,
     });
@@ -229,8 +263,8 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
         <Button variant="secondary" onClick={() => setStage("choose")}>
           Back
         </Button>
-        <Button disabled={toImport.length === 0} onClick={() => void run()}>
-          {`Import ${toImport.length} question${toImport.length === 1 ? "" : "s"}`}
+        <Button disabled={total === 0} onClick={() => void run()}>
+          {`Import ${total} question${total === 1 ? "" : "s"}`}
         </Button>
       </>
     ) : stage === "done" && outcome?.failure && loaded ? (
@@ -463,8 +497,8 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
                 <input
                   type="radio"
                   name="dup"
-                  checked={skipDuplicates}
-                  onChange={() => setSkipDuplicates(true)}
+                  checked={policy === "skip"}
+                  onChange={() => setPolicy("skip")}
                   className="size-4 accent-[var(--lv-accent)]"
                 />
                 Skip them
@@ -473,12 +507,24 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
                 <input
                   type="radio"
                   name="dup"
-                  checked={!skipDuplicates}
-                  onChange={() => setSkipDuplicates(false)}
+                  checked={policy === "keep"}
+                  onChange={() => setPolicy("keep")}
                   className="size-4 accent-[var(--lv-accent)]"
                 />
                 Import them anyway
               </label>
+              {inBank > 0 && (
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="dup"
+                    checked={policy === "replace"}
+                    onChange={() => setPolicy("replace")}
+                    className="size-4 accent-[var(--lv-accent)]"
+                  />
+                  Replace the ones already in my bank
+                </label>
+              )}
             </fieldset>
           )}
           {report.errors.length > 0 && (
@@ -554,11 +600,13 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
             </p>
           ) : (
             <p role="status" className="m-0 text-lg font-semibold">
-              Imported {outcome.imported} question{outcome.imported === 1 ? "" : "s"}.
+              Imported {outcome.imported + outcome.replaced} question
+              {outcome.imported + outcome.replaced === 1 ? "" : "s"}.
             </p>
           )}
           <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0 sm:grid-cols-4">
             <Tile value={outcome.imported} label="imported" />
+            {outcome.replaced > 0 && <Tile value={outcome.replaced} label="replaced" />}
             <Tile value={outcome.skippedDuplicates} label="duplicates skipped" />
             <Tile value={outcome.skippedInvalid} label="invalid skipped" />
             <Tile

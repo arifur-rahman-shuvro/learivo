@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Button, ProgressRing, Spinner } from "../../../design-system/index.ts";
+import { Badge, Button, ProgressRing, RichText, Spinner } from "../../../design-system/index.ts";
 import { errorText } from "../../question-bank/ui/bank.tsx";
 import { TYPE_LABELS } from "../../question-bank/domain/model.ts";
 import type { AttemptWithItems } from "../data/repo.ts";
@@ -221,9 +221,7 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
                     {i.snapshot.explanation.trim() !== "" && (
                       <div className="rounded-control border border-line bg-surface-2 p-3.5">
                         <p className="m-0 mb-1 text-sm font-semibold">Explanation</p>
-                        <p className="m-0 whitespace-pre-wrap break-words text-sm">
-                          {i.snapshot.explanation}
-                        </p>
+                        <RichText className="text-sm" text={i.snapshot.explanation} />
                       </div>
                     )}
                   </div>

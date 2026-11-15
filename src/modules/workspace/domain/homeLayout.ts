@@ -5,6 +5,7 @@ export const HOME_SECTIONS = [
   { id: "goal", label: "Daily goal" },
   { id: "weak", label: "Weak areas" },
   { id: "recent", label: "Recent sessions" },
+  { id: "exam", label: "Exam countdown" },
 ] as const;
 
 export type HomeSectionId = (typeof HOME_SECTIONS)[number]["id"];

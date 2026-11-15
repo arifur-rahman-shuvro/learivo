@@ -100,3 +100,7 @@ Follow-up (2026-11-14), owner request: delete and clear data.
 - Multiple answer with k correct: each correct pick earns 1/k; a wrong pick cancels one correct pick (ticking everything earns 0).
 - Negative marking uses the same units (a wrong statement costs 1/5 of the penalty, a wrong pick 1/k).
 - Insights and the revision queue treat "partly correct" as not fully correct.
+
+## Follow-up: remaining Phase 0–8 items
+- Done: FK covering indexes (M8), import "Replace" policy, note search, safe rich text (bold, italic, code, bullet lists) in notes and explanations, exam countdown with a daily pace on Home (M9), crash reporting wired but off until a Sentry DSN is provided at build time (no personal data is sent).
+- Owner-only / unavailable: backup secrets (see RUNBOOK), a separate staging Supabase project (free-plan limit), leaked-password protection (paid Supabase setting), real-user, screen-reader and penetration tests.

@@ -8,4 +8,6 @@ export const config = {
   supabasePublishableKey:
     import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ??
     "sb_publishable_swo9z1VNBvDjvrjt12FzJQ_ldW8crRa",
+  /** Error reporting stays off unless a Sentry DSN is set at build time. A DSN is not a secret. */
+  sentryDsn: (import.meta.env.VITE_SENTRY_DSN as string | undefined) ?? "",
 } as const;

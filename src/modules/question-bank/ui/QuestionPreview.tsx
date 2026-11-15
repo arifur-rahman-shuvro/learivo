@@ -1,3 +1,4 @@
+import { RichText } from "../../../design-system/index.ts";
 import { BLANK_PATTERN, TYPE_LABELS, type QuestionInput } from "../domain/model.ts";
 
 /** A question as a student will see it. Read-only. */
@@ -42,7 +43,7 @@ export function QuestionPreview({ question: q }: { question: QuestionInput }) {
       {q.explanation && (
         <div className="rounded-control border border-line bg-surface-2 p-3 text-sm">
           <div className="mb-1 font-semibold">Explanation</div>
-          <p className="m-0 whitespace-pre-wrap">{q.explanation}</p>
+          <RichText text={q.explanation} />
         </div>
       )}
     </div>

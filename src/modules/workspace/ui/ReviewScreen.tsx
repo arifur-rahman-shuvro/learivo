@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Button, EmptyState, Spinner } from "../../../design-system/index.ts";
+import { Badge, Button, EmptyState, RichText, Spinner } from "../../../design-system/index.ts";
 import type { QuestionRecord } from "../../question-bank/data/repo.ts";
 import { TYPE_LABELS } from "../../question-bank/domain/model.ts";
 import { errorText, useBank } from "../../question-bank/ui/bank.tsx";
@@ -44,6 +44,7 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
   const [tab, setTab] = useState<Tab>("due");
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState<string>();
+  const [noteSearch, setNoteSearch] = useState("");
   const [notice, setNotice] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [noteFor, setNoteFor] = useState<null | { questionId: string | null; note: Note | null }>(
@@ -127,6 +128,15 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
       setError(errorText(e));
     }
   }
+
+  const shownNotes = useMemo(() => {
+    const needle = noteSearch.trim().toLowerCase();
+    if (!data || needle === "") return data?.notes ?? [];
+    return data.notes.filter((n) => {
+      const q = n.questionId ? data.questions.get(n.questionId) : null;
+      return `${n.title}\n${n.body}\n${q?.stem ?? ""}`.toLowerCase().includes(needle);
+    });
+  }, [data, noteSearch]);
 
   const counts: Record<Tab, number> = {
     due: due.length,
@@ -313,35 +323,51 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
             />
           </div>
         ) : (
-          <ul className="m-0 flex list-none flex-col gap-2 p-0">
-            {data.notes.map((n) => {
-              const q = n.questionId ? data.questions.get(n.questionId) : null;
-              return (
-                <li key={n.id} className="lv-card flex flex-col gap-2 p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="m-0 truncate font-semibold">
-                        {n.title || (q ? q.stem : "Note")}
-                      </p>
-                      {q && n.title && (
-                        <p className="m-0 line-clamp-1 text-xs text-muted">{q.stem}</p>
-                      )}
+          <>
+            <div>
+              <label htmlFor="note-search" className="sr-only">
+                Search notes
+              </label>
+              <input
+                id="note-search"
+                type="search"
+                className="lv-input"
+                placeholder="Search notes"
+                value={noteSearch}
+                onChange={(e) => setNoteSearch(e.target.value)}
+              />
+            </div>
+            {shownNotes.length === 0 && (
+              <p className="m-0 text-sm text-muted">No notes match "{noteSearch.trim()}".</p>
+            )}
+            <ul className="m-0 flex list-none flex-col gap-2 p-0">
+              {shownNotes.map((n) => {
+                const q = n.questionId ? data.questions.get(n.questionId) : null;
+                return (
+                  <li key={n.id} className="lv-card flex flex-col gap-2 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="m-0 truncate font-semibold">
+                          {n.title || (q ? q.stem : "Note")}
+                        </p>
+                        {q && n.title && (
+                          <p className="m-0 line-clamp-1 text-xs text-muted">{q.stem}</p>
+                        )}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setNoteFor({ questionId: n.questionId, note: n })}
+                      >
+                        Edit
+                      </Button>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="secondary"
-                      onClick={() => setNoteFor({ questionId: n.questionId, note: n })}
-                    >
-                      Edit
-                    </Button>
-                  </div>
-                  <p className="m-0 line-clamp-4 whitespace-pre-wrap break-words text-sm">
-                    {n.body}
-                  </p>
-                </li>
-              );
-            })}
-          </ul>
+                    <RichText className="line-clamp-4 text-sm" text={n.body} />
+                  </li>
+                );
+              })}
+            </ul>
+          </>
         ))}
 
       {noteFor && (
@@ -451,7 +477,7 @@ function DueNow({
           {q.explanation.trim() !== "" && (
             <div className="rounded-control border border-line bg-surface-2 p-3.5">
               <p className="m-0 mb-1 text-sm font-semibold">Explanation</p>
-              <p className="m-0 whitespace-pre-wrap break-words text-sm">{q.explanation}</p>
+              <RichText className="text-sm" text={q.explanation} />
             </div>
           )}
           <div

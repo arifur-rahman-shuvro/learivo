@@ -1,3 +1,4 @@
+import { NO_EXAM, cleanExamTarget, type ExamTarget } from "../domain/examTarget.ts";
 import { DEFAULT_HOME_LAYOUT, cleanLayout, type HomeLayout } from "../domain/homeLayout.ts";
 import { newCard, type Card } from "../domain/scheduler.ts";
 import {
@@ -84,6 +85,14 @@ export class MemoryWorkspace implements WorkspaceRepo {
   async setDailyGoal(n: number) {
     if (!Number.isInteger(n) || n < 1 || n > 500) throw new Error("Choose a goal from 1 to 500.");
     this.goal = n;
+  }
+
+  private exam: ExamTarget = NO_EXAM;
+  async examTarget() {
+    return { ...this.exam };
+  }
+  async setExamTarget(target: ExamTarget) {
+    this.exam = cleanExamTarget(target);
   }
 
   async homeLayout() {

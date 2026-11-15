@@ -145,4 +145,20 @@ describe("Smart import", () => {
       expect(screen.getByRole("button", { name: "Check again and retry" })).toBeTruthy(),
     );
   });
+
+  it("can replace the questions already in the bank instead of adding copies", async () => {
+    const repo = new MemoryRepo();
+    await repo.create([{ ...blankQuestion("true_false"), stem: "Same", answer: TF_ANSWER }]);
+    open(repo);
+    paste(JSON.stringify([{ ...q("Same"), explanation: "Updated explanation" }, q("Brand new")]));
+    check();
+    await screen.findByText(/1 duplicate/);
+    fireEvent.click(screen.getByLabelText("Replace the ones already in my bank"));
+    fireEvent.click(screen.getByRole("button", { name: "Import 2 questions" }));
+    expect(await screen.findByText("Imported 2 questions.")).toBeTruthy();
+    expect(screen.getByText("replaced").previousSibling?.textContent).toBe("1");
+    const all = await repo.list({ ...(await import("../data/repo.ts")).DEFAULT_QUERY });
+    expect(all.total).toBe(2);
+    expect(all.items.find((x) => x.stem === "Same")!.explanation).toBe("Updated explanation");
+  });
 });

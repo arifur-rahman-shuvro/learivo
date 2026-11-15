@@ -49,3 +49,6 @@ A database with 50,000 questions, 8,000 sessions and 200,000 answers was dumped 
 | Which questions were answered | about 200 requests | one database function (M6) |
 
 In the browser, with 20,000 questions the list opens in about 1.5 s and shows 50 at a time. These numbers are from a local database on this machine; real Supabase adds network time.
+
+## Crash reporting (Sentry), optional
+Off by default. To turn it on: create a free Sentry account and a "Browser JavaScript" project, copy its DSN (a DSN is public, not a secret), and add it in Cloudflare Pages > learivo > Settings > Variables and Secrets as `VITE_SENTRY_DSN`, then redeploy. Events carry no user, request or breadcrumb data.

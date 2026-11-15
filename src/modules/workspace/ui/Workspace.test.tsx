@@ -346,3 +346,54 @@ describe("Home dashboard", () => {
     expect((await workspace.homeLayout()).hidden).toEqual(["goal"]);
   });
 });
+
+describe("Review: notes search", () => {
+  it("filters notes by title, body or question text", async () => {
+    await setup(
+      (nav) => <ReviewScreen onNavigate={nav} />,
+      async ({ workspace }) => {
+        await workspace.saveNote({
+          id: null,
+          questionId: null,
+          title: "Cardiac",
+          body: "**Pumps** blood",
+        });
+        await workspace.saveNote({
+          id: null,
+          questionId: null,
+          title: "Renal",
+          body: "Filters blood",
+        });
+      },
+    );
+    fireEvent.click(await screen.findByRole("tab", { name: /Notes/ }));
+    expect(await screen.findByText("Cardiac")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Search notes"), { target: { value: "renal" } });
+    expect(screen.queryByText("Cardiac")).toBeNull();
+    expect(screen.getByText("Renal")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Search notes"), { target: { value: "zzz" } });
+    expect(screen.getByText(/No notes match/)).toBeTruthy();
+  });
+});
+
+describe("Home: exam countdown", () => {
+  it("sets an exam date, shows the days left and lets it be removed", async () => {
+    const { workspace } = await setup(
+      () => <HomeDashboard onNavigate={() => undefined} />,
+      async ({ bank }) => {
+        await bank.create([tf("Q1"), tf("Q2")]);
+      },
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "Set exam date" }));
+    fireEvent.change(screen.getByLabelText("Exam name"), { target: { value: "Final MBBS" } });
+    const soon = new Date(Date.now() + 10 * 86_400_000);
+    const iso = `${soon.getFullYear()}-${String(soon.getMonth() + 1).padStart(2, "0")}-${String(soon.getDate()).padStart(2, "0")}`;
+    fireEvent.change(screen.getByLabelText("Exam date"), { target: { value: iso } });
+    fireEvent.click(screen.getByRole("button", { name: "Save exam" }));
+    expect(await screen.findByText("10 days")).toBeTruthy();
+    expect(screen.getByText(/until Final MBBS/)).toBeTruthy();
+    expect((await workspace.examTarget()).date).toBe(iso);
+    fireEvent.click(screen.getByRole("button", { name: "Remove exam" }));
+    expect(await screen.findByRole("button", { name: "Set exam date" })).toBeTruthy();
+  });
+});

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Dialog, Spinner } from "../../../design-system/index.ts";
+import { Button, Dialog, RichText, Spinner } from "../../../design-system/index.ts";
 import { errorText } from "../../question-bank/ui/bank.tsx";
 import { TYPE_LABELS } from "../../question-bank/domain/model.ts";
 import type { AttemptWithItems } from "../data/repo.ts";
@@ -261,7 +261,7 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
           {locked && snap.explanation.trim() !== "" && (
             <div className="rounded-control border border-line bg-surface-2 p-3.5">
               <p className="m-0 mb-1 text-sm font-semibold">Explanation</p>
-              <p className="m-0 whitespace-pre-wrap break-words text-sm">{snap.explanation}</p>
+              <RichText className="text-sm" text={snap.explanation} />
             </div>
           )}
           <div className="flex flex-wrap items-center gap-2">

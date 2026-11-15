@@ -19,7 +19,7 @@ describe("home layout", () => {
       order: ["goal", "bogus", "goal", "focus"],
       hidden: ["weak", "weak", "x"],
     });
-    expect(l.order).toEqual(["goal", "focus", "numbers", "weak", "recent"]);
+    expect(l.order).toEqual(["goal", "focus", "numbers", "weak", "recent", "exam"]);
     expect(l.hidden).toEqual(["weak"]);
   });
 
@@ -27,7 +27,7 @@ describe("home layout", () => {
     const up = moveSection(DEFAULT_HOME_LAYOUT, "goal", -1);
     expect(up.order.slice(0, 3)).toEqual(["focus", "goal", "numbers"]);
     expect(moveSection(DEFAULT_HOME_LAYOUT, "focus", -1)).toBe(DEFAULT_HOME_LAYOUT);
-    expect(moveSection(DEFAULT_HOME_LAYOUT, "recent", 1)).toBe(DEFAULT_HOME_LAYOUT);
+    expect(moveSection(DEFAULT_HOME_LAYOUT, "exam", 1)).toBe(DEFAULT_HOME_LAYOUT);
   });
 
   it("hides and shows sections", () => {
