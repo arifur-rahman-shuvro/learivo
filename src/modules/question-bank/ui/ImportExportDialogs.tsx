@@ -8,6 +8,14 @@ import {
   type ImportFormat,
   type ImportReport,
 } from "../domain/importExport.ts";
+import {
+  NO_DEFAULTS,
+  applyDefaults,
+  buildFixPrompt,
+  hasDefaults,
+  type Defaults,
+} from "../domain/promptBuilder.ts";
+import { PromptMaker } from "./PromptMaker.tsx";
 import { blankQuestion, type QuestionInput } from "../domain/model.ts";
 import { errorText, useBank } from "./bank.tsx";
 import { contentHash } from "../domain/hash.ts";
@@ -56,7 +64,7 @@ const EXAMPLE: QuestionInput = {
 };
 
 type Stage = "choose" | "review" | "importing" | "done";
-type Source = "paste" | "upload";
+type Source = "paste" | "upload" | "prompt";
 
 interface Outcome {
   imported: number;
@@ -130,6 +138,53 @@ function Tile({
   );
 }
 
+function DefaultsForm({ value, onChange }: { value: Defaults; onChange: (d: Defaults) => void }) {
+  const [year, setYear] = useState(value.examYear === null ? "" : String(value.examYear));
+  const set = (patch: Partial<Defaults>) => onChange({ ...value, ...patch });
+  const text = (id: string, label: string, v: string, f: (s: string) => void) => (
+    <div className="flex flex-col gap-1">
+      <label htmlFor={id} className="text-sm font-semibold">
+        {label}
+      </label>
+      <input id={id} className="lv-input" value={v} onChange={(e) => f(e.target.value)} />
+    </div>
+  );
+  const [subject = "", chapter = "", ...deeper] = value.path;
+  const setPath = (sub: string, chap: string) =>
+    set({ path: sub.trim() === "" ? [] : chap.trim() === "" ? [sub] : [sub, chap, ...deeper] });
+  return (
+    <details className="rounded-control border border-line bg-surface-2 p-3 text-sm">
+      <summary className="cursor-pointer font-semibold">
+        Add to every question{hasDefaults(value) ? " (on)" : ""}
+      </summary>
+      <div className="mt-3 flex flex-col gap-3">
+        <p className="m-0 text-muted">
+          Fills only what a question is missing. Tags are added to the ones it already has.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {text("dv-subject", "Subject", subject, (v) => setPath(v, chapter))}
+          {text("dv-chapter", "Chapter", chapter, (v) => setPath(subject, v))}
+          {text("dv-tags", "Tags (comma separated)", value.tags.join(", "), (v) =>
+            set({
+              tags: v
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean),
+            }),
+          )}
+          {text("dv-exam", "Exam name", value.examName, (v) => set({ examName: v }))}
+          {text("dv-inst", "Institution", value.institution, (v) => set({ institution: v }))}
+          {text("dv-year", "Exam year", year, (v) => {
+            setYear(v);
+            set({ examYear: /^\d{4}$/.test(v.trim()) ? Number(v) : null });
+          })}
+          {text("dv-source", "Source", value.source, (v) => set({ source: v }))}
+        </div>
+      </div>
+    </details>
+  );
+}
+
 export function ImportDialog({ onClose }: { onClose: () => void }) {
   const { repo, refresh } = useBank();
   const [stage, setStage] = useState<Stage>("choose");
@@ -144,6 +199,8 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
   const [shown, setShown] = useState(5);
   const [checking, setChecking] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [fixCopied, setFixCopied] = useState(false);
+  const [defaults, setDefaults] = useState<Defaults>(NO_DEFAULTS);
   const [error, setError] = useState<string>();
   const input = useRef<HTMLInputElement>(null);
 
@@ -204,7 +261,20 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
     }
   }
 
-  const rows = report?.ok ? report.rows : [];
+  async function copyFix() {
+    if (!report?.ok) return;
+    try {
+      await navigator.clipboard.writeText(buildFixPrompt(report.errors));
+      setFixCopied(true);
+      setTimeout(() => setFixCopied(false), 2500);
+    } catch {
+      setError("Could not copy the fix request.");
+    }
+  }
+
+  const rows = (report?.ok ? report.rows : []).map((r) =>
+    hasDefaults(defaults) ? { ...r, input: applyDefaults(r.input, defaults) } : r,
+  );
   const toImport = rows.filter((r) => (policy === "keep" ? true : r.duplicate === null));
   const toReplace = policy === "replace" ? rows.filter((r) => r.duplicate === "bank") : [];
   const total = toImport.length + toReplace.length;
@@ -291,12 +361,13 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
           <div
             role="tablist"
             aria-label="Import method"
-            className="grid grid-cols-2 gap-1 rounded-control bg-surface-2 p-1"
+            className="grid grid-cols-3 gap-1 rounded-control bg-surface-2 p-1"
           >
             {(
               [
                 ["paste", "Paste JSON"],
                 ["upload", "Upload file"],
+                ["prompt", "Make a prompt"],
               ] as const
             ).map(([k, label]) => (
               <button
@@ -319,7 +390,21 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
             ))}
           </div>
 
-          {source === "paste" ? (
+          {source === "prompt" ? (
+            <div
+              role="tabpanel"
+              id="import-panel-prompt"
+              aria-labelledby="import-tab-prompt"
+              className="flex flex-col gap-3"
+            >
+              <PromptMaker />
+              <div>
+                <Button variant="secondary" onClick={() => setSource("paste")}>
+                  I have the JSON, go to Paste
+                </Button>
+              </div>
+            </div>
+          ) : source === "paste" ? (
             <div
               role="tabpanel"
               id="import-panel-paste"
@@ -455,7 +540,7 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
           </p>
           <div>
             <Button variant="secondary" onClick={() => setStage("choose")}>
-              {source === "paste" ? "Edit the pasted text" : "Choose another file"}
+              {source === "upload" ? "Choose another file" : "Edit the pasted text"}
             </Button>
           </div>
         </div>
@@ -536,21 +621,32 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
               <ul className="m-0 mt-2 flex max-h-48 list-none flex-col gap-1 overflow-y-auto p-0">
                 {report.errors.slice(0, 100).map((e, i) => (
                   <li key={i} className="text-danger">
-                    {source === "paste" ? "Question" : "Row"} {e.row}: {e.message}
+                    {source === "upload" ? "Row" : "Question"} {e.row}: {e.message}
                   </li>
                 ))}
                 {report.errors.length > 100 && (
                   <li className="text-muted">…and {report.errors.length - 100} more.</li>
                 )}
               </ul>
+              <div className="mt-2 flex flex-col gap-1">
+                <div>
+                  <Button variant="secondary" size="sm" onClick={() => void copyFix()}>
+                    {fixCopied ? "Copied" : "Copy a fix request for the AI"}
+                  </Button>
+                </div>
+                <span className="text-xs text-muted">
+                  Paste it in the same chat. The AI sends back only the broken questions.
+                </span>
+              </div>
             </details>
           )}
+          {report.rows.length > 0 && <DefaultsForm value={defaults} onChange={setDefaults} />}
           {report.rows.length > 0 && (
             <section aria-label="Preview" className="flex flex-col gap-2 text-sm">
               <h3 className="m-0 text-base font-semibold">
                 Preview ({Math.min(shown, report.rows.length)} of {report.rows.length})
               </h3>
-              {report.rows.slice(0, shown).map((r) => (
+              {rows.slice(0, shown).map((r) => (
                 <div key={r.row} className="rounded-control border border-line p-3">
                   <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted">
                     <span>#{r.row}</span>

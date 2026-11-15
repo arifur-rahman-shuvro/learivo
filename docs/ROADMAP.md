@@ -113,3 +113,10 @@ Follow-up (2026-11-14), owner request: delete and clear data.
 - Review > Glossary: own terms and meanings with search; matching words are underlined (hover or focus to read the meaning) in explanations, notes and flashcards.
 - Insights > Achievements: 11 milestones worked out from the student's own sessions (answers, streaks, exams, clean sheets, accuracy). Nothing is shared.
 - Not built, by the owner's choice: AI helpers and sharing (these need the Go server and an outside AI service).
+
+## Follow-up: smarter import prompts
+
+- Import > Make a prompt: a form (subject, chapter, topic, subtopic, exam, institution, year, source, tags, level, question types, difficulty, count, explanation length, languages, extra wishes) builds a ready-to-paste prompt for ChatGPT or any AI chat. The student's details are written onto every question. The form is remembered on this device only.
+- Two modes: write new questions, or copy existing ones from photos, PDF pages or text (keeps the wording, solves a missing answer key and tags it `check-answer`, pads or trims to 5 options and tags `check-options`, describes pictures in words and tags `had-image`, because Learivo does not store images).
+- Review step: "Add to every question" fills subject, chapter, tags, exam, institution, year and source only where a question lacks them.
+- Invalid questions: "Copy a fix request for the AI" builds a message asking for corrected JSON for only the failing questions.

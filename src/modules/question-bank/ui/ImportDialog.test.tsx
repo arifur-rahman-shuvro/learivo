@@ -161,4 +161,62 @@ describe("Smart import", () => {
     expect(all.total).toBe(2);
     expect(all.items.find((x) => x.stem === "Same")!.explanation).toBe("Updated explanation");
   });
+
+  describe("prompt maker and fixes", () => {
+    const copied: string[] = [];
+    const clip = () => {
+      copied.length = 0;
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: { writeText: (t: string) => (copied.push(t), Promise.resolve()) },
+      });
+    };
+
+    it("builds a prompt from the form and copies it", async () => {
+      clip();
+      open();
+      fireEvent.click(screen.getByRole("tab", { name: "Make a prompt" }));
+      fireEvent.change(screen.getByLabelText("Subject"), { target: { value: "Anatomy" } });
+      fireEvent.change(screen.getByLabelText("Topic"), { target: { value: "Heart" } });
+      fireEvent.change(screen.getByLabelText("Exam year"), { target: { value: "2024" } });
+      const box = screen.getByRole("region", { name: "Your prompt" });
+      expect(box.textContent).toContain('"subject": "Anatomy"');
+      expect(box.textContent).toContain("Anatomy > Heart");
+      fireEvent.click(screen.getByLabelText(/Copy existing questions/));
+      expect(box.textContent).toContain("Do not write new questions");
+      fireEvent.click(screen.getByRole("button", { name: "Copy prompt" }));
+      expect(await screen.findByRole("button", { name: "Copied" })).toBeTruthy();
+      expect(copied[0]).toContain('"exam_year": "2024"');
+    });
+
+    it("adds details to every question that lacks them and keeps the ones it has", async () => {
+      const repo = open();
+      paste(JSON.stringify([q("No subject"), { ...q("Has subject"), subject: "Physiology" }]));
+      check();
+      await screen.findByRole("region", { name: "Preview" });
+      fireEvent.click(screen.getByText(/Add to every question/));
+      fireEvent.change(screen.getByLabelText("Subject"), { target: { value: "Anatomy" } });
+      fireEvent.change(screen.getByLabelText("Tags (comma separated)"), {
+        target: { value: "imported" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: "Import 2 questions" }));
+      await screen.findByText("Imported 2 questions.");
+      const items = (await repo.list({ ...(await import("../data/repo.ts")).DEFAULT_QUERY })).items;
+      const by = Object.fromEntries(items.map((x) => [x.stem, x]));
+      expect(by["No subject"]?.path).toEqual(["Anatomy"]);
+      expect(by["Has subject"]?.path).toEqual(["Physiology"]);
+      expect(by["Has subject"]?.tags).toContain("imported");
+    });
+
+    it("copies a fix request listing the invalid questions", async () => {
+      clip();
+      open();
+      paste(JSON.stringify([q("Good"), { type: "sba", stem: "Bad one", options: [] }]));
+      check();
+      fireEvent.click(await screen.findByRole("button", { name: /Copy a fix request/ }));
+      expect(await screen.findByRole("button", { name: "Copied" })).toBeTruthy();
+      expect(copied[0]).toContain("Question 2");
+      expect(copied[0]).toContain("Fix only these questions");
+    });
+  });
 });
