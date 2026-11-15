@@ -22,17 +22,17 @@ Each phase ends with a written report and owner approval before the next begins.
 
 ## Status and deviations (updated 2026-11-15)
 
-| Phase | Status                                                                                      |
-| ----- | ------------------------------------------------------------------------------------------- |
-| 0-1   | Done (blueprint)                                                                            |
-| 2     | Done, and the app shell and Home screen were redesigned afterwards at the owner's request   |
-| 3     | Done, except the items below. Go service live on Render free (owner-checked 2026-11-12)     |
-| 4     | Done; owner phone-tested and approved (2026-11-13)                                          |
-| 5     | Done; owner phone-tested and approved (2026-11-13)                                          |
-| 6     | Done; owner phone-tested and approved (2026-11-13)                                          |
-| 7     | Done; M5 applied; owner checked everything (2026-11-15)                                     |
-| 8     | Done; M6 applied; owner checked everything (2026-11-15). Open items listed below            |
-| 9     | Done in part: flashcards, glossary, achievements (AI helpers and sharing deferred by owner) |
+| Phase | Status                                                                                                                     |
+| ----- | -------------------------------------------------------------------------------------------------------------------------- |
+| 0-1   | Done (blueprint)                                                                                                           |
+| 2     | Done, and the app shell and Home screen were redesigned afterwards at the owner's request                                  |
+| 3     | Done, except the items below. Go service live on Render free (owner-checked 2026-11-12)                                    |
+| 4     | Done; owner phone-tested and approved (2026-11-13)                                                                         |
+| 5     | Done; owner phone-tested and approved (2026-11-13)                                                                         |
+| 6     | Done; owner phone-tested and approved (2026-11-13)                                                                         |
+| 7     | Done; M5 applied; owner checked everything (2026-11-15)                                                                    |
+| 8     | Done; M6 applied; owner checked everything (2026-11-15). Open items listed below                                           |
+| 9     | Done in part: flashcards, glossary, achievements; owner phone-tested 2026-11-15 (AI helpers and sharing deferred by owner) |
 
 Phase 3 items not done, with reasons:
 
@@ -47,7 +47,7 @@ Phase 4 deviations from the blueprint:
 - Question create, edit, search and bulk actions go from the browser to Supabase under row-level security, not through the Go service. The Go database connection stays deferred.
 - Answers are stored as validated JSON (`answer_spec`) instead of a separate options table.
 - Statements and explanations are plain text; rich text comes later.
-- Import files are parsed in the browser and inserted in batches of 500. The duplicate policies are Skip and Import anyway; Replace is not built.
+- Import files are parsed in the browser and inserted in batches of 500. The duplicate policies are Skip, Import anyway and Replace.
 - Search uses a generated full-text column (simple dictionary), which handles Bengali.
 - Not checked in a real browser session against production: the owner must try the screens at https://learivo.pages.dev.
 
@@ -65,8 +65,8 @@ Phase 6 notes:
 - The scheduler follows the published FSRS-4.5 memory model with its default parameters. It is not tuned to the student's own history yet. After Again a card returns in 10 minutes.
 - Insights: overview with a 30-day accuracy trend, accuracy by subject or chapter (weakest first), exam scores over time, study time for 14 days. Every chart has a table view. They are worked out from the latest 5000 answers and 200 finished sessions.
 - Home shows due cards, daily goal (stored in the cloud, 1 to 500), day streak, weak areas (under 70% after 5 or more answers) and recent sessions. A streak that was alive yesterday still counts today.
-- Notes: one note per question, plus free notes. Rich text and note search are not built.
-- Planner basics are limited to the daily goal and streak. A calendar planner and exam countdown are not built.
+- Notes: one note per question, plus free notes. Note search and simple rich text were added later.
+- Planner basics are limited to the daily goal and streak. The exam countdown was added later; a calendar planner is not built.
 - Practice can now draw from bookmarked questions.
 
 Phase 7 notes:
@@ -120,3 +120,7 @@ Follow-up (2026-11-14), owner request: delete and clear data.
 - Two modes: write new questions, or copy existing ones from photos, PDF pages or text (keeps the wording, solves a missing answer key and tags it `check-answer`, pads or trims to 5 options and tags `check-options`, describes pictures in words and tags `had-image`, because Learivo does not store images).
 - Review step: "Add to every question" fills subject, chapter, tags, exam, institution, year and source only where a question lacks them.
 - Invalid questions: "Copy a fix request for the AI" builds a message asking for corrected JSON for only the failing questions.
+
+## Owner phone check
+
+- 2026-11-15: owner reported that everything (5-option marking, Phase 9, smart import prompts) was tested on the phone and passed.
