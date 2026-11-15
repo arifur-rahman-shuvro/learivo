@@ -95,6 +95,7 @@ Follow-up (2026-11-14), owner request: delete and clear data.
 - Not added: deleting the account itself, and deleting a single question from inside the editor (select it in the list and tap Delete).
 
 ## Follow-up: five-option questions and partial marking (M7)
+
 - Short answer removed. sba / single_choice / multi_select / true_false always have exactly 5 options (enforced in the app and by the database).
 - True/false: a lead-in question plus 5 statements, each with its own True/False key. 0.2 marks per statement correctly marked.
 - Multiple answer with k correct: each correct pick earns 1/k; a wrong pick cancels one correct pick (ticking everything earns 0).
@@ -102,5 +103,6 @@ Follow-up (2026-11-14), owner request: delete and clear data.
 - Insights and the revision queue treat "partly correct" as not fully correct.
 
 ## Follow-up: remaining Phase 0–8 items
+
 - Done: FK covering indexes (M8), import "Replace" policy, note search, safe rich text (bold, italic, code, bullet lists) in notes and explanations, exam countdown with a daily pace on Home (M9), crash reporting wired but off until a Sentry DSN is provided at build time (no personal data is sent).
 - Owner-only / unavailable: backup secrets (see RUNBOOK), a separate staging Supabase project (free-plan limit), leaked-password protection (paid Supabase setting), real-user, screen-reader and penetration tests.
