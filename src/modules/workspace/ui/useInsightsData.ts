@@ -13,7 +13,7 @@ export function toSession(a: Attempt): SessionSummary {
     marksCorrect: a.marksCorrect,
     score: a.score ?? 0,
     secondsSpent: a.secondsSpent,
-    answered: (a.correct ?? 0) + (a.wrong ?? 0),
+    answered: (a.correct ?? 0) + (a.partial ?? 0) + (a.wrong ?? 0),
     correct: a.correct ?? 0,
   };
 }

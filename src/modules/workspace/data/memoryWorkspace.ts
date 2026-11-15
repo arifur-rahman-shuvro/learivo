@@ -1,3 +1,12 @@
+import {
+  cleanFlashcard,
+  cleanTerm,
+  sortTerms,
+  type Flashcard,
+  type FlashcardInput,
+  type GlossaryTerm,
+  type TermInput,
+} from "../domain/cards.ts";
 import { NO_EXAM, cleanExamTarget, type ExamTarget } from "../domain/examTarget.ts";
 import { DEFAULT_HOME_LAYOUT, cleanLayout, type HomeLayout } from "../domain/homeLayout.ts";
 import { newCard, type Card } from "../domain/scheduler.ts";
@@ -85,6 +94,51 @@ export class MemoryWorkspace implements WorkspaceRepo {
   async setDailyGoal(n: number) {
     if (!Number.isInteger(n) || n < 1 || n > 500) throw new Error("Choose a goal from 1 to 500.");
     this.goal = n;
+  }
+
+  private cardsMap = new Map<string, Flashcard>();
+  private termMap = new Map<string, GlossaryTerm>();
+
+  async flashcards() {
+    return structuredClone([...this.cardsMap.values()].reverse());
+  }
+  async saveFlashcard(input: FlashcardInput) {
+    const clean = cleanFlashcard(input);
+    const existing = clean.id ? this.cardsMap.get(clean.id) : undefined;
+    if (clean.id && !existing) throw new Error("That card no longer exists.");
+    const id = existing?.id ?? `flash-${++this.seq}`;
+    const card: Flashcard = existing
+      ? { ...existing, front: clean.front, back: clean.back }
+      : { id, front: clean.front, back: clean.back, ...newCard(new Date()) };
+    this.cardsMap.set(id, card);
+    return structuredClone(card);
+  }
+  async rateFlashcard(id: string, card: Card) {
+    const existing = this.cardsMap.get(id);
+    if (!existing) throw new Error("That card no longer exists.");
+    this.cardsMap.set(id, { ...existing, ...structuredClone(card) });
+  }
+  async deleteFlashcard(id: string) {
+    this.cardsMap.delete(id);
+  }
+
+  async glossary() {
+    return sortTerms(structuredClone([...this.termMap.values()]));
+  }
+  async saveTerm(input: TermInput) {
+    const clean = cleanTerm(input);
+    const clash = [...this.termMap.values()].find(
+      (t) => t.id !== clean.id && t.term.toLowerCase() === clean.term.toLowerCase(),
+    );
+    if (clash) throw new Error("You already have a term with that name.");
+    const id = clean.id ?? `term-${++this.seq}`;
+    if (clean.id && !this.termMap.has(clean.id)) throw new Error("That term no longer exists.");
+    const term: GlossaryTerm = { id, term: clean.term, definition: clean.definition };
+    this.termMap.set(id, term);
+    return structuredClone(term);
+  }
+  async deleteTerm(id: string) {
+    this.termMap.delete(id);
   }
 
   private exam: ExamTarget = NO_EXAM;

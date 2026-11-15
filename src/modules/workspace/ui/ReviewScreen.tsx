@@ -1,5 +1,6 @@
+import GlossaryText from "./GlossaryText.tsx";
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Button, EmptyState, RichText, Spinner } from "../../../design-system/index.ts";
+import { Badge, Button, EmptyState, Spinner } from "../../../design-system/index.ts";
 import type { QuestionRecord } from "../../question-bank/data/repo.ts";
 import { TYPE_LABELS } from "../../question-bank/domain/model.ts";
 import { errorText, useBank } from "../../question-bank/ui/bank.tsx";
@@ -18,15 +19,19 @@ import {
   review,
   type Rating,
 } from "../domain/scheduler.ts";
+import FlashcardsPanel from "./FlashcardsPanel.tsx";
+import GlossaryPanel from "./GlossaryPanel.tsx";
 import NoteDialog from "./NoteDialog.tsx";
 import { useWorkspace } from "./workspace.tsx";
 
-type Tab = "due" | "mistakes" | "bookmarks" | "notes";
+type Tab = "due" | "mistakes" | "bookmarks" | "notes" | "flashcards" | "glossary";
 const TABS: [Tab, string][] = [
   ["due", "Due now"],
   ["mistakes", "Mistakes"],
   ["bookmarks", "Bookmarks"],
   ["notes", "Notes"],
+  ["flashcards", "Flashcards"],
+  ["glossary", "Glossary"],
 ];
 
 interface Data {
@@ -143,6 +148,8 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
     mistakes: mistakes.length,
     bookmarks: marked.length,
     notes: data?.notes.length ?? 0,
+    flashcards: 0,
+    glossary: 0,
   };
 
   return (
@@ -208,6 +215,9 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
           <Spinner />
         </div>
       )}
+
+      {tab === "flashcards" && <FlashcardsPanel />}
+      {tab === "glossary" && <GlossaryPanel />}
 
       {data && tab === "due" && (
         <DueNow
@@ -362,7 +372,7 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
                         Edit
                       </Button>
                     </div>
-                    <RichText className="line-clamp-4 text-sm" text={n.body} />
+                    <GlossaryText className="line-clamp-4 text-sm" text={n.body} />
                   </li>
                 );
               })}
@@ -477,7 +487,7 @@ function DueNow({
           {q.explanation.trim() !== "" && (
             <div className="rounded-control border border-line bg-surface-2 p-3.5">
               <p className="m-0 mb-1 text-sm font-semibold">Explanation</p>
-              <RichText className="text-sm" text={q.explanation} />
+              <GlossaryText className="text-sm" text={q.explanation} />
             </div>
           )}
           <div

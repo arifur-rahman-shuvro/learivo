@@ -397,3 +397,103 @@ describe("Home: exam countdown", () => {
     expect(await screen.findByRole("button", { name: "Set exam date" })).toBeTruthy();
   });
 });
+
+describe("Insights: achievements", () => {
+  it("shows earned and locked milestones from the student's own sessions", async () => {
+    await setup(
+      (n) => <InsightsScreen onNavigate={n} />,
+      async ({ bank, attempts }) => {
+        const [a] = await bank.create([tf("A1")]);
+        await finished(attempts, [{ id: a!, stem: "A1", right: true }], "exam");
+      },
+    );
+    fireEvent.click(await screen.findByRole("tab", { name: "Achievements" }));
+    const list = await screen.findByRole("region", { name: "Achievements" });
+    const first = within(list).getByText("First step").closest("li")!;
+    expect(within(first).getByText("Earned")).toBeTruthy();
+    const exam = within(list).getByText("First exam").closest("li")!;
+    expect(within(exam).getByText("Earned")).toBeTruthy();
+    const hundred = within(list).getByText("Hundred").closest("li")!;
+    expect(within(hundred).getByText("Locked")).toBeTruthy();
+    expect(within(hundred).getByRole("progressbar").getAttribute("aria-label")).toBe(
+      "Hundred: 1 of 100",
+    );
+  });
+});
+
+describe("Review: flashcards", () => {
+  it("writes a card, studies it, rates it, then edits and deletes it", async () => {
+    const { workspace } = await setup((n) => <ReviewScreen onNavigate={n} />);
+    fireEvent.click(await screen.findByRole("tab", { name: /Flashcards/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Write your first card" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save card" }));
+    expect(await screen.findByText("Write the front of the card.")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Front"), { target: { value: "Heart chambers?" } });
+    fireEvent.change(screen.getByLabelText("Back"), { target: { value: "**Four**" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save card" }));
+
+    const study = await screen.findByRole("region", { name: "Flashcard" });
+    expect(within(study).getByText("Heart chambers?")).toBeTruthy();
+    expect(within(study).queryByText("Four")).toBeNull();
+    fireEvent.click(within(study).getByRole("button", { name: "Show answer" }));
+    expect(within(study).getByText("Four").tagName).toBe("STRONG");
+    fireEvent.click(within(study).getByRole("button", { name: /^Good/ }));
+    await screen.findByText("No cards due");
+    const [saved] = await workspace.flashcards();
+    expect(saved!.reps).toBe(1);
+    expect(new Date(saved!.due).getTime()).toBeGreaterThan(Date.now());
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    fireEvent.change(screen.getByLabelText("Front"), {
+      target: { value: "Chambers of the heart?" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save card" }));
+    expect(await screen.findByText("Chambers of the heart?")).toBeTruthy();
+    expect((await workspace.flashcards())[0]!.reps).toBe(1); // editing keeps the schedule
+
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete card" }));
+    expect(await screen.findByText("No flashcards yet")).toBeTruthy();
+  });
+});
+
+describe("Review: glossary", () => {
+  it("adds, searches, refuses a duplicate, and underlines terms in notes", async () => {
+    const { workspace } = await setup(
+      (n) => <ReviewScreen onNavigate={n} />,
+      async ({ workspace }) => {
+        await workspace.saveNote({
+          id: null,
+          questionId: null,
+          title: "Cardio",
+          body: "Systole is the pumping phase",
+        });
+      },
+    );
+    fireEvent.click(await screen.findByRole("tab", { name: /Glossary/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Add your first term" }));
+    fireEvent.change(screen.getByLabelText("Term"), { target: { value: "Systole" } });
+    fireEvent.change(screen.getByLabelText("Meaning"), { target: { value: "Contraction phase" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save term" }));
+    expect(await screen.findByText("Contraction phase")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "New term" }));
+    fireEvent.change(screen.getByLabelText("Term"), { target: { value: "  systole " } });
+    fireEvent.change(screen.getByLabelText("Meaning"), { target: { value: "again" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save term" }));
+    expect(await screen.findByText("You already have a term with that name.")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(await workspace.glossary()).toHaveLength(1);
+
+    fireEvent.change(screen.getByLabelText("Search glossary"), { target: { value: "zzz" } });
+    expect(screen.getByText(/No terms match/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Search glossary"), {
+      target: { value: "contraction" },
+    });
+    expect(screen.getByText("Systole")).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("tab", { name: /Notes/ }));
+    const hit = await screen.findByTitle("Contraction phase");
+    expect(hit.textContent).toBe("Systole");
+  });
+});

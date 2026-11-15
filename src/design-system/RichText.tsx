@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
 
+/** Splits text into pieces, marking the ones that are glossary terms. Provided by the app. */
+export type TermSplitter = (text: string) => { text: string; definition?: string }[];
+
 /**
  * Safe "markdown-lite": **bold**, *italic*, `code`, "- " bullet lists and blank-line paragraphs.
  * Everything is built as React elements, so the text can never become HTML or script.
@@ -7,7 +10,27 @@ import type { ReactNode } from "react";
 
 const INLINE = /(\*\*[^\s*](?:[^*\n]*[^\s*])?\*\*|\*[^\s*](?:[^*\n]*[^\s*])?\*|`[^`\n]+`)/g;
 
-function inline(text: string): ReactNode[] {
+function plain(part: string, split?: TermSplitter): ReactNode {
+  if (!split) return part;
+  const pieces = split(part);
+  if (pieces.length === 1 && pieces[0]!.definition === undefined) return part;
+  return pieces.map((p, k) =>
+    p.definition === undefined ? (
+      p.text
+    ) : (
+      <span
+        key={k}
+        tabIndex={0}
+        title={p.definition}
+        className="cursor-help underline decoration-dotted underline-offset-2"
+      >
+        {p.text}
+      </span>
+    ),
+  );
+}
+
+function inline(text: string, split?: TermSplitter): ReactNode[] {
   return text.split(INLINE).map((part, i) => {
     if (part.length > 4 && part.startsWith("**") && part.endsWith("**"))
       return <strong key={i}>{part.slice(2, -2)}</strong>;
@@ -19,7 +42,7 @@ function inline(text: string): ReactNode[] {
       );
     if (part.length > 2 && part.startsWith("*") && part.endsWith("*"))
       return <em key={i}>{part.slice(1, -1)}</em>;
-    return part;
+    return <span key={i}>{plain(part, split)}</span>;
   });
 }
 
@@ -43,14 +66,22 @@ export function blocks(text: string): Block[] {
   return out.filter((b) => b.kind === "ul" || b.lines.length > 0);
 }
 
-export function RichText({ text, className }: { text: string; className?: string }) {
+export function RichText({
+  text,
+  className,
+  split,
+}: {
+  text: string;
+  className?: string;
+  split?: TermSplitter;
+}) {
   return (
     <div className={className}>
       {blocks(text).map((b, i) =>
         b.kind === "ul" ? (
           <ul key={i} className="m-0 my-1 list-disc pl-5">
             {b.items.map((item, k) => (
-              <li key={k}>{inline(item)}</li>
+              <li key={k}>{inline(item, split)}</li>
             ))}
           </ul>
         ) : (
@@ -58,7 +89,7 @@ export function RichText({ text, className }: { text: string; className?: string
             {b.lines.map((l, k) => (
               <span key={k}>
                 {k > 0 && <br />}
-                {inline(l)}
+                {inline(l, split)}
               </span>
             ))}
           </p>

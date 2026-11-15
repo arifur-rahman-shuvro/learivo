@@ -4,4 +4,4 @@ export * from "./Logo.tsx";
 export { ThemeSwitcher } from "./ThemeSwitcher.tsx";
 export { BottomNav } from "./BottomNav.tsx";
 export { Dialog } from "./Dialog.tsx";
-export { RichText } from "./RichText.tsx";
+export { RichText, type TermSplitter } from "./RichText.tsx";

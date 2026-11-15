@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Button, EmptyState, Spinner } from "../../../design-system/index.ts";
+import { achievements } from "../domain/achievements.ts";
+import { Badge, Button, EmptyState, ProgressBar, Spinner } from "../../../design-system/index.ts";
 import { clock } from "../../practice/ui/practice.tsx";
 import { useInsightsData } from "./useInsightsData.ts";
 import {
@@ -12,12 +13,13 @@ import {
   studyTimeByDay,
 } from "../domain/insights.ts";
 
-type Tab = "overview" | "subjects" | "exams" | "time";
+type Tab = "overview" | "subjects" | "exams" | "time" | "achievements";
 const TABS: [Tab, string][] = [
   ["overview", "Overview"],
   ["subjects", "Subjects"],
   ["exams", "Exams"],
   ["time", "Study time"],
+  ["achievements", "Achievements"],
 ];
 
 const dayLabel = (day: string) => {
@@ -145,6 +147,7 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
       time: studyTimeByDay(sessions, today, 14),
       totalSeconds: sessions.reduce((n, s) => n + s.secondsSpent, 0),
       sessions: sessions.length,
+      badges: achievements(facts, sessions),
     };
   }, [data, today, depth]);
 
@@ -338,6 +341,36 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
                   </tbody>
                 </table>
               </details>
+            </section>
+          )}
+          {tab === "achievements" && (
+            <section aria-label="Achievements" className="flex flex-col gap-3">
+              <p className="m-0 text-sm text-muted" aria-live="polite">
+                {view.badges.filter((b) => b.earned).length} of {view.badges.length} earned. These
+                come only from your own sessions and are never shared.
+              </p>
+              <ul className="m-0 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-2">
+                {view.badges.map((b) => (
+                  <li
+                    key={b.id}
+                    className={`lv-card flex flex-col gap-2 p-4 ${b.earned ? "border-accent" : ""}`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <h2 className="m-0 text-base font-semibold">{b.title}</h2>
+                      <Badge tone={b.earned ? "success" : "neutral"}>
+                        {b.earned ? "Earned" : "Locked"}
+                      </Badge>
+                    </div>
+                    <p className="m-0 text-sm text-muted">{b.description}</p>
+                    {!b.earned && (
+                      <ProgressBar
+                        value={(b.current / b.target) * 100}
+                        label={`${b.title}: ${b.current} of ${b.target}`}
+                      />
+                    )}
+                  </li>
+                ))}
+              </ul>
             </section>
           )}
         </>

@@ -38,6 +38,18 @@ export interface WorkspaceRepo {
   dailyGoal(): Promise<number>;
   setDailyGoal(n: number): Promise<void>;
 
+  /** Newest first. */
+  flashcards(): Promise<Flashcard[]>;
+  saveFlashcard(input: FlashcardInput): Promise<Flashcard>;
+  /** Stores the card's new schedule after a rating. */
+  rateFlashcard(id: string, card: Card): Promise<void>;
+  deleteFlashcard(id: string): Promise<void>;
+
+  /** Sorted by term. */
+  glossary(): Promise<GlossaryTerm[]>;
+  saveTerm(input: TermInput): Promise<GlossaryTerm>;
+  deleteTerm(id: string): Promise<void>;
+
   examTarget(): Promise<ExamTarget>;
   setExamTarget(target: ExamTarget): Promise<void>;
 
@@ -45,6 +57,7 @@ export interface WorkspaceRepo {
   setHomeLayout(layout: HomeLayout): Promise<void>;
 }
 
+import type { Flashcard, FlashcardInput, GlossaryTerm, TermInput } from "../domain/cards.ts";
 import type { ExamTarget } from "../domain/examTarget.ts";
 import type { HomeLayout } from "../domain/homeLayout.ts";
 

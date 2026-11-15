@@ -22,17 +22,17 @@ Each phase ends with a written report and owner approval before the next begins.
 
 ## Status and deviations (updated 2026-11-15)
 
-| Phase | Status                                                                                    |
-| ----- | ----------------------------------------------------------------------------------------- |
-| 0-1   | Done (blueprint)                                                                          |
-| 2     | Done, and the app shell and Home screen were redesigned afterwards at the owner's request |
-| 3     | Done, except the items below. Go service live on Render free (owner-checked 2026-11-12)   |
-| 4     | Done; owner phone-tested and approved (2026-11-13)                                        |
-| 5     | Done; owner phone-tested and approved (2026-11-13)                                        |
-| 6     | Done; owner phone-tested and approved (2026-11-13)                                        |
-| 7     | Done; M5 applied; owner checked everything (2026-11-15)                                   |
-| 8     | Done; M6 applied; owner checked everything (2026-11-15). Open items listed below          |
-| 9     | Not started; waits for the owner's approval                                               |
+| Phase | Status                                                                                      |
+| ----- | ------------------------------------------------------------------------------------------- |
+| 0-1   | Done (blueprint)                                                                            |
+| 2     | Done, and the app shell and Home screen were redesigned afterwards at the owner's request   |
+| 3     | Done, except the items below. Go service live on Render free (owner-checked 2026-11-12)     |
+| 4     | Done; owner phone-tested and approved (2026-11-13)                                          |
+| 5     | Done; owner phone-tested and approved (2026-11-13)                                          |
+| 6     | Done; owner phone-tested and approved (2026-11-13)                                          |
+| 7     | Done; M5 applied; owner checked everything (2026-11-15)                                     |
+| 8     | Done; M6 applied; owner checked everything (2026-11-15). Open items listed below            |
+| 9     | Done in part: flashcards, glossary, achievements (AI helpers and sharing deferred by owner) |
 
 Phase 3 items not done, with reasons:
 
@@ -106,3 +106,10 @@ Follow-up (2026-11-14), owner request: delete and clear data.
 
 - Done: FK covering indexes (M8), import "Replace" policy, note search, safe rich text (bold, italic, code, bullet lists) in notes and explanations, exam countdown with a daily pace on Home (M9), crash reporting wired but off until a Sentry DSN is provided at build time (no personal data is sent).
 - Owner-only / unavailable: backup secrets (see RUNBOOK), a separate staging Supabase project (free-plan limit), leaked-password protection (paid Supabase setting), real-user, screen-reader and penetration tests.
+
+## Phase 9: flashcards, glossary, achievements (M10)
+
+- Review > Flashcards: the student writes cards (front/back), due cards are revised and rated Again/Hard/Good/Easy with the same scheduler as questions.
+- Review > Glossary: own terms and meanings with search; matching words are underlined (hover or focus to read the meaning) in explanations, notes and flashcards.
+- Insights > Achievements: 11 milestones worked out from the student's own sessions (answers, streaks, exams, clean sheets, accuracy). Nothing is shared.
+- Not built, by the owner's choice: AI helpers and sharing (these need the Go server and an outside AI service).

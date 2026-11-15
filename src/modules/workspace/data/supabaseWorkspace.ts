@@ -1,3 +1,12 @@
+import {
+  cleanFlashcard,
+  cleanTerm,
+  sortTerms,
+  type Flashcard,
+  type FlashcardInput,
+  type GlossaryTerm,
+  type TermInput,
+} from "../domain/cards.ts";
 import { cleanExamTarget, type ExamTarget } from "../domain/examTarget.ts";
 import { cleanLayout, type HomeLayout } from "../domain/homeLayout.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -45,6 +54,27 @@ interface CardRow {
   lapses: number;
   last_review: string | null;
 }
+
+const CARD_COLUMNS = "state, due, stability, difficulty, reps, lapses, last_review";
+
+interface FlashRow extends Omit<CardRow, "question_id"> {
+  id: string;
+  front: string;
+  back: string;
+}
+
+const toFlashcard = (r: FlashRow): Flashcard => ({
+  id: r.id,
+  front: r.front,
+  back: r.back,
+  state: r.state,
+  due: r.due,
+  stability: Number(r.stability),
+  difficulty: Number(r.difficulty),
+  reps: r.reps,
+  lapses: r.lapses,
+  lastReview: r.last_review,
+});
 
 const toNote = (r: NoteRow): Note => ({
   id: r.id,
@@ -215,6 +245,101 @@ export class SupabaseWorkspace implements WorkspaceRepo {
       .from("user_preferences")
       .update({ daily_goal: n })
       .eq("user_id", this.userId);
+    if (res.error) fail(res.error);
+  }
+
+  async flashcards() {
+    const out: Flashcard[] = [];
+    for (let from = 0; ; from += 1000) {
+      const rows = ok(
+        await this.db
+          .from("flashcards")
+          .select(`id, front, back, ${CARD_COLUMNS}`)
+          .order("created_at", { ascending: false })
+          .order("id")
+          .range(from, from + 999),
+      ) as FlashRow[];
+      out.push(...rows.map(toFlashcard));
+      if (rows.length < 1000) break;
+    }
+    return out;
+  }
+
+  async saveFlashcard(input: FlashcardInput) {
+    const clean = cleanFlashcard(input);
+    const cols = `id, front, back, ${CARD_COLUMNS}`;
+    if (clean.id) {
+      return toFlashcard(
+        ok(
+          await this.db
+            .from("flashcards")
+            .update({ front: clean.front, back: clean.back })
+            .eq("id", clean.id)
+            .select(cols)
+            .single(),
+        ) as FlashRow,
+      );
+    }
+    return toFlashcard(
+      ok(
+        await this.db
+          .from("flashcards")
+          .insert({ user_id: this.userId, front: clean.front, back: clean.back })
+          .select(cols)
+          .single(),
+      ) as FlashRow,
+    );
+  }
+
+  async rateFlashcard(id: string, c: Card) {
+    const res = await this.db
+      .from("flashcards")
+      .update({
+        state: c.state,
+        due: c.due,
+        stability: c.stability,
+        difficulty: c.difficulty,
+        reps: c.reps,
+        lapses: c.lapses,
+        last_review: c.lastReview,
+      })
+      .eq("id", id);
+    if (res.error) fail(res.error);
+  }
+
+  async deleteFlashcard(id: string) {
+    const res = await this.db.from("flashcards").delete().eq("id", id);
+    if (res.error) fail(res.error);
+  }
+
+  async glossary() {
+    const rows = ok(
+      await this.db.from("glossary_terms").select("id, term, definition").order("term").limit(5000),
+    ) as GlossaryTerm[];
+    return sortTerms(rows);
+  }
+
+  async saveTerm(input: TermInput) {
+    const clean = cleanTerm(input);
+    const fields = { term: clean.term, definition: clean.definition };
+    const res = clean.id
+      ? await this.db
+          .from("glossary_terms")
+          .update(fields)
+          .eq("id", clean.id)
+          .select("id, term, definition")
+          .single()
+      : await this.db
+          .from("glossary_terms")
+          .insert({ user_id: this.userId, ...fields })
+          .select("id, term, definition")
+          .single();
+    if (res.error?.code === "23505") throw new Error("You already have a term with that name.");
+    return ok(res) as GlossaryTerm;
+  }
+
+  async deleteTerm(id: string) {
+    const res = await this.db.from("glossary_terms").delete().eq("id", id);
     if (res.error) fail(res.error);
   }
 
