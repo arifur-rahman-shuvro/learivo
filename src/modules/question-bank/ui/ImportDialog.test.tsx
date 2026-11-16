@@ -43,7 +43,7 @@ describe("Smart import", () => {
     ).toBe(false);
   });
 
-  it("pastes JSON from ChatGPT in a code block, shows a preview, imports and summarises", async () => {
+  it("pastes JSON from AI in a code block, shows a preview, imports and summarises", async () => {
     const repo = open();
     paste(
       `Here you go:\n\`\`\`json\n${JSON.stringify([q("First pasted"), q("Second pasted")])}\n\`\`\``,

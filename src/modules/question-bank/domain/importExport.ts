@@ -35,7 +35,7 @@ export type ImportReport =
       total: number;
       rows: ImportRow[];
       errors: ImportIssue[];
-      /** Something the importer tidied up, for example a code fence from ChatGPT. */
+      /** Something the importer tidied up, for example a code fence from AI. */
       notice?: string;
     };
 

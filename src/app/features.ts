@@ -51,7 +51,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       {
         id: "import",
         title: "Import questions",
-        description: "Paste JSON from ChatGPT or upload a file.",
+        description: "Paste JSON from AI or upload a file.",
         icon: "import",
         route: "#/questions",
         action: "import",
@@ -59,7 +59,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       {
         id: "prompt",
         title: "Make an AI prompt",
-        description: "Fill a form, copy a ready prompt for ChatGPT.",
+        description: "Fill a form, copy a ready prompt for AI.",
         icon: "prompt",
         route: "#/questions",
         target: "prompt",

@@ -1,7 +1,7 @@
 import type { ImportIssue } from "./importExport.ts";
 import type { QuestionInput, QuestionType } from "./model.ts";
 
-/** What the student fills in to get a ready-to-paste prompt for ChatGPT (or any AI chat). */
+/** What the student fills in to get a ready-to-paste prompt for an AI chat. */
 export interface PromptSpec {
   /** "create": the AI writes new questions. "convert": the AI copies questions from files or photos. */
   mode: "create" | "convert";

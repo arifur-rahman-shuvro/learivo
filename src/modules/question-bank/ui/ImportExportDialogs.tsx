@@ -76,7 +76,7 @@ interface Outcome {
   attempted: number;
 }
 
-/** What to tell ChatGPT so that its answer imports cleanly. */
+/** What to tell AI so that its answer imports cleanly. */
 const CHAT_PROMPT = `Write the questions as JSON only, with no text before or after it. Use this format:
 [
   {
@@ -366,9 +366,9 @@ export function ImportDialog({
           </p>
           <p className="m-0 text-sm text-muted">
             {source === "prompt"
-              ? "Step 1. Fill the form and copy the prompt. Give it to ChatGPT with your notes or photos."
+              ? "Step 1. Fill the form and copy the prompt. Give it to your AI chat with your notes or photos."
               : source === "paste"
-                ? "Step 2. Paste the JSON that ChatGPT gave you, or JSON you wrote yourself."
+                ? "Step 2. Paste the JSON that AI gave you, or JSON you wrote yourself."
                 : "Or upload a JSON or CSV file, such as one you exported earlier."}
           </p>
           <div
@@ -467,7 +467,7 @@ export function ImportDialog({
                 </span>
               </div>
               <p className="m-0 text-sm text-muted">
-                Copied from ChatGPT with the code block around it? That works too.
+                Copied from an AI chat with the code block around it? That works too.
               </p>
             </div>
           ) : (
@@ -512,7 +512,8 @@ export function ImportDialog({
             <summary className="cursor-pointer font-semibold">Format guide and examples</summary>
             <div className="mt-3 flex flex-col gap-3">
               <p className="m-0 text-muted">
-                Give this to ChatGPT before your request, so the answer imports without changes.
+                Give this to your AI chat before your request, so the answer imports without
+                changes.
               </p>
               <pre className="m-0 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-control border border-line bg-surface p-2 font-mono text-xs">
                 {CHAT_PROMPT}

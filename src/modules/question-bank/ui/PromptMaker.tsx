@@ -51,7 +51,7 @@ function Field({
 
 const LANGS = ["English", "Bangla", "Banglish (Bangla in English letters)"];
 
-/** Form that builds a ready-to-paste prompt for ChatGPT or any AI chat. */
+/** Form that builds a ready-to-paste prompt for an AI chat. */
 export function PromptMaker() {
   const [spec, setSpec] = useState<PromptSpec>(load);
   const [copied, setCopied] = useState<"ok" | "fail" | null>(null);
@@ -338,7 +338,7 @@ export function PromptMaker() {
           )}
         </div>
         <ol className="m-0 pl-5 text-sm text-muted">
-          <li>Open ChatGPT (or any AI chat) and paste this prompt.</li>
+          <li>Open your AI chat and paste this prompt.</li>
           {convert ? (
             <li>Attach your photos, screenshots or PDF in the same message, then send.</li>
           ) : (

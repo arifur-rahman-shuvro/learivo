@@ -15,13 +15,13 @@ const CHOICES: { id: AddChoice; icon: IconName; title: string; text: ReactNode }
   {
     id: "prompt",
     icon: "prompt",
-    title: "Make a prompt for ChatGPT",
-    text: "Fill in subject, topic, exam and tags. Copy the prompt, then add notes or photos in ChatGPT.",
+    title: "Make a prompt for AI",
+    text: "Fill in subject, topic, exam and tags. Copy the prompt, then add notes or photos in AI.",
   },
   {
     id: "paste",
     icon: "import",
-    title: "Paste what ChatGPT gave you",
+    title: "Paste what AI gave you",
     text: "Paste the JSON, check it, and save many questions at once.",
   },
   {

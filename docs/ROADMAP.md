@@ -116,7 +116,7 @@ Follow-up (2026-11-14), owner request: delete and clear data.
 
 ## Follow-up: smarter import prompts
 
-- Import > Make a prompt: a form (subject, chapter, topic, subtopic, exam, institution, year, source, tags, level, question types, difficulty, count, explanation length, languages, extra wishes) builds a ready-to-paste prompt for ChatGPT or any AI chat. The student's details are written onto every question. The form is remembered on this device only.
+- Import > Make a prompt: a form (subject, chapter, topic, subtopic, exam, institution, year, source, tags, level, question types, difficulty, count, explanation length, languages, extra wishes) builds a ready-to-paste prompt for AI or any AI chat. The student's details are written onto every question. The form is remembered on this device only.
 - Two modes: write new questions, or copy existing ones from photos, PDF pages or text (keeps the wording, solves a missing answer key and tags it `check-answer`, pads or trims to 5 options and tags `check-options`, describes pictures in words and tags `had-image`, because Learivo does not store images).
 - Review step: "Add to every question" fills subject, chapter, tags, exam, institution, year and source only where a question lacks them.
 - Invalid questions: "Copy a fix request for the AI" builds a message asking for corrected JSON for only the failing questions.
@@ -178,6 +178,6 @@ Done and pushed:
 - Add questions hub (write, make a prompt, paste, upload, add a subject) and a tidier Import dialog (Make a prompt, Paste JSON, Upload file, with a step line for each).
 - Home > This week: seven-day activity bars.
 - Back up and restore (Settings and All features): one JSON file with questions, notes, bookmarks, flashcards, glossary, exam target and daily goal. Restore shows a preview and only adds what is missing; nothing is overwritten or deleted. Practice history is not included.
-- Interactive user guide: six first steps that tick themselves from the student's own data, plus short answers (marks, ChatGPT import, revision, offline, privacy, shortcuts). Opened from the account menu, All features and the welcome screen.
+- Interactive user guide: six first steps that tick themselves from the student's own data, plus short answers (marks, AI import, revision, offline, privacy, shortcuts). Opened from the account menu, All features and the welcome screen.
 
 Still open from the proposal: confidence mark, result breakdown per subject and time, subject colours, question list upgrade and saved filters, first-run sample bank, study planner, duplicate merge, printable paper.

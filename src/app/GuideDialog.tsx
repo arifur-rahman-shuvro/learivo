@@ -86,7 +86,7 @@ export default function GuideDialog({ onNavigate }: { onNavigate: (route: string
       id: "questions",
       icon: "add",
       title: "Add your questions",
-      why: "Write one by hand, or let ChatGPT make many from your notes or photos. You check them before saving.",
+      why: "Write one by hand, or let AI make many from your notes or photos. You check them before saving.",
       done: d("questions"),
       go: { label: "Add questions", route: "#/questions", intent: { kind: "open", target: "hub" } },
     },
@@ -226,22 +226,21 @@ export default function GuideDialog({ onNavigate }: { onNavigate: (route: string
               Timed exams can also take marks off for wrong answers. The total never goes below 0.
             </p>
           </Section>
-          <Section title="Making questions with ChatGPT">
+          <Section title="Making questions with AI">
             <ol className="m-0 list-decimal pl-5">
               <li>
-                Add questions, then Make a prompt for ChatGPT. Fill in subject, topic, exam and
-                tags.
+                Add questions, then Make a prompt for AI. Fill in subject, topic, exam and tags.
               </li>
               <li>
-                Copy the prompt into ChatGPT. Attach your notes, or photos of questions you want
-                copied.
+                Copy the prompt into your AI chat. Attach your notes, or photos of questions you
+                want copied.
               </li>
               <li>
-                Copy the JSON ChatGPT replies with, then paste it into Learivo and check the
-                preview.
+                Copy the JSON AI replies with, then paste it into Learivo and check the preview.
               </li>
               <li>
-                If some questions are rejected, copy the fix request and send it back to ChatGPT.
+                If some questions are rejected, copy the fix request and send it back to your AI
+                chat.
               </li>
             </ol>
             <p className="m-0">

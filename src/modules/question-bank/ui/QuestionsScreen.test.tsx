@@ -139,14 +139,14 @@ describe("Add questions hub", () => {
     const hub = await screen.findByRole("dialog", { name: "Add questions" });
     for (const name of [
       "Write one question",
-      "Make a prompt for ChatGPT",
-      "Paste what ChatGPT gave you",
+      "Make a prompt for AI",
+      "Paste what AI gave you",
       "Upload a file",
       "Add a subject or topic first",
     ]) {
       expect(within(hub).getByRole("button", { name: new RegExp(name) })).toBeTruthy();
     }
-    fireEvent.click(within(hub).getByRole("button", { name: /Make a prompt for ChatGPT/ }));
+    fireEvent.click(within(hub).getByRole("button", { name: /Make a prompt for AI/ }));
     const imp = await screen.findByRole("dialog", { name: "Import questions" });
     expect(
       within(imp).getByRole("tab", { name: "Make a prompt" }).getAttribute("aria-selected"),

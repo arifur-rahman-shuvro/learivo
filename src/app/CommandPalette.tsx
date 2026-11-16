@@ -111,7 +111,7 @@ export default function CommandPalette({ onNavigate }: Props) {
         id: "import",
         group: "Actions",
         label: "Import questions",
-        keywords: "paste json upload file chatgpt",
+        keywords: "paste json upload file ai chatgpt",
         run: () => {
           close();
           sendIntent({ kind: "import" });
