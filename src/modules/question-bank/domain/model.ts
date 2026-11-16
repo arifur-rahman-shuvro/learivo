@@ -33,13 +33,16 @@ export type AnswerSpec =
   | { options: Option[] } // sba, single_choice, multi_select, true_false
   | { blanks: { accepted: string[] }[] }; // fill_blank
 
-/** Every choice-based question has exactly this many options (or statements). */
-export const OPTION_COUNT = 5;
-/** Types whose answer is a list of OPTION_COUNT options. */
+/** A choice-based question has between OPTION_MIN and OPTION_MAX options (or statements). */
+export const OPTION_MIN = 2;
+export const OPTION_MAX = 5;
+/** How many empty options a new question starts with. */
+export const OPTION_DEFAULT = 5;
+/** Types whose answer is a list of options. */
 export const OPTION_TYPES = ["sba", "single_choice", "multi_select", "true_false"] as const;
 export const isOptionType = (t: QuestionType) => (OPTION_TYPES as readonly string[]).includes(t);
 
-export const MAX_OPTIONS = OPTION_COUNT;
+export const MAX_OPTIONS = OPTION_MAX;
 export const BLANK_PATTERN = /\{\{\d+\}\}/g;
 
 /** A question as the app creates, edits, imports and exports it. */
@@ -89,7 +92,8 @@ export function answerIssues(qtype: QuestionType, stem: string, answer: unknown)
   if (isOptionType(qtype)) {
     const options = Array.isArray(a.options) ? (a.options as Partial<Option>[]) : [];
     const noun = qtype === "true_false" ? "statements" : "options";
-    if (options.length !== OPTION_COUNT) bad(`Use exactly ${OPTION_COUNT} ${noun}.`);
+    if (options.length < OPTION_MIN || options.length > OPTION_MAX)
+      bad(`Use ${OPTION_MIN} to ${OPTION_MAX} ${noun}.`);
     else if (options.some((o) => typeof o.text !== "string" || !nonEmpty(o.text)))
       bad(qtype === "true_false" ? "Every statement needs text." : "Every option needs text.");
     else if (qtype === "multi_select") {
@@ -154,7 +158,7 @@ export function blankQuestion(qtype: QuestionType = "sba"): QuestionInput {
       ? { blanks: [{ accepted: [""] }] }
       : {
           // One correct option to start with, except true or false where each statement is its own.
-          options: Array.from({ length: OPTION_COUNT }, (_, i) => ({
+          options: Array.from({ length: OPTION_DEFAULT }, (_, i) => ({
             text: "",
             correct: qtype === "true_false" ? false : i === 0,
           })),

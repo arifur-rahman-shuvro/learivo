@@ -41,6 +41,20 @@ describe("grade", () => {
     expect(all.verdict).toBe("wrong");
   });
 
+  it("works the same with other option counts", () => {
+    const two = five([false, true]);
+    expect(grade("sba", two, { choices: [1] }).verdict).toBe("correct");
+    const four = five([true, true, true, false]);
+    expect(marks(grade("multi_select", four, { choices: [0] }))).toBe(0.33);
+    expect(marks(grade("multi_select", four, { choices: [0, 1, 2] }))).toBe(1);
+    // three statements: a third of the mark each
+    const tf3 = five([true, false, true]);
+    expect(marks(grade("true_false", tf3, { marks: [true, false, false] }))).toBe(0.67);
+    // four statements: a quarter each
+    const tf4 = five([true, false, true, false]);
+    expect(marks(grade("true_false", tf4, { marks: [true, false, true, true] }))).toBe(0.75);
+  });
+
   it("true or false: five statements, 0.2 each", () => {
     const a = five([false, true, false, true, true]);
     const answer = (m: boolean[]) => grade("true_false", a, { marks: m });

@@ -26,6 +26,8 @@ export interface PromptSpec {
   explanationLanguage: string;
   /** For example "MBBS second professional". */
   level: string;
+  /** How many options each choice question has; "auto" lets the AI choose 2 to 5. */
+  optionCount: "auto" | 2 | 3 | 4 | 5;
   /** Anything else the student wants the AI to follow. */
   extra: string;
 }
@@ -48,6 +50,7 @@ export const DEFAULT_SPEC: PromptSpec = {
   questionLanguage: "English",
   explanationLanguage: "English",
   level: "",
+  optionCount: 5,
   extra: "",
 };
 
@@ -105,13 +108,21 @@ function example(spec: PromptSpec): string {
   const sba = {
     type: "sba",
     stem: "Question text",
-    options: opts([false, true, false, false, false]),
+    options: opts(
+      Array.from({ length: spec.optionCount === "auto" ? 4 : spec.optionCount }, (_, i) => i === 1),
+    ),
     ...(spec.explanation === "none" ? {} : { explanation: "Why the answer is right" }),
     difficulty: diff,
     ...shared,
     tags: tags.length > 0 ? tags : ["tag"],
   };
   return JSON.stringify([sba], null, 2);
+}
+
+function optionRule(spec: PromptSpec): string {
+  return spec.optionCount === "auto"
+    ? "between 2 and 5 options (4 or 5 is usual)"
+    : `EXACTLY ${spec.optionCount} options`;
 }
 
 function typeRules(spec: PromptSpec): string[] {
@@ -123,7 +134,7 @@ function typeRules(spec: PromptSpec): string[] {
   const opt = allowed.filter((t) => t !== "fill_blank");
   if (opt.length > 0) {
     lines.push(
-      `Every ${opt.join(", ")} question has EXACTLY 5 options, each with "text" and "correct" (true or false).`,
+      `Every ${opt.join(", ")} question has ${optionRule(spec)}, each with "text" and "correct" (true or false).`,
     );
   }
   if (allowed.includes("sba") || allowed.includes("single_choice")) {
@@ -134,7 +145,7 @@ function typeRules(spec: PromptSpec): string[] {
   }
   if (allowed.includes("true_false")) {
     lines.push(
-      'true_false: "stem" is a short lead-in (for example "Heart has-") and the 5 options are statements. Set "correct": true for each statement that is TRUE and false for each that is FALSE. Mix true and false statements.',
+      'true_false: "stem" is a short lead-in (for example "Heart has-") and the options are statements. Set "correct": true for each statement that is TRUE and false for each that is FALSE. Mix true and false statements.',
     );
   }
   if (allowed.includes("fill_blank")) {
@@ -212,9 +223,11 @@ export function buildPrompt(spec: PromptSpec): string {
   } else {
     lines.push(
       '- If the source shows the answer key, use it. If it does not, work out the most likely answer yourself and add the tag "check-answer".',
-      '- If a question has fewer than 5 options, add plausible options to reach exactly 5 and add the tag "check-options". If it has more than 5, keep the correct option(s) and the 5 most plausible in total, and add the tag "check-options".',
+      spec.optionCount === "auto"
+        ? "- Keep the number of options the source has (2 to 5). Do not add or remove options."
+        : `- If a question has fewer than ${spec.optionCount} options, add plausible options to reach exactly ${spec.optionCount} and add the tag "check-options". If it has more, keep the correct option(s) and the ${spec.optionCount} most plausible in total, and add the tag "check-options".`,
       '- My app cannot store pictures. If a question depends on a picture, diagram or graph, describe what it shows in words inside the question, starting with "[Picture: " and ending with "]", and add the tag "had-image".',
-      "- True/false must be 5 statements under one lead-in. If the source has single statements, group 5 related ones under a short lead-in.",
+      "- True/false is several statements under one lead-in. If the source has single statements, group related ones under a short lead-in.",
     );
   }
   if (clean(spec.extra)) lines.push(`- Also: ${clean(spec.extra)}`);
@@ -245,7 +258,7 @@ export function buildFixPrompt(errors: readonly ImportIssue[]): string {
     "",
     "Fix only these questions. Keep every other detail the same.",
     "Reply with JSON only: a list containing just the corrected question objects, in the same format as before, in one code block.",
-    'Remember: sba, single_choice, multi_select and true_false need EXACTLY 5 options with "text" and "correct"; sba and single_choice have exactly one correct option; fill_blank uses {{1}} in the stem and a "blanks" list.',
+    'Remember: sba, single_choice, multi_select and true_false need 2 to 5 options with "text" and "correct"; sba and single_choice have exactly one correct option; fill_blank uses {{1}} in the stem and a "blanks" list.',
   ].join("\n");
 }
 

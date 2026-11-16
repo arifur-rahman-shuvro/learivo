@@ -216,6 +216,29 @@ export function PromptMaker() {
           </div>
         )}
         <div className="flex flex-col gap-1">
+          <label htmlFor="pm-opts" className="text-sm font-semibold">
+            Options per question
+          </label>
+          <select
+            id="pm-opts"
+            className="lv-input"
+            value={String(spec.optionCount)}
+            onChange={(e) =>
+              set(
+                "optionCount",
+                e.target.value === "auto" ? "auto" : (Number(e.target.value) as 2 | 3 | 4 | 5),
+              )
+            }
+          >
+            <option value="auto">AI decides (2 to 5)</option>
+            {[2, 3, 4, 5].map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
           <label htmlFor="pm-diff" className="text-sm font-semibold">
             Difficulty
           </label>

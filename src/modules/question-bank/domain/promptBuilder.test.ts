@@ -39,11 +39,23 @@ describe("buildPrompt", () => {
     expect(p).toContain(`at most ${BATCH_SIZE} questions`);
   });
 
-  it("states the five-option rules and only the chosen types", () => {
+  it("asks for the chosen number of options, or lets the AI choose 2 to 5", () => {
+    expect(buildPrompt(spec({ optionCount: 4 }))).toContain("EXACTLY 4 options");
+    const auto = buildPrompt(spec({ optionCount: "auto" }));
+    expect(auto).toContain("between 2 and 5 options");
+    expect(auto).not.toContain("EXACTLY");
+    const conv = buildPrompt(spec({ mode: "convert", optionCount: 4 }));
+    expect(conv).toContain("fewer than 4 options");
+    expect(buildPrompt(spec({ mode: "convert", optionCount: "auto" }))).toContain(
+      "Keep the number of options the source has",
+    );
+  });
+
+  it("states the option rules and only the chosen types", () => {
     const p = buildPrompt(spec({ types: ["sba", "true_false"] }));
     expect(p).toContain('"type" must be one of: sba, true_false.');
     expect(p).toContain("EXACTLY 5 options");
-    expect(p).toContain("5 options are statements");
+    expect(p).toContain("the options are statements");
     expect(p).not.toContain("fill_blank:");
     expect(p).not.toContain("multi_select:");
   });
@@ -87,8 +99,8 @@ describe("buildPrompt", () => {
 describe("buildFixPrompt", () => {
   it("lists each failing question once with its problems", () => {
     const p = buildFixPrompt([
-      { row: 3, field: "options", message: "Use exactly 5 options." },
-      { row: 3, field: "options", message: "Use exactly 5 options." },
+      { row: 3, field: "options", message: "Use 2 to 5 options." },
+      { row: 3, field: "options", message: "Use 2 to 5 options." },
       { row: 1, field: "type", message: "Type must be one of: sba." },
     ]);
     expect(p.indexOf("Question 1")).toBeLessThan(p.indexOf("Question 3"));

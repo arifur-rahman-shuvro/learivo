@@ -70,7 +70,7 @@ function outcome(credit: number, penalty: number): Outcome {
  * - Single answer: all or nothing.
  * - Multiple answers, k of them correct: each correct pick earns 1/k, and each wrong pick takes
  *   1/k away (never below zero), so ticking everything earns nothing.
- * - True or false, one mark spread over the statements (0.2 each for five): each statement that
+ * - True or false, one mark spread over the statements (an equal share each, 0.2 for five): each statement that
  *   is marked correctly earns its share. A statement left unmarked earns nothing and loses nothing.
  * - Fill in the blank: every blank must be right.
  *

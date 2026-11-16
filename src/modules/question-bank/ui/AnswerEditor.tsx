@@ -1,5 +1,5 @@
 import { Button } from "../../../design-system/index.ts";
-import { type AnswerSpec, type QuestionType } from "../domain/model.ts";
+import { OPTION_MAX, OPTION_MIN, type AnswerSpec, type QuestionType } from "../domain/model.ts";
 
 interface Props {
   qtype: QuestionType;
@@ -22,10 +22,10 @@ export function AnswerEditor({ qtype, answer, onChange }: Props) {
           {tf ? "Statements" : "Options"}{" "}
           <span className="font-normal text-muted">
             {tf
-              ? "(write five statements and mark each True or False)"
+              ? `(${OPTION_MIN} to ${OPTION_MAX} statements, mark each True or False)`
               : single
-                ? "(five options, pick the correct one)"
-                : "(five options, tick every correct one)"}
+                ? `(${OPTION_MIN} to ${OPTION_MAX} options, pick the correct one)`
+                : `(${OPTION_MIN} to ${OPTION_MAX} options, tick every correct one)`}
           </span>
         </legend>
         {options.map((o, i) => (
@@ -73,8 +73,33 @@ export function AnswerEditor({ qtype, answer, onChange }: Props) {
                 onChange({ options: replace(options, i, { ...o, text: e.target.value }) })
               }
             />
+            <Button
+              variant="ghost"
+              size="sm"
+              aria-label={`Remove ${tf ? "statement" : "option"} ${i + 1}`}
+              disabled={options.length <= OPTION_MIN}
+              onClick={() => {
+                const next = remove(options, i);
+                // A single-answer question must keep one correct option.
+                if (single && !next.some((x) => x.correct) && next[0])
+                  next[0] = { ...next[0], correct: true };
+                onChange({ options: next });
+              }}
+            >
+              Remove
+            </Button>
           </div>
         ))}
+        <div>
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={options.length >= OPTION_MAX}
+            onClick={() => onChange({ options: [...options, { text: "", correct: false }] })}
+          >
+            {tf ? "Add statement" : "Add option"}
+          </Button>
+        </div>
       </fieldset>
     );
   }

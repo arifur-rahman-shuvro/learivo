@@ -81,14 +81,16 @@ describe("validateQuestion", () => {
     expect(validateQuestion({ ...ok, answer: five(K()) }).ok).toBe(false);
   });
 
-  it("needs exactly five options, each with text", () => {
-    const four = { options: five(K(1)).options.slice(0, 4) };
-    const six = { options: [...five(K(1)).options, { text: "o6", correct: false }] };
-    expect(validateQuestion(sba({ answer: four })).ok).toBe(false);
-    expect(validateQuestion(sba({ answer: six })).ok).toBe(false);
+  it("accepts 2 to 5 options, each with text, and refuses other counts", () => {
+    const opts = (n: number, at = 0) => ({
+      options: Array.from({ length: n }, (_, i) => ({ text: `o${i + 1}`, correct: i === at })),
+    });
+    for (const n of [2, 3, 4, 5]) expect(validateQuestion(sba({ answer: opts(n) })).ok).toBe(true);
+    expect(validateQuestion(sba({ answer: opts(1) })).ok).toBe(false);
+    expect(validateQuestion(sba({ answer: opts(6) })).ok).toBe(false);
     expect(validateQuestion(sba({ answer: five(K(1), ["a", "b", " ", "d", "e"]) })).ok).toBe(false);
-    const r = validateQuestion(sba({ answer: four }));
-    expect(!r.ok && r.issues[0]!.message).toBe("Use exactly 5 options.");
+    const r = validateQuestion(sba({ answer: opts(1) }));
+    expect(!r.ok && r.issues[0]!.message).toBe("Use 2 to 5 options.");
   });
 
   it("checks true or false (five keyed statements) and fill in the blank", () => {
@@ -96,8 +98,12 @@ describe("validateQuestion", () => {
     // all five statements false is a legal key
     expect(validateQuestion(tfq("Heart has-", { answer: five(K()) })).ok).toBe(true);
     expect(validateQuestion(tfq("x", { answer: {} as never })).ok).toBe(false);
+    // fewer statements are fine; one statement is not
     expect(
       validateQuestion(tfq("x", { answer: { options: five(K()).options.slice(0, 3) } })).ok,
+    ).toBe(true);
+    expect(
+      validateQuestion(tfq("x", { answer: { options: five(K()).options.slice(0, 1) } })).ok,
     ).toBe(false);
     const fb = {
       ...blankQuestion("fill_blank"),

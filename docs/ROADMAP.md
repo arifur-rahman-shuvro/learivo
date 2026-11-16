@@ -131,3 +131,10 @@ Follow-up (2026-11-14), owner request: delete and clear data.
 - Your profile: a name (up to 40 characters) and one of 8 avatar colours. The avatar is a person glyph until a name is saved, then shows initials. Stored on the student's own `profiles` row (M11 adds `avatar`; row-level security already limited it to the owner).
 - Appearance: theme and mode. Settings: Your data (counts and clearing) and the search shortcut note. The signed-out screen keeps a small Appearance button.
 - Not built: uploading a photo (Learivo stores no images), changing the sign-in email or password from the menu.
+
+## Follow-up: flexible options (M12)
+
+- Choice questions (single best, single choice, multiple answer, true/false) now have **2 to 5** options or statements instead of exactly 5. New questions still start with 5 blank rows; the editor has Add option and Remove option.
+- Marking is unchanged: each true/false statement is worth 1/n of the mark, each correct pick in multiple answer is 1/k.
+- The prompt maker has an "Options per question" setting (AI decides 2 to 5, or exactly 2, 3, 4 or 5).
+- Existing questions with 5 options are untouched.

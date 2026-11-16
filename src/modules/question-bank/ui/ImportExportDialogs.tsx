@@ -97,9 +97,9 @@ const CHAT_PROMPT = `Write the questions as JSON only, with no text before or af
   }
 ]
 "type" is one of: sba, single_choice, multi_select, true_false, fill_blank.
-Every sba, single_choice, multi_select and true_false question has EXACTLY 5 options.
+Every sba, single_choice, multi_select and true_false question has 2 to 5 options (4 or 5 is usual).
 For sba and single_choice exactly one option is correct; multi_select has one or more correct options.
-For true_false the stem is a lead-in (for example "Heart has-") and the 5 options are statements; set "correct": true for each statement that is true and false for each that is false.
+For true_false the stem is a lead-in (for example "Heart has-") and the options are statements; set "correct": true for each statement that is true and false for each that is false.
 For fill_blank write {{1}}, {{2}} in the stem and use "blanks": [["answer for 1"], ["answer for 2"]].`;
 
 /** Finds the bank question behind each content hash, so a replace can update it in place. */
