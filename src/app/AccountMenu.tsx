@@ -1,3 +1,4 @@
+import { forgetAllKeys } from "../modules/ai/keys.ts";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Avatar } from "../design-system/index.ts";
 import { useAuth } from "../auth/AuthProvider.tsx";
@@ -95,6 +96,7 @@ export default function AccountMenu({ repo }: { repo: ProfileRepo }) {
     setLeaving(true);
     await offline?.pack.clear().catch(() => undefined);
     await offline?.sync.clearCaches().catch(() => undefined);
+    forgetAllKeys(); // AI keys belong to this device only
     await client.signOut();
   }
 

@@ -410,7 +410,12 @@ export function ImportDialog({
               aria-labelledby="import-tab-prompt"
               className="flex flex-col gap-3"
             >
-              <PromptMaker />
+              <PromptMaker
+                onGenerated={(text) => {
+                  setPasted(text);
+                  void check(text, "json", "AI answer");
+                }}
+              />
               <div>
                 <Button variant="secondary" onClick={() => setSource("paste")}>
                   I have the JSON, go to Paste

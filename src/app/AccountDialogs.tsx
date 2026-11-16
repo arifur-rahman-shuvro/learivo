@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { openAiConnection } from "../modules/ai/keys.ts";
 import { openBackup } from "./backupStore.ts";
 import { Avatar, Button, Dialog, ThemeSwitcher } from "../design-system/index.ts";
 import {
@@ -311,6 +312,24 @@ export function SettingsDialog({
             </div>
           </section>
         )}
+        <section className="flex flex-col gap-2">
+          <h3 className="m-0 text-base font-semibold">AI connection</h3>
+          <p className="m-0 text-sm text-muted">
+            Connect your own AI account so Learivo can write questions for you.
+          </p>
+          <div>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                onClose();
+                openAiConnection();
+              }}
+            >
+              AI connection
+            </Button>
+          </div>
+        </section>
         <section className="flex flex-col gap-2">
           <h3 className="m-0 text-base font-semibold">Back up and restore</h3>
           <p className="m-0 text-sm text-muted">

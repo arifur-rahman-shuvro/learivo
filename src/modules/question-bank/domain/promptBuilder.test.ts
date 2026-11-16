@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   BATCH_SIZE,
+  MATERIAL_MAX,
   DEFAULT_SPEC,
   NO_DEFAULTS,
   applyDefaults,
@@ -154,5 +155,21 @@ describe("quality standard", () => {
 
   it("is left out when converting existing questions", () => {
     expect(buildPrompt({ ...DEFAULT_SPEC, mode: "convert" })).not.toContain("QUALITY STANDARD");
+  });
+});
+
+describe("source material", () => {
+  it("puts the student's notes into the prompt and tells the AI to stay inside them", () => {
+    const p = buildPrompt({ ...DEFAULT_SPEC, material: "The heart has four chambers." });
+    expect(p).toContain("SOURCE MATERIAL");
+    expect(p).toContain("only from the text between");
+    expect(p).toContain("The heart has four chambers.");
+  });
+
+  it("leaves the section out when there are no notes, and caps very long notes", () => {
+    expect(buildPrompt(DEFAULT_SPEC)).not.toContain("SOURCE MATERIAL");
+    const long = buildPrompt({ ...DEFAULT_SPEC, material: "x".repeat(MATERIAL_MAX + 500) });
+    expect(long).toContain("x".repeat(MATERIAL_MAX));
+    expect(long).not.toContain("x".repeat(MATERIAL_MAX + 1));
   });
 });

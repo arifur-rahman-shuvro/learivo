@@ -12,6 +12,7 @@ import App from "../App.tsx";
 import { useAuth } from "../auth/AuthProvider.tsx";
 import AuthScreen from "../auth/AuthScreen.tsx";
 import AccountMenu from "./AccountMenu.tsx";
+import { AiConnectionDialog } from "../modules/ai/AiConnectionDialog.tsx";
 import GuideDialog from "./GuideDialog.tsx";
 import BackupDialog from "./BackupDialog.tsx";
 import { SupabaseProfile } from "../modules/profile/data/supabaseProfile.ts";
@@ -163,6 +164,7 @@ export default function AppShell({
         Skip to content
       </a>
       <CommandPalette onNavigate={go} />
+      <AiConnectionDialog />
       <div className="relative z-10 mx-auto min-h-dvh max-w-[1280px] lg:grid lg:grid-cols-[260px_1fr]">
         <aside className="lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-6 lg:border-r lg:border-line lg:px-4 lg:py-6">
           <div className="hidden px-3 lg:block">

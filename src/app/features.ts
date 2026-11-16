@@ -28,7 +28,7 @@ export interface Feature {
   /** Opens a named part of the screen, see Intent "open". */
   target?: string;
   /** Opens the add form, or the import dialog. */
-  action?: "add" | "import" | "guide" | "backup";
+  action?: "add" | "import" | "guide" | "backup" | "ai";
 }
 
 export interface FeatureGroup {
@@ -172,6 +172,14 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
         icon: "guide",
         route: "#/home",
         action: "guide",
+      },
+      {
+        id: "ai",
+        title: "AI connection",
+        description: "Connect your own AI account to write questions inside Learivo.",
+        icon: "prompt",
+        route: "#/home",
+        action: "ai",
       },
       {
         id: "backup",

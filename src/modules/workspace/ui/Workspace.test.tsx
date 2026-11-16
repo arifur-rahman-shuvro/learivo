@@ -533,6 +533,8 @@ describe("Home: sample questions", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Try sample questions" }));
     expect(await screen.findByText("Questions")).toBeTruthy();
     await waitFor(async () => expect(await bank.exportAll()).toHaveLength(5));
-    expect(screen.queryByRole("button", { name: "Try sample questions" })).toBeNull();
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "Try sample questions" })).toBeNull(),
+    );
   });
 });

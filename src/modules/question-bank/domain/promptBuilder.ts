@@ -30,7 +30,12 @@ export interface PromptSpec {
   optionCount: "auto" | 2 | 3 | 4 | 5;
   /** Anything else the student wants the AI to follow. */
   extra: string;
+  /** Notes or text the questions must come from. Not remembered between visits. */
+  material: string;
 }
+
+/** The most pasted text a prompt carries, so one request stays within what AI services accept. */
+export const MATERIAL_MAX = 12000;
 
 export const DEFAULT_SPEC: PromptSpec = {
   mode: "create",
@@ -52,6 +57,7 @@ export const DEFAULT_SPEC: PromptSpec = {
   level: "",
   optionCount: 5,
   extra: "",
+  material: "",
 };
 
 export const PROMPT_TYPES: { id: QuestionType; label: string }[] = [
@@ -284,6 +290,20 @@ export function buildPrompt(spec: PromptSpec): string {
     );
   }
   if (clean(spec.extra)) lines.push(`- Also: ${clean(spec.extra)}`);
+
+  const material = spec.material.trim().slice(0, MATERIAL_MAX);
+  if (material) {
+    lines.push(
+      "",
+      "SOURCE MATERIAL",
+      spec.mode === "create"
+        ? "Write the questions only from the text between the two lines of dashes. Do not add facts that are not in it. If it does not hold enough for the number I asked for, write fewer."
+        : "The questions to copy are in the text between the two lines of dashes.",
+      "-----",
+      material,
+      "-----",
+    );
+  }
 
   lines.push(
     "",

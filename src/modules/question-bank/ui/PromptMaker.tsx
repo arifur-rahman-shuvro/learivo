@@ -1,8 +1,13 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "../../../design-system/index.ts";
+import { generateQuestions } from "../../ai/generate.ts";
+import { activeConfig, openAiConnection, useAiState } from "../../ai/keys.ts";
+import { AiError, providerOf } from "../../ai/providers.ts";
 import {
   DEFAULT_SPEC,
   PROMPT_TYPES,
+  BATCH_SIZE,
+  MATERIAL_MAX,
   buildPrompt,
   type PromptSpec,
 } from "../domain/promptBuilder.ts";
@@ -12,7 +17,7 @@ const STORE = "learivo.promptSpec";
 function load(): PromptSpec {
   try {
     const raw = window.localStorage.getItem(STORE);
-    if (raw) return { ...DEFAULT_SPEC, ...(JSON.parse(raw) as Partial<PromptSpec>) };
+    if (raw) return { ...DEFAULT_SPEC, ...(JSON.parse(raw) as Partial<PromptSpec>), material: "" };
   } catch {
     /* storage unavailable: start blank */
   }
@@ -52,14 +57,24 @@ function Field({
 const LANGS = ["English", "Bangla", "Banglish (Bangla in English letters)"];
 
 /** Form that builds a ready-to-paste prompt for an AI chat. */
-export function PromptMaker() {
+export function PromptMaker({
+  onGenerated,
+}: {
+  /** Receives the AI's reply when the student generates inside the app. */
+  onGenerated?: (text: string) => void;
+}) {
+  const ai = useAiState();
+  const cfg = activeConfig(ai);
+  const [working, setWorking] = useState(false);
+  const [genError, setGenError] = useState<string | null>(null);
+  const abort = useRef<AbortController | null>(null);
   const [spec, setSpec] = useState<PromptSpec>(load);
   const [copied, setCopied] = useState<"ok" | "fail" | null>(null);
   const set = <K extends keyof PromptSpec>(k: K, v: PromptSpec[K]) => {
     setSpec((s) => {
       const next = { ...s, [k]: v };
       try {
-        window.localStorage.setItem(STORE, JSON.stringify(next));
+        window.localStorage.setItem(STORE, JSON.stringify({ ...next, material: "" }));
       } catch {
         /* ignore */
       }
@@ -68,6 +83,29 @@ export function PromptMaker() {
   };
   const prompt = buildPrompt(spec);
   const convert = spec.mode === "convert";
+
+  async function generate() {
+    if (!cfg || !onGenerated) return;
+    setGenError(null);
+    setWorking(true);
+    const ctl = new AbortController();
+    abort.current = ctl;
+    try {
+      const out = await generateQuestions(cfg, spec, {
+        signal: AbortSignal.any([ctl.signal, AbortSignal.timeout(180000)]),
+      });
+      onGenerated(out.text);
+    } catch (e) {
+      setGenError(
+        e instanceof AiError
+          ? e.message
+          : "That took too long or failed. Try again, or ask for fewer questions.",
+      );
+    } finally {
+      abort.current = null;
+      setWorking(false);
+    }
+  }
 
   async function copy() {
     try {
@@ -317,6 +355,79 @@ export function PromptMaker() {
         onChange={(v) => set("extra", v)}
         placeholder="Focus on clinical scenarios"
       />
+
+      <div className="flex flex-col gap-1">
+        <label htmlFor="pm-material" className="text-sm font-semibold">
+          {convert
+            ? "Paste the questions to copy (optional)"
+            : "Make questions from my notes (optional)"}
+        </label>
+        <textarea
+          id="pm-material"
+          className="lv-input"
+          style={{ minHeight: "6rem", resize: "vertical" }}
+          value={spec.material}
+          maxLength={MATERIAL_MAX}
+          placeholder={
+            convert
+              ? "Paste the text of the questions here"
+              : "Paste a chapter, lecture notes or a summary. The questions will come only from this text."
+          }
+          onChange={(e) => set("material", e.target.value)}
+        />
+        <p className="m-0 text-xs text-muted">
+          {spec.material.length.toLocaleString()} of {MATERIAL_MAX.toLocaleString()} characters. Not
+          remembered after you close this.
+        </p>
+      </div>
+
+      {onGenerated && (
+        <section
+          aria-label="Generate with AI"
+          className="flex flex-col gap-2 rounded-control border border-line p-3"
+        >
+          <h3 className="m-0 text-base font-semibold">Generate with AI</h3>
+          {cfg ? (
+            <>
+              <p className="m-0 text-sm text-muted">
+                Uses your {providerOf(cfg.provider).label} account ({cfg.model}). Up to {BATCH_SIZE}{" "}
+                questions at a time. This may use your credit or daily limit. You will see the
+                questions before anything is saved.
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button loading={working} onClick={() => void generate()}>
+                  {working ? "Writing questions" : "Generate questions"}
+                </Button>
+                {working && (
+                  <Button variant="ghost" onClick={() => abort.current?.abort()}>
+                    Stop
+                  </Button>
+                )}
+                <Button variant="ghost" onClick={openAiConnection}>
+                  AI connection
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="m-0 text-sm text-muted">
+                Connect your own AI account and Learivo writes the questions for you, with no copy
+                and paste.
+              </p>
+              <div>
+                <Button variant="secondary" onClick={openAiConnection}>
+                  Connect an AI
+                </Button>
+              </div>
+            </>
+          )}
+          {genError && (
+            <p role="alert" className="m-0 text-sm text-danger">
+              {genError}
+            </p>
+          )}
+        </section>
+      )}
 
       <section aria-label="Your prompt" className="flex flex-col gap-2">
         <h3 className="m-0 text-base font-semibold">Your prompt</h3>

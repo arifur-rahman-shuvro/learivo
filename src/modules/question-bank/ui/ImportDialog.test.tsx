@@ -1,4 +1,5 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { reloadAi, removeKey, saveAi } from "../../ai/keys.ts";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { ThemeProvider } from "../../../themes/ThemeProvider.tsx";
 import { MemoryRepo } from "../data/memoryRepo.ts";
@@ -187,6 +188,39 @@ describe("Smart import", () => {
       fireEvent.click(screen.getByRole("button", { name: "Copy prompt" }));
       expect(await screen.findByRole("button", { name: "Copied" })).toBeTruthy();
       expect(copied[0]).toContain('"exam_year": "2024"');
+    });
+
+    it("generates questions with the connected AI and shows them for review", async () => {
+      localStorage.clear();
+      saveAi("openai", "sk-test", "");
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(() =>
+          Promise.resolve(
+            new Response(
+              JSON.stringify({
+                choices: [{ message: { content: JSON.stringify([q("Written by AI")]) } }],
+              }),
+            ),
+          ),
+        ),
+      );
+      open();
+      fireEvent.click(screen.getByRole("tab", { name: "Make a prompt" }));
+      fireEvent.click(screen.getByRole("button", { name: "Generate questions" }));
+      await screen.findByRole("region", { name: "Preview" });
+      expect(screen.getByText(/Written by AI/)).toBeTruthy();
+      vi.unstubAllGlobals();
+      removeKey("openai");
+    });
+
+    it("offers to connect an AI when none is connected", () => {
+      localStorage.clear();
+      reloadAi();
+      open();
+      fireEvent.click(screen.getByRole("tab", { name: "Make a prompt" }));
+      expect(screen.getByRole("button", { name: "Connect an AI" })).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "Generate questions" })).toBeNull();
     });
 
     it("adds details to every question that lacks them and keeps the ones it has", async () => {
