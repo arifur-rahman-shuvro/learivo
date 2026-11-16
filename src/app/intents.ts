@@ -1,7 +1,12 @@
 import { useEffect, useRef } from "react";
 
 /** A request made from outside a screen, such as the command palette: "open the add form". */
-export type Intent = { kind: "search"; text: string } | { kind: "add" } | { kind: "import" };
+export type Intent =
+  | { kind: "search"; text: string }
+  | { kind: "add" }
+  | { kind: "import" }
+  /** Open a named part of a screen: a Review or Insights tab, or a Questions panel. */
+  | { kind: "open"; target: string };
 
 let pending: Intent | null = null;
 const listeners = new Set<() => void>();

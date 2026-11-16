@@ -4,6 +4,7 @@ import { useAuth } from "../auth/AuthProvider.tsx";
 import { useOfflineControls } from "../offline/OfflineProvider.tsx";
 import { avatarColor, initials } from "../modules/profile/domain/profile.ts";
 import type { ProfileRepo } from "../modules/profile/data/repo.ts";
+import { openGuide } from "./guide.ts";
 import { useProfile } from "../modules/profile/ui/useProfile.ts";
 import { AppearanceDialog, ProfileDialog, SettingsDialog } from "./AccountDialogs.tsx";
 import DataDialog from "./DataDialog.tsx";
@@ -126,6 +127,14 @@ export default function AccountMenu({ repo }: { repo: ProfileRepo }) {
           <div role="separator" className="my-1 border-t border-line" />
           <Item onClick={() => show("profile")}>Your profile</Item>
           <Item onClick={() => show("appearance")}>Appearance</Item>
+          <Item
+            onClick={() => {
+              setOpen(false);
+              openGuide();
+            }}
+          >
+            User guide
+          </Item>
           <Item onClick={() => show("settings")}>Settings</Item>
           <div role="separator" className="my-1 border-t border-line" />
           <Item danger disabled={leaving} onClick={() => void signOut()}>

@@ -1,3 +1,4 @@
+import AddHub, { type AddChoice } from "./AddHub.tsx";
 import { useEffect, useMemo, useState } from "react";
 import { useIntent } from "../../../app/intents.ts";
 import {
@@ -50,7 +51,7 @@ function useDebounced<T>(value: T, ms: number): T {
   return v;
 }
 
-type Panel = null | "import" | "export" | "manage";
+type Panel = null | "hub" | "import" | "export" | "manage";
 type BulkPick = "classify" | "tag" | "collection" | null;
 
 export default function QuestionsScreen() {
@@ -58,7 +59,11 @@ export default function QuestionsScreen() {
   useIntent((i) => {
     if (i.kind === "search") setSearchText(i.text);
     else if (i.kind === "add") setEditing("new");
-    else setPanel("import");
+    else if (i.kind === "import") choose("paste");
+    else if (i.target === "hub") setPanel("hub");
+    else if (i.target === "prompt") choose("prompt");
+    else if (i.target === "subjects") choose("subject");
+    else if (i.target === "export") setPanel("export");
   });
   const ws = useWorkspace();
   const [marks, setMarks] = useState<Set<string>>(new Set());
@@ -72,6 +77,17 @@ export default function QuestionsScreen() {
   const [error, setError] = useState<string>();
   const [editing, setEditing] = useState<null | "new" | string>(null);
   const [panel, setPanel] = useState<Panel>(null);
+  const [importFrom, setImportFrom] = useState<"paste" | "upload" | "prompt">("paste");
+  function choose(c: AddChoice) {
+    if (c === "write") {
+      setPanel(null);
+      setEditing("new");
+    } else if (c === "subject") setPanel("manage");
+    else {
+      setImportFrom(c);
+      setPanel("import");
+    }
+  }
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkPick, setBulkPick] = useState<BulkPick>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -211,11 +227,8 @@ export default function QuestionsScreen() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button icon={<PlusIcon />} onClick={() => setEditing("new")}>
-            Add question
-          </Button>
-          <Button variant="secondary" onClick={() => setPanel("import")}>
-            Import
+          <Button icon={<PlusIcon />} onClick={() => setPanel("hub")}>
+            Add questions
           </Button>
           <Button variant="secondary" onClick={() => setPanel("export")}>
             Export
@@ -623,7 +636,8 @@ export default function QuestionsScreen() {
           onManage={() => setPanel("manage")}
         />
       )}
-      {panel === "import" && <ImportDialog onClose={() => setPanel(null)} />}
+      {panel === "hub" && <AddHub onChoose={choose} onClose={() => setPanel(null)} />}
+      {panel === "import" && <ImportDialog initial={importFrom} onClose={() => setPanel(null)} />}
       {panel === "export" && <ExportDialog onClose={() => setPanel(null)} />}
       {panel === "manage" && <ManageDialog onClose={() => setPanel(null)} />}
 

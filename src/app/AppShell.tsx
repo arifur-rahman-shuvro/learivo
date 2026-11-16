@@ -12,6 +12,7 @@ import App from "../App.tsx";
 import { useAuth } from "../auth/AuthProvider.tsx";
 import AuthScreen from "../auth/AuthScreen.tsx";
 import AccountMenu from "./AccountMenu.tsx";
+import GuideDialog from "./GuideDialog.tsx";
 import { SupabaseProfile } from "../modules/profile/data/supabaseProfile.ts";
 import type { ProfileRepo } from "../modules/profile/data/repo.ts";
 import StatusBanner from "./StatusBanner.tsx";
@@ -68,6 +69,7 @@ function ModuleHost({
       <PracticeProvider attempts={attempts}>
         <WorkspaceProvider repo={workspace}>
           <Suspense fallback={<div role="status" aria-label="Loading" />}>
+            <GuideDialog onNavigate={onNavigate} />
             {module === "home" ? (
               <HomeDashboard onNavigate={onNavigate} />
             ) : module === "questions" ? (

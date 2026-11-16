@@ -1,3 +1,4 @@
+import { useIntent } from "../../../app/intents.ts";
 import GlossaryText from "./GlossaryText.tsx";
 import { useEffect, useMemo, useState } from "react";
 import { Badge, Button, EmptyState, Spinner } from "../../../design-system/index.ts";
@@ -47,6 +48,9 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
   const { attempts } = usePractice();
   const ws = useWorkspace();
   const [tab, setTab] = useState<Tab>("due");
+  useIntent((i) => {
+    if (i.kind === "open" && TABS.some(([k]) => k === i.target)) setTab(i.target as Tab);
+  });
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState<string>();
   const [noteSearch, setNoteSearch] = useState("");

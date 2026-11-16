@@ -1,4 +1,8 @@
+import { useState } from "react";
 import { Badge, Button, PlusIcon, ProgressRing } from "../../design-system/index.ts";
+import FeaturesDialog from "../FeaturesDialog.tsx";
+import { openGuide } from "../guide.ts";
+import { sendIntent } from "../intents.ts";
 
 const steps = [
   { title: "Add your questions", detail: "Type them in, or import a JSON or CSV file." },
@@ -50,6 +54,7 @@ function ExampleCard() {
 }
 
 export default function Home({ onNavigate }: { onNavigate: (route: string) => void }) {
+  const [features, setFeatures] = useState(false);
   return (
     <div className="flex flex-col gap-5">
       <section className="lv-card grid gap-6 p-5 sm:p-7 md:grid-cols-[1.15fr_1fr] md:items-center">
@@ -62,11 +67,29 @@ export default function Home({ onNavigate }: { onNavigate: (route: string) => vo
             to revise next. Everything is private to you.
           </p>
           <div className="flex flex-wrap gap-3">
-            <Button icon={<PlusIcon />} onClick={() => onNavigate("#/questions")}>
+            <Button
+              icon={<PlusIcon />}
+              onClick={() => {
+                sendIntent({ kind: "add" });
+                onNavigate("#/questions");
+              }}
+            >
               Add a question
             </Button>
-            <Button variant="secondary" onClick={() => onNavigate("#/questions")}>
-              Import a file
+            <Button
+              variant="secondary"
+              onClick={() => {
+                sendIntent({ kind: "import" });
+                onNavigate("#/questions");
+              }}
+            >
+              Import questions
+            </Button>
+            <Button variant="secondary" onClick={() => setFeatures(true)}>
+              All features
+            </Button>
+            <Button variant="ghost" onClick={openGuide}>
+              User guide
             </Button>
           </div>
         </div>
@@ -117,6 +140,7 @@ export default function Home({ onNavigate }: { onNavigate: (route: string) => vo
           </div>
         </section>
       </div>
+      <FeaturesDialog open={features} onClose={() => setFeatures(false)} onNavigate={onNavigate} />
     </div>
   );
 }

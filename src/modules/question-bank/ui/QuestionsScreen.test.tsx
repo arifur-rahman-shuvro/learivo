@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { ThemeProvider } from "../../../themes/ThemeProvider.tsx";
 import { MemoryRepo } from "../data/memoryRepo.ts";
 import { DEFAULT_QUERY } from "../data/repo.ts";
@@ -128,5 +128,37 @@ describe("QuestionsScreen", () => {
     renderScreen(repo);
     fireEvent.click(await screen.findByText("Open me"));
     expect(await screen.findByRole("dialog")).toBeTruthy();
+  });
+});
+
+describe("Add questions hub", () => {
+  it("offers every way in and opens the matching screen", async () => {
+    const repo = new MemoryRepo();
+    renderScreen(repo);
+    fireEvent.click(await screen.findByRole("button", { name: "Add questions" }));
+    const hub = await screen.findByRole("dialog", { name: "Add questions" });
+    for (const name of [
+      "Write one question",
+      "Make a prompt for ChatGPT",
+      "Paste what ChatGPT gave you",
+      "Upload a file",
+      "Add a subject or topic first",
+    ]) {
+      expect(within(hub).getByRole("button", { name: new RegExp(name) })).toBeTruthy();
+    }
+    fireEvent.click(within(hub).getByRole("button", { name: /Make a prompt for ChatGPT/ }));
+    const imp = await screen.findByRole("dialog", { name: "Import questions" });
+    expect(
+      within(imp).getByRole("tab", { name: "Make a prompt" }).getAttribute("aria-selected"),
+    ).toBe("true");
+    expect(within(imp).getByRole("region", { name: "Your prompt" })).toBeTruthy();
+  });
+
+  it("opens the subject organizer from the hub", async () => {
+    renderScreen(new MemoryRepo());
+    fireEvent.click(await screen.findByRole("button", { name: "Add questions" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Add a subject or topic first/ }));
+    const dlg = await screen.findByRole("dialog", { name: "Organize your bank" });
+    expect(within(dlg).getByLabelText("New subject")).toBeTruthy();
   });
 });

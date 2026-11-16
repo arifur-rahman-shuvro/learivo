@@ -49,7 +49,7 @@ describe("account menu", () => {
       within(menu)
         .getAllByRole("menuitem")
         .map((i) => i.textContent),
-    ).toEqual(["Your profile", "Appearance", "Settings", "Sign out"]);
+    ).toEqual(["Your profile", "Appearance", "User guide", "Settings", "Sign out"]);
   });
 
   it("moves focus into the menu, supports arrow keys and closes on Escape", async () => {
@@ -62,7 +62,7 @@ describe("account menu", () => {
     expect(document.activeElement).toBe(items[1]);
     fireEvent.keyDown(document, { key: "ArrowUp" });
     fireEvent.keyDown(document, { key: "ArrowUp" });
-    expect(document.activeElement).toBe(items[3]);
+    expect(document.activeElement).toBe(items[4]);
     fireEvent.keyDown(document, { key: "Escape" });
     expect(screen.queryByRole("menu")).toBeNull();
     expect(document.activeElement).toBe(trigger);

@@ -1,3 +1,4 @@
+import { useIntent } from "../../../app/intents.ts";
 import { useMemo, useState } from "react";
 import { achievements } from "../domain/achievements.ts";
 import {
@@ -133,6 +134,9 @@ function LineChart({
 export default function InsightsScreen({ onNavigate }: { onNavigate: (route: string) => void }) {
   const { data, error } = useInsightsData();
   const [tab, setTab] = useState<Tab>("overview");
+  useIntent((i) => {
+    if (i.kind === "open" && TABS.some(([k]) => k === i.target)) setTab(i.target as Tab);
+  });
   const [depth, setDepth] = useState<1 | 2>(1);
   const today = useMemo(() => new Date(), []);
 

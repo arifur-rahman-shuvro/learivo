@@ -1,3 +1,4 @@
+import FeaturesDialog from "../../../app/FeaturesDialog.tsx";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button, ProgressRing } from "../../../design-system/index.ts";
 import Home from "../../../app/screens/Home.tsx";
@@ -42,6 +43,7 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
   const [goal, setGoal] = useState(DEFAULT_GOAL);
   const [layout, setLayout] = useState<HomeLayout>(DEFAULT_HOME_LAYOUT);
   const [customizing, setCustomizing] = useState(false);
+  const [features, setFeatures] = useState(false);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(String(DEFAULT_GOAL));
   const [error, setError] = useState<string>();
@@ -329,9 +331,14 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
         <h1 id="module-title" className="m-0 text-3xl font-bold">
           Today
         </h1>
-        <Button variant="secondary" size="sm" onClick={() => setCustomizing(true)}>
-          Customize
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm" onClick={() => setFeatures(true)}>
+            All features
+          </Button>
+          <Button variant="secondary" size="sm" onClick={() => setCustomizing(true)}>
+            Customize
+          </Button>
+        </div>
       </header>
       <div className="grid gap-5 lg:grid-cols-2">
         {shown.map((id) =>
@@ -347,6 +354,7 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
           Every section is hidden. Use Customize to show some again.
         </p>
       )}
+      <FeaturesDialog open={features} onClose={() => setFeatures(false)} onNavigate={onNavigate} />
       {customizing && (
         <CustomizeDialog
           layout={layout}

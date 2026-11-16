@@ -1,3 +1,4 @@
+import { useIntent } from "../../../app/intents.ts";
 import { useEffect, useMemo, useState } from "react";
 import { Badge, Button, EmptyState, PlusIcon, Spinner } from "../../../design-system/index.ts";
 import { KIND_BY_DEPTH, type TaxonomyNode } from "../../question-bank/data/repo.ts";
@@ -81,6 +82,9 @@ function Home({ onOpen }: { onOpen: (v: View) => void }) {
   const [recent, setRecent] = useState<Attempt[] | null>(null);
   const [exams, setExams] = useState<Exam[] | null>(null);
   const [builder, setBuilder] = useState<null | "new" | Exam>(null);
+  useIntent((i) => {
+    if (i.kind === "open" && i.target === "exam") setBuilder("new");
+  });
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string>();
 

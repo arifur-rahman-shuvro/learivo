@@ -185,10 +185,16 @@ function DefaultsForm({ value, onChange }: { value: Defaults; onChange: (d: Defa
   );
 }
 
-export function ImportDialog({ onClose }: { onClose: () => void }) {
+export function ImportDialog({
+  onClose,
+  initial = "paste",
+}: {
+  onClose: () => void;
+  initial?: "paste" | "upload" | "prompt";
+}) {
   const { repo, refresh } = useBank();
   const [stage, setStage] = useState<Stage>("choose");
-  const [source, setSource] = useState<Source>("paste");
+  const [source, setSource] = useState<Source>(initial);
   const [pasted, setPasted] = useState("");
   const [fileName, setFileName] = useState("");
   const [loaded, setLoaded] = useState<{ text: string; format: ImportFormat } | null>(null);
@@ -355,8 +361,15 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
       {stage === "choose" && (
         <div className="flex flex-col gap-4">
           <p className="m-0 text-muted">
-            Add up to {MAX_IMPORT_ROWS.toLocaleString()} questions at once. You review everything
+            Add up to {MAX_IMPORT_ROWS.toLocaleString()} questions at once. You always review them
             before anything is saved.
+          </p>
+          <p className="m-0 text-sm text-muted">
+            {source === "prompt"
+              ? "Step 1. Fill the form and copy the prompt. Give it to ChatGPT with your notes or photos."
+              : source === "paste"
+                ? "Step 2. Paste the JSON that ChatGPT gave you, or JSON you wrote yourself."
+                : "Or upload a JSON or CSV file, such as one you exported earlier."}
           </p>
           <div
             role="tablist"
@@ -365,9 +378,9 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
           >
             {(
               [
+                ["prompt", "Make a prompt"],
                 ["paste", "Paste JSON"],
                 ["upload", "Upload file"],
-                ["prompt", "Make a prompt"],
               ] as const
             ).map(([k, label]) => (
               <button
