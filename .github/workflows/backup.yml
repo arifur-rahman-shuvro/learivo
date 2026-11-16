@@ -2,7 +2,7 @@ name: Weekly backup
 
 # Saves an encrypted copy of the database every Sunday and keeps it for 30 days.
 # It fails (red) until the owner adds two repository secrets (see docs/RUNBOOK.md):
-#   BACKUP_DB_URL     the database connection string
+#   BACKUP_DB_URL     the database connection string (SUPABASE_DB_URL also works)
 #   BACKUP_PASSPHRASE a long passphrase used to encrypt the file
 on:
   schedule:
@@ -16,14 +16,14 @@ jobs:
   backup:
     runs-on: ubuntu-latest
     env:
-      DB_URL: ${{ secrets.BACKUP_DB_URL }}
+      DB_URL: ${{ secrets.BACKUP_DB_URL || secrets.SUPABASE_DB_URL }}
       PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
     steps:
       - name: Check the secrets exist
         id: gate
         run: |
           missing=0
-          if [ -z "$DB_URL" ]; then echo "::error::Secret BACKUP_DB_URL is empty or missing (check the name, and that it is a Repository secret)."; missing=1; fi
+          if [ -z "$DB_URL" ]; then echo "::error::Neither BACKUP_DB_URL nor SUPABASE_DB_URL is set (it must be a Repository secret)."; missing=1; fi
           if [ -z "$PASSPHRASE" ]; then echo "::error::Secret BACKUP_PASSPHRASE is empty or missing."; missing=1; fi
           if [ "$missing" = 1 ]; then exit 1; fi
           echo "run=true" >> "$GITHUB_OUTPUT"
