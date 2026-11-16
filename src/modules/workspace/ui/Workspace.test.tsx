@@ -500,3 +500,23 @@ describe("Review: glossary", () => {
     expect(hit.textContent).toBe("Systole");
   });
 });
+
+describe("Home week chart", () => {
+  it("shows the last seven days and the goal", async () => {
+    const { WeekBars } = await import("./InsightsParts.tsx");
+    const days = Array.from({ length: 7 }, (_, i) => ({
+      day: `2026-11-${String(10 + i).padStart(2, "0")}`,
+      count: i === 6 ? 12 : i === 4 ? 3 : 0,
+    }));
+    render(<WeekBars days={days} goal={10} />);
+    const chart = screen.getByRole("img", { name: /Answers in the last 7 days/ });
+    expect(chart.getAttribute("aria-label")).toContain("Daily goal 10");
+    expect(chart.getAttribute("aria-label")).toContain("Sat 3");
+    expect(
+      screen.getByText("15 answered in 7 days. The dashed line is your daily goal."),
+    ).toBeTruthy();
+    cleanup();
+    render(<WeekBars days={days.map((d) => ({ ...d, count: 0 }))} goal={10} />);
+    expect(screen.getByText(/No answers yet this week/)).toBeTruthy();
+  });
+});

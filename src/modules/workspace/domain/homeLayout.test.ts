@@ -19,7 +19,7 @@ describe("home layout", () => {
       order: ["goal", "bogus", "goal", "focus"],
       hidden: ["weak", "weak", "x"],
     });
-    expect(l.order).toEqual(["goal", "focus", "numbers", "weak", "recent", "exam"]);
+    expect(l.order).toEqual(["goal", "focus", "numbers", "week", "weak", "recent", "exam"]);
     expect(l.hidden).toEqual(["weak"]);
   });
 

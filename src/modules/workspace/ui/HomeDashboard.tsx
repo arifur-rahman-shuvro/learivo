@@ -1,6 +1,6 @@
 import FeaturesDialog from "../../../app/FeaturesDialog.tsx";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Button, ProgressRing } from "../../../design-system/index.ts";
+import { Button, ProgressRing, Spinner } from "../../../design-system/index.ts";
 import Home from "../../../app/screens/Home.tsx";
 import { DEFAULT_QUERY } from "../../question-bank/data/repo.ts";
 import { errorText, useBank } from "../../question-bank/ui/bank.tsx";
@@ -12,7 +12,15 @@ import {
   paceFor,
   type ExamTarget,
 } from "../domain/examTarget.ts";
-import { activeDaySet, answeredOn, overall, streak, weakAreas } from "../domain/insights.ts";
+import {
+  activeDaySet,
+  activityByDay,
+  answeredOn,
+  overall,
+  streak,
+  weakAreas,
+} from "../domain/insights.ts";
+import { WeekBars } from "./InsightsParts.tsx";
 import { isDue } from "../domain/scheduler.ts";
 import {
   DEFAULT_HOME_LAYOUT,
@@ -90,6 +98,7 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
       today: answeredOn(data.facts, today),
       weak: weakAreas(data.facts).slice(0, 3),
       recent: data.sessions.slice(0, 4),
+      week: activityByDay(data.facts, today, 7),
     };
   }, [data, today]);
 
@@ -212,6 +221,14 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
         </div>
       </section>
     ),
+    week: (
+      <section aria-labelledby="week-title" className="lv-card flex flex-col gap-3 p-5">
+        <h2 id="week-title" className="m-0 text-lg font-semibold">
+          This week
+        </h2>
+        {view ? <WeekBars days={view.week} goal={goal} /> : <Spinner />}
+      </section>
+    ),
     weak: (
       <section aria-labelledby="weak-title" className="lv-card p-5 sm:p-6">
         <h2 id="weak-title" className="m-0 mb-2 text-lg font-bold">
@@ -319,6 +336,7 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
     focus: true,
     numbers: true,
     goal: false,
+    week: false,
     weak: false,
     recent: true,
     exam: false,

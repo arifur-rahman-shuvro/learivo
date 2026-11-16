@@ -3,6 +3,7 @@ export const HOME_SECTIONS = [
   { id: "focus", label: "Today's focus" },
   { id: "numbers", label: "Your numbers" },
   { id: "goal", label: "Daily goal" },
+  { id: "week", label: "This week" },
   { id: "weak", label: "Weak areas" },
   { id: "recent", label: "Recent sessions" },
   { id: "exam", label: "Exam countdown" },
