@@ -138,3 +138,31 @@ Follow-up (2026-11-14), owner request: delete and clear data.
 - Marking is unchanged: each true/false statement is worth 1/n of the mark, each correct pick in multiple answer is 1/k.
 - The prompt maker has an "Options per question" setting (AI decides 2 to 5, or exactly 2, 3, 4 or 5).
 - Existing questions with 5 options are untouched.
+
+## Next: Phase 10 to 12 (proposed 2026-11-16)
+
+Built on what already exists (practice palette and flags, goal ring, exam countdown, flashcards, glossary, achievements and offline are done). Each item is small enough to ship and phone-test alone.
+
+### Phase 10: Learn from mistakes (highest value)
+
+1. **Mistake reasons.** After an attempt, tag each wrong answer: careless, did not know, mixed up, guessed. Insights shows which reason costs the most marks. (new column on attempt_items)
+2. **Mistake notebook.** One screen of every question you got wrong, grouped by reason and subject, with a one-tap "practise these".
+3. **Confidence mark.** Optional "sure / unsure" before answering; Insights shows lucky guesses and overconfident misses.
+4. **Result breakdown.** Per-subject bars and time per question on the result screen.
+
+### Phase 11: Look and structure
+
+5. **Subject colours.** Pick a colour per subject; used on chips, charts and the question list.
+6. **Question list upgrade.** Type badge, difficulty dots, saved filter views ("Anatomy, hard, never answered").
+7. **Home refresh.** Weekly 7-day bar chart, streak, and a single "Start today's session" button that mixes due reviews and weak topics.
+8. **Empty states and first-run tour.** A sample bank the student can delete, and a short checklist (add questions, take a test, set exam date).
+9. **Theme polish.** Motion and focus states reviewed across Default, Forest and Space.
+
+### Phase 12: Planning and safety
+
+10. **Study planner.** From the exam date and bank size, a daily quota and a simple week calendar.
+11. **Full backup and restore.** One file with questions, notes, flashcards and history; restore into an empty account.
+12. **Duplicate merge.** Find near-duplicate questions and merge, keeping notes and history.
+13. **Printable paper.** A built exam as a print-friendly page.
+
+Deferred by the owner: AI helpers, sharing, Go API features. Not planned: image questions (Learivo stores no images).
