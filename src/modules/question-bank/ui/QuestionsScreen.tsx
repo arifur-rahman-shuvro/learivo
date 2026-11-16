@@ -1,3 +1,5 @@
+import { DifficultyDots } from "./DifficultyDots.tsx";
+import { SavedViews } from "./SavedViews.tsx";
 import AddHub, { type AddChoice } from "./AddHub.tsx";
 import { useEffect, useMemo, useState } from "react";
 import { useIntent } from "../../../app/intents.ts";
@@ -354,13 +356,32 @@ export default function QuestionsScreen() {
               <option value="stem">Alphabetical</option>
             </select>
           </div>
-          {filtered && (
-            <div>
+          <div className="flex flex-wrap items-center gap-2">
+            {filtered && (
               <Button variant="ghost" size="sm" onClick={clearFilters}>
                 Clear filters
               </Button>
-            </div>
-          )}
+            )}
+            <SavedViews
+              canSave={filtered}
+              current={{
+                search: searchText,
+                nodeId: query.nodeId,
+                unclassified: query.unclassified,
+                qtypes: query.qtypes,
+                difficulties: query.difficulties,
+                tagId: query.tagId,
+                collectionId: query.collectionId,
+                sort: query.sort,
+              }}
+              onApply={(f) => {
+                setSearchText(f.search);
+                const { search: _s, ...rest } = f;
+                void _s;
+                patch(rest);
+              }}
+            />
+          </div>
         </section>
       )}
 
@@ -594,7 +615,7 @@ export default function QuestionsScreen() {
                     <span className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
                       <Badge>{TYPE_LABELS[q.qtype]}</Badge>
                       {path.length > 0 && <span>{path.join(" › ")}</span>}
-                      {q.difficulty !== null && <span>Level {q.difficulty}</span>}
+                      {q.difficulty !== null && <DifficultyDots level={q.difficulty} />}
                       {q.tags.slice(0, 3).map((t) => (
                         <Badge key={t} tone="accent">
                           {t}

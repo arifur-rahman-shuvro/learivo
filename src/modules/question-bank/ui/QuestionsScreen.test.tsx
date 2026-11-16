@@ -161,4 +161,30 @@ describe("Add questions hub", () => {
     const dlg = await screen.findByRole("dialog", { name: "Organize your bank" });
     expect(within(dlg).getByLabelText("New subject")).toBeTruthy();
   });
+
+  it("saves a filter as a named view and brings it back", async () => {
+    localStorage.clear();
+    const repo = new MemoryRepo();
+    await repo.create([
+      { ...tf("Easy one"), difficulty: 1 },
+      { ...tf("Hard one"), difficulty: 5 },
+    ]);
+    renderScreen(repo);
+    fireEvent.change(await screen.findByLabelText("Filter by difficulty"), {
+      target: { value: "5" },
+    });
+    await waitFor(() => expect(screen.queryByText("Easy one")).toBeNull());
+    expect(screen.getByRole("img", { name: "Level 5 of 5" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Save this view" }));
+    fireEvent.change(screen.getByLabelText("View name"), { target: { value: "Hard ones" } });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+    expect(await screen.findByText("Easy one")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Saved views"), { target: { value: "Hard ones" } });
+    await waitFor(() => expect(screen.queryByText("Easy one")).toBeNull());
+    expect(screen.getByText("Hard one")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Delete view" }));
+    expect(screen.queryByLabelText("Saved views")).toBeNull();
+    localStorage.clear();
+  });
 });
