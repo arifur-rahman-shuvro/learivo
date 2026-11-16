@@ -76,6 +76,18 @@ do $$ begin
     insert into check_results values ('negative partial count is refused', true);
   end;
 end $$;
+update public.attempt_items set mistake_reason = 'careless' where position = 0;
+insert into check_results select 'a mistake reason can be saved and cleared',
+  (select mistake_reason from public.attempt_items) = 'careless';
+update public.attempt_items set mistake_reason = null where position = 0;
+do $$ begin
+  begin
+    update public.attempt_items set mistake_reason = 'lazy';
+    insert into check_results values ('an unknown mistake reason is refused', false);
+  exception when check_violation then
+    insert into check_results values ('an unknown mistake reason is refused', true);
+  end;
+end $$;
 delete from public.exams;
 insert into check_results select 'deleting an exam keeps the attempt', (select count(*) from public.attempts where exam_id is null) = 1;
 delete from public.attempts;

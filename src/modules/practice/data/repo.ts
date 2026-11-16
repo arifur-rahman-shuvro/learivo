@@ -1,4 +1,5 @@
 import type { Snapshot, Response, Verdict } from "../domain/grading.ts";
+import type { Reason } from "../domain/reasons.ts";
 import type { ExamRule, Past } from "../domain/session.ts";
 import type { Fact } from "../../workspace/domain/insights.ts";
 
@@ -23,6 +24,8 @@ export interface AttemptItem {
   snapshot: Snapshot;
   response: Response | null;
   flagged: boolean;
+  /** The student's own reason for missing it; set after the session. */
+  mistakeReason: Reason | null;
   verdict: Verdict | null;
   /** Share of full credit earned, 0 to 1. */
   credit: number | null;
@@ -71,6 +74,8 @@ export interface NewAttempt {
 export interface ItemPatch {
   response?: Response | null;
   flagged?: boolean;
+  /** Can be set after the attempt is submitted. */
+  mistakeReason?: Reason | null;
 }
 
 /** One graded answer, written when an attempt is submitted. */

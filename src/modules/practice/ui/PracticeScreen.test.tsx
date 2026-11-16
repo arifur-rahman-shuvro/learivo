@@ -115,6 +115,35 @@ describe("Practice", () => {
     expect(done).toMatchObject({ kind: "exam", wrong: 1, score: 0 });
   });
 
+  it("lets the student tag why a wrong answer was missed, and clear it", async () => {
+    const { ready, attempts } = setup([tf("Tag me")]);
+    await ready;
+    await startPractice(1);
+    await screen.findByText(/Question 1 of 1/);
+    fireEvent.click(screen.getByLabelText(/Wrong answer 1/));
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+    fireEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", { name: "Submit" }),
+    );
+    await screen.findByRole("heading", { name: "Results" });
+    fireEvent.click(screen.getByRole("button", { name: /Tag me/ }));
+    const careless = await screen.findByRole("radio", { name: "Careless" });
+    fireEvent.click(careless);
+    await waitFor(async () => {
+      const [a] = await attempts.list(1);
+      const full = await attempts.get(a!.id);
+      expect(full!.items[0]!.mistakeReason).toBe("careless");
+    });
+    expect(careless.getAttribute("aria-checked")).toBe("true");
+    const facts = await attempts.facts(10);
+    expect(facts[0]!.reason).toBe("careless");
+    fireEvent.click(careless);
+    await waitFor(async () => {
+      const [a] = await attempts.list(1);
+      expect((await attempts.get(a!.id))!.items[0]!.mistakeReason).toBeNull();
+    });
+  });
+
   it("offers to resume an unfinished session and can retry missed questions", async () => {
     const { ready, attempts } = setup([tf("Retry me")]);
     await ready;

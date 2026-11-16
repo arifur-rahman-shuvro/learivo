@@ -244,10 +244,13 @@ describe("Insights", () => {
         await finished(attempts, [{ id: a!, stem: "A1", path: ["Anatomy"], right: true }], "exam");
       },
     );
-    expect(await screen.findByText("Questions answered")).toBeTruthy();
-    const totals = screen.getByRole("region", { name: "Totals" });
-    expect(within(totals).getByText("4")).toBeTruthy();
-    expect(within(totals).getByText("75%")).toBeTruthy();
+    const summary = await screen.findByRole("region", { name: "Summary" });
+    expect(within(summary).getAllByText("75%").length).toBeGreaterThan(0);
+    expect(within(summary).getByText(/3 right of 4 answered, over 2 sessions/)).toBeTruthy();
+    expect(within(summary).getByText(/1-day streak/)).toBeTruthy();
+    expect(screen.getByRole("img", { name: /Answers per day over the last 84 days/ })).toBeTruthy();
+    const why = screen.getByRole("region", { name: "Why you lose marks" });
+    expect(within(why).getByText(/1 missed question/)).toBeTruthy();
     expect(screen.getByRole("img", { name: /Accuracy by day/ })).toBeTruthy();
     fireEvent.click(screen.getByRole("tab", { name: "Subjects" }));
     const bars = await screen.findAllByRole("progressbar");

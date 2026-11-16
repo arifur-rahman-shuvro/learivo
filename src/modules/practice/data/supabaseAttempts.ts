@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { isAnswered, type Response, type Snapshot, type Verdict } from "../domain/grading.ts";
+import type { Reason } from "../domain/reasons.ts";
 import type { ExamRule, Past } from "../domain/session.ts";
 import type { Fact } from "../../workspace/domain/insights.ts";
 import type {
@@ -42,6 +43,7 @@ interface ItemRow {
   snapshot: Snapshot;
   response: Response | null;
   flagged: boolean;
+  mistake_reason: Reason | null;
   is_correct: boolean | null;
   credit: number | string | null;
   marks: number | string | null;
@@ -181,7 +183,7 @@ export class SupabaseAttempts implements AttemptRepo {
       await this.db
         .from("attempt_items")
         .select(
-          "position, question_id, snapshot, response, flagged, is_correct, credit, marks, answered_at",
+          "position, question_id, snapshot, response, flagged, mistake_reason, is_correct, credit, marks, answered_at",
         )
         .eq("attempt_id", id)
         .order("position")
@@ -193,6 +195,7 @@ export class SupabaseAttempts implements AttemptRepo {
       snapshot: r.snapshot,
       response: r.response,
       flagged: r.flagged,
+      mistakeReason: r.mistake_reason ?? null,
       verdict: toVerdict(r.is_correct, num(r.credit), r.response),
       credit: num(r.credit),
       marks: num(r.marks),
@@ -218,6 +221,7 @@ export class SupabaseAttempts implements AttemptRepo {
       update.answered_at = patch.response ? new Date().toISOString() : null;
     }
     if (patch.flagged !== undefined) update.flagged = patch.flagged;
+    if (patch.mistakeReason !== undefined) update.mistake_reason = patch.mistakeReason;
     if (Object.keys(update).length === 0) return;
     const res = await this.db
       .from("attempt_items")
@@ -269,7 +273,9 @@ export class SupabaseAttempts implements AttemptRepo {
       const rows = ok(
         await this.db
           .from("attempt_items")
-          .select("is_correct, response, path:snapshot->path, attempts!inner(submitted_at, status)")
+          .select(
+            "is_correct, mistake_reason, response, path:snapshot->path, attempts!inner(submitted_at, status)",
+          )
           .not("is_correct", "is", null)
           .not("response", "is", null)
           .eq("attempts.status", "submitted")
@@ -277,11 +283,17 @@ export class SupabaseAttempts implements AttemptRepo {
           .range(from, from + 999),
       ) as unknown as {
         is_correct: boolean;
+        mistake_reason: Reason | null;
         path: string[] | null;
         attempts: { submitted_at: string };
       }[];
       for (const r of rows) {
-        out.push({ at: r.attempts.submitted_at, path: r.path ?? [], correct: r.is_correct });
+        out.push({
+          at: r.attempts.submitted_at,
+          path: r.path ?? [],
+          correct: r.is_correct,
+          reason: r.mistake_reason,
+        });
       }
       if (rows.length < 1000) break;
     }

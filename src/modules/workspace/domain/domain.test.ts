@@ -211,3 +211,50 @@ describe("insights", () => {
     expect(dayKey(new Date(2026, 0, 5))).toBe("2026-01-05");
   });
 });
+
+describe("insight helpers", () => {
+  const f = (over: Partial<import("./insights.ts").Fact>) => ({
+    at: "2026-11-15T10:00:00",
+    path: ["Anatomy"],
+    correct: false,
+    ...over,
+  });
+  it("counts why questions were missed and what is untagged", async () => {
+    const { byReason } = await import("./insights.ts");
+    const r = byReason([
+      f({ reason: "careless" }),
+      f({ reason: "careless" }),
+      f({ reason: "guessed" }),
+      f({}),
+      f({ correct: true, reason: "careless" }),
+    ]);
+    expect(r.rows).toEqual([
+      { reason: "careless", count: 2 },
+      { reason: "guessed", count: 1 },
+    ]);
+    expect(r.missed).toBe(4);
+    expect(r.untagged).toBe(1);
+  });
+  it("lists answers per day ending today, with empty days as zero", async () => {
+    const { activityByDay } = await import("./insights.ts");
+    const days = activityByDay(
+      [
+        f({ at: "2026-11-15T09:00:00" }),
+        f({ at: "2026-11-15T21:00:00" }),
+        f({ at: "2026-11-13T08:00:00" }),
+      ],
+      new Date(2026, 10, 15, 12),
+      4,
+    );
+    expect(days.map((d) => d.count)).toEqual([0, 1, 0, 2]);
+    expect(days[3]!.day).toBe("2026-11-15");
+  });
+  it("finds the strongest and weakest subject only when there is a real comparison", async () => {
+    const { bestAndWorst } = await import("./insights.ts");
+    expect(bestAndWorst([f({ correct: true }), f({ correct: true }), f({})]).best).toBeNull();
+    const mk = (path: string, ok: boolean[]) => ok.map((c) => f({ path: [path], correct: c }));
+    const r = bestAndWorst([...mk("A", [true, true, true]), ...mk("B", [false, false, true])]);
+    expect(r.best?.name).toBe("A");
+    expect(r.worst?.name).toBe("B");
+  });
+});

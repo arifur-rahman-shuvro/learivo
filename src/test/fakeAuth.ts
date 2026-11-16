@@ -3,7 +3,7 @@ import type { AuthClient, AuthUser, SignInResult, SignUpResult } from "../auth/t
 /** In-memory authentication for tests. */
 export function fakeAuth(
   initial: AuthUser | null = null,
-  over: Partial<Pick<AuthClient, "signIn" | "signUp">> = {},
+  over: Partial<Pick<AuthClient, "signIn" | "signUp" | "changePassword">> = {},
 ): AuthClient & { calls: string[] } {
   let user = initial;
   const listeners = new Set<(u: AuthUser | null) => void>();
@@ -29,6 +29,14 @@ export function fakeAuth(
         user = { id: "u1", email };
         emit();
         return { ok: true };
+      }),
+    changePassword:
+      over.changePassword ??
+      (async (current) => {
+        calls.push(`changePassword:${current}`);
+        return current === "wrong-password"
+          ? { ok: false as const, message: "Your current password is incorrect." }
+          : { ok: true as const };
       }),
     signOut: async () => {
       calls.push("signOut");

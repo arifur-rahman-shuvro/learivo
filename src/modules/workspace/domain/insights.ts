@@ -1,3 +1,5 @@
+import type { Reason } from "../../practice/domain/reasons.ts";
+
 /** Numbers for the Insights and Home screens, worked out from finished sessions. */
 
 /** One answered question from a finished session. Skipped questions are not facts. */
@@ -6,6 +8,8 @@ export interface Fact {
   at: string;
   path: string[];
   correct: boolean;
+  /** The student's reason for a missed question, when they gave one. */
+  reason?: Reason | null;
 }
 
 export interface SessionSummary {
@@ -158,4 +162,52 @@ export function overall(facts: readonly Fact[]) {
     correct,
     accuracy: facts.length === 0 ? null : correct / facts.length,
   };
+}
+
+export interface ReasonRow {
+  reason: Reason;
+  count: number;
+}
+
+/** Why missed questions were missed, from the reasons the student tagged. */
+export function byReason(facts: readonly Fact[]) {
+  const counts = new Map<Reason, number>();
+  let missed = 0;
+  for (const f of facts) {
+    if (f.correct) continue;
+    missed += 1;
+    if (f.reason) counts.set(f.reason, (counts.get(f.reason) ?? 0) + 1);
+  }
+  const rows: ReasonRow[] = [...counts.entries()]
+    .map(([reason, count]) => ({ reason, count }))
+    .sort((a, b) => b.count - a.count);
+  const tagged = rows.reduce((n, r) => n + r.count, 0);
+  return { rows, tagged, missed, untagged: missed - tagged };
+}
+
+export interface ActivityDay {
+  day: string;
+  count: number;
+}
+
+/** Answers per day for the last `days` days, oldest first, ending today. */
+export function activityByDay(facts: readonly Fact[], today: Date, days: number): ActivityDay[] {
+  const counts = new Map<string, number>();
+  for (const f of facts) {
+    const k = dayKey(f.at);
+    counts.set(k, (counts.get(k) ?? 0) + 1);
+  }
+  const end = dayKey(today);
+  const start = shiftDay(end, -(days - 1));
+  return Array.from({ length: days }, (_, i) => {
+    const day = shiftDay(start, i);
+    return { day, count: counts.get(day) ?? 0 };
+  });
+}
+
+/** Strongest and weakest area among those with enough answers to judge. */
+export function bestAndWorst(facts: readonly Fact[], minAnswers = 3) {
+  const areas = byArea(facts, 1).filter((a) => a.total >= minAnswers);
+  if (areas.length < 2) return { best: null, worst: null };
+  return { best: areas[areas.length - 1]!, worst: areas[0]! };
 }

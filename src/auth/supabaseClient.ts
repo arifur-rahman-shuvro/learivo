@@ -40,6 +40,27 @@ export function createSupabaseAuth(): AuthClient {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       return error ? { ok: false, message: friendly(error.message) } : { ok: true };
     },
+    async changePassword(current, next) {
+      const { data } = await supabase.auth.getSession();
+      const email = data.session?.user.email;
+      if (!email) return { ok: false, message: "Your session has ended. Sign in again." };
+      // Re-check the current password so a stolen open session cannot change it.
+      const check = await supabase.auth.signInWithPassword({ email, password: current });
+      if (check.error) {
+        return {
+          ok: false,
+          message: check.error.message.toLowerCase().includes("invalid login")
+            ? "Your current password is incorrect."
+            : friendly(check.error.message),
+        };
+      }
+      const { error } = await supabase.auth.updateUser({ password: next });
+      if (!error) return { ok: true };
+      const m = error.message.toLowerCase();
+      if (m.includes("different") || m.includes("same"))
+        return { ok: false, message: "Choose a password you have not used on this account." };
+      return { ok: false, message: friendly(error.message) };
+    },
     async signOut() {
       await supabase.auth.signOut();
     },

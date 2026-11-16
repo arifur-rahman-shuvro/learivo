@@ -51,6 +51,7 @@ export class MemoryAttempts implements AttemptRepo {
       snapshot: x.snapshot,
       response: null,
       flagged: false,
+      mistakeReason: null,
       verdict: null,
       credit: null,
       marks: null,
@@ -105,9 +106,12 @@ export class MemoryAttempts implements AttemptRepo {
 
   async patchItem(attemptId: string, position: number, patch: ItemPatch) {
     const a = this.attempts.get(attemptId);
-    if (!a || a.status === "submitted") throw new Error("This attempt is already submitted.");
+    const reasonOnly = Object.keys(patch).every((k) => k === "mistakeReason");
+    if (!a || (a.status === "submitted" && !reasonOnly))
+      throw new Error("This attempt is already submitted.");
     const item = a.items[position];
     if (!item) throw new Error("No such question in this attempt.");
+    if (patch.mistakeReason !== undefined) item.mistakeReason = patch.mistakeReason;
     if ("response" in patch) item.response = patch.response ?? null;
     if (patch.flagged !== undefined) item.flagged = patch.flagged;
   }
@@ -152,6 +156,7 @@ export class MemoryAttempts implements AttemptRepo {
           at: a.submittedAt!,
           path: item.snapshot.path,
           correct: item.verdict === "correct",
+          reason: item.mistakeReason,
         });
       }
     }

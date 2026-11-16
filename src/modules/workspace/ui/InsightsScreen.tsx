@@ -1,12 +1,23 @@
 import { useMemo, useState } from "react";
 import { achievements } from "../domain/achievements.ts";
-import { Badge, Button, EmptyState, ProgressBar, Spinner } from "../../../design-system/index.ts";
+import {
+  Badge,
+  Button,
+  EmptyState,
+  ProgressBar,
+  ProgressRing,
+  Spinner,
+} from "../../../design-system/index.ts";
 import { clock } from "../../practice/ui/practice.tsx";
 import { useInsightsData } from "./useInsightsData.ts";
+import { FlameIcon, Heatmap, ReasonBars } from "./InsightsParts.tsx";
 import {
   accuracyByDay,
   activeDaySet,
+  activityByDay,
+  bestAndWorst,
   byArea,
+  byReason,
   examHistory,
   overall,
   streak,
@@ -119,15 +130,6 @@ function LineChart({
   );
 }
 
-function Tile({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="lv-card p-4">
-      <div className="text-2xl font-bold tabular-nums">{value}</div>
-      <div className="mt-1 text-sm text-muted">{label}</div>
-    </div>
-  );
-}
-
 export default function InsightsScreen({ onNavigate }: { onNavigate: (route: string) => void }) {
   const { data, error } = useInsightsData();
   const [tab, setTab] = useState<Tab>("overview");
@@ -148,6 +150,9 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
       totalSeconds: sessions.reduce((n, s) => n + s.secondsSpent, 0),
       sessions: sessions.length,
       badges: achievements(facts, sessions),
+      reasons: byReason(facts),
+      activity: activityByDay(facts, today, 84),
+      extremes: bestAndWorst(facts),
     };
   }, [data, today, depth]);
 
@@ -211,17 +216,69 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
 
           {tab === "overview" && (
             <>
-              <section aria-label="Totals" className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                <Tile label="Questions answered" value={view.all.answered.toLocaleString()} />
-                <Tile
-                  label="Accuracy"
-                  value={
-                    view.all.accuracy === null ? "-" : `${Math.round(view.all.accuracy * 100)}%`
-                  }
+              <section
+                aria-label="Summary"
+                className="lv-card flex flex-wrap items-center gap-x-8 gap-y-4 p-5 sm:p-6"
+              >
+                <ProgressRing
+                  size={112}
+                  value={(view.all.accuracy ?? 0) * 100}
+                  label="Overall accuracy"
                 />
-                <Tile label="Day streak" value={String(view.streak)} />
-                <Tile label="Sessions" value={String(view.sessions)} />
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <p className="m-0 text-4xl font-bold tabular-nums">
+                    {view.all.accuracy === null ? "-" : `${Math.round(view.all.accuracy * 100)}%`}
+                  </p>
+                  <p className="m-0 text-sm text-muted">
+                    {view.all.correct.toLocaleString()} right of{" "}
+                    {view.all.answered.toLocaleString()} answered, over {view.sessions}{" "}
+                    {view.sessions === 1 ? "session" : "sessions"}.
+                  </p>
+                  <p className="m-0 mt-1 inline-flex items-center gap-1.5 text-sm font-semibold">
+                    <span className={view.streak > 0 ? "text-[#f59e0b]" : "text-muted"}>
+                      <FlameIcon />
+                    </span>
+                    {view.streak > 0
+                      ? `${view.streak}-day streak`
+                      : "No streak yet. Answer a question today."}
+                  </p>
+                </div>
               </section>
+
+              {view.extremes.best && view.extremes.worst && (
+                <section
+                  aria-label="Strongest and weakest"
+                  className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+                >
+                  {[
+                    { k: "Strongest subject", a: view.extremes.best, tone: "success" as const },
+                    { k: "Needs the most work", a: view.extremes.worst, tone: "danger" as const },
+                  ].map(({ k, a, tone }) => (
+                    <div key={k} className="lv-card flex flex-col gap-1 p-4">
+                      <Badge tone={tone}>{k}</Badge>
+                      <p className="m-0 truncate text-lg font-bold">{a.name}</p>
+                      <p className="m-0 text-sm text-muted">
+                        {Math.round(a.accuracy * 100)}% · {a.correct} of {a.total}
+                      </p>
+                    </div>
+                  ))}
+                </section>
+              )}
+
+              <section aria-label="Why you lose marks" className="lv-card flex flex-col gap-3 p-5">
+                <h2 className="m-0 text-lg font-semibold">Why you lose marks</h2>
+                <ReasonBars
+                  rows={view.reasons.rows}
+                  untagged={view.reasons.untagged}
+                  missed={view.reasons.missed}
+                />
+              </section>
+
+              <section aria-label="Activity" className="lv-card flex flex-col gap-3 p-5">
+                <h2 className="m-0 text-lg font-semibold">Your last 12 weeks</h2>
+                <Heatmap days={view.activity} today={today} />
+              </section>
+
               <section aria-label="Accuracy trend" className="lv-card flex flex-col gap-3 p-5">
                 <h2 className="m-0 text-lg font-semibold">Accuracy, last 30 days</h2>
                 {view.trend.length === 0 ? (

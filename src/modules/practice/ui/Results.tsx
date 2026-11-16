@@ -7,6 +7,7 @@ import type { AttemptWithItems } from "../data/repo.ts";
 import { clock, usePractice } from "./practice.tsx";
 import ResponseInput from "./ResponseInput.tsx";
 import { startRetry } from "./start.ts";
+import { REASONS, reasonLabel, type Reason } from "../domain/reasons.ts";
 
 type Show = "all" | "wrong" | "unanswered" | "flagged";
 
@@ -71,6 +72,22 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
     0,
   );
   const missed = a.items.some((i) => i.verdict !== "correct" && i.questionId !== null);
+
+  async function setReason(position: number, reason: Reason | null) {
+    const before = a!;
+    setA({
+      ...before,
+      items: before.items.map((i) =>
+        i.position === position ? { ...i, mistakeReason: reason } : i,
+      ),
+    });
+    try {
+      await attempts.patchItem(attemptId, position, { mistakeReason: reason });
+    } catch (e) {
+      setA(before);
+      setError(errorText(e));
+    }
+  }
 
   async function retry() {
     setBusy(true);
@@ -205,6 +222,7 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
                           : "Skipped"}
                     {i.verdict !== "unanswered" && i.marks !== null ? ` · ${i.marks}` : ""}
                   </Badge>
+                  {i.mistakeReason && <Badge tone="neutral">{reasonLabel(i.mistakeReason)}</Badge>}
                 </button>
                 {isOpen && (
                   <div className="mt-3 flex flex-col gap-3 border-t border-line pt-3">
@@ -219,6 +237,39 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
                       locked
                       reveal
                     />
+                    {(i.verdict === "wrong" || i.verdict === "partial") && (
+                      <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
+                        <legend className="mb-1 text-sm font-semibold">Why did you miss it?</legend>
+                        <div
+                          role="radiogroup"
+                          aria-label="Why did you miss it?"
+                          className="flex flex-wrap gap-2"
+                        >
+                          {REASONS.map((r) => (
+                            <button
+                              key={r.id}
+                              type="button"
+                              role="radio"
+                              aria-checked={i.mistakeReason === r.id}
+                              title={r.hint}
+                              onClick={() =>
+                                void setReason(i.position, i.mistakeReason === r.id ? null : r.id)
+                              }
+                              className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${
+                                i.mistakeReason === r.id
+                                  ? "border-[var(--lv-accent)] bg-[var(--lv-accent)] text-white"
+                                  : "border-line bg-surface hover:bg-surface-2"
+                              }`}
+                            >
+                              {r.label}
+                            </button>
+                          ))}
+                        </div>
+                        <p className="m-0 text-xs text-muted">
+                          Only you see this. Insights uses it to show where your marks go.
+                        </p>
+                      </fieldset>
+                    )}
                     {i.snapshot.explanation.trim() !== "" && (
                       <div className="rounded-control border border-line bg-surface-2 p-3.5">
                         <p className="m-0 mb-1 text-sm font-semibold">Explanation</p>

@@ -156,10 +156,11 @@ export class SyncedAttempts implements AttemptRepo {
     const there = await this.remote.get(remoteId);
     if (there && there.status !== "submitted") {
       for (const item of a.items) {
-        if (item.response !== null || item.flagged) {
+        if (item.response !== null || item.flagged || item.mistakeReason) {
           await this.remote.patchItem(remoteId, item.position, {
             response: item.response,
             flagged: item.flagged,
+            ...(item.mistakeReason ? { mistakeReason: item.mistakeReason } : {}),
           });
         }
       }

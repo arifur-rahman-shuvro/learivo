@@ -121,6 +121,38 @@ describe("account menu", () => {
     expect(within(settings).getByText("Shortcuts")).toBeTruthy();
   });
 
+  it("changes the password only when the form is valid, and shows the reason when it fails", async () => {
+    const { client } = shell();
+    await openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Settings" }));
+    const dialog = await screen.findByRole("dialog", { name: "Settings" });
+    const form = within(dialog).getByRole("form", { name: "Change password" });
+    const submit = within(form).getByRole("button", {
+      name: "Change password",
+    }) as HTMLButtonElement;
+    expect(submit.disabled).toBe(true);
+    const type = (label: string, v: string) =>
+      fireEvent.change(within(form).getByLabelText(label), { target: { value: v } });
+    type("Current password", "wrong-password");
+    type("New password", "short");
+    expect(within(form).getByText("Use at least 8 characters.")).toBeTruthy();
+    type("New password", "longenough1");
+    type("New password again", "different1");
+    expect(within(form).getByText("The two new passwords are not the same.")).toBeTruthy();
+    expect(submit.disabled).toBe(true);
+    type("New password again", "longenough1");
+    expect(submit.disabled).toBe(false);
+    fireEvent.click(submit);
+    expect((await within(form).findByRole("alert")).textContent).toBe(
+      "Your current password is incorrect.",
+    );
+    type("Current password", "old-password-1");
+    fireEvent.click(submit);
+    expect(await within(form).findByText("Password changed.")).toBeTruthy();
+    expect(client.calls).toContain("changePassword:old-password-1");
+    expect((within(form).getByLabelText("New password") as HTMLInputElement).value).toBe("");
+  });
+
   it("signs out from the menu", async () => {
     shell();
     await openMenu();
