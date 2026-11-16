@@ -395,6 +395,12 @@ describe("Home: exam countdown", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save exam" }));
     expect(await screen.findByText("10 days")).toBeTruthy();
     expect(screen.getByText(/until Final MBBS/)).toBeTruthy();
+    expect(
+      screen.getByText(/2 of your 2 questions are not practised yet. About 1 a day/),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("progressbar", { name: "Questions practised at least once" }),
+    ).toBeTruthy();
     expect((await workspace.examTarget()).date).toBe(iso);
     fireEvent.click(screen.getByRole("button", { name: "Remove exam" }));
     expect(await screen.findByRole("button", { name: "Set exam date" })).toBeTruthy();

@@ -31,3 +31,23 @@ export function paceFor(count: number, days: number): number | null {
   if (count <= 0 || days <= 0) return null;
   return Math.ceil(count / days);
 }
+
+export interface StudyPlan {
+  /** Questions never practised yet. */
+  unseen: number;
+  /** Share of the bank practised at least once, 0 to 100. */
+  coverage: number;
+  /** Questions a day that finish the unseen ones before the exam; null when nothing is left. */
+  perDay: number | null;
+}
+
+/** Turns "days left" and "questions practised so far" into a daily quota. */
+export function studyPlan(total: number, seen: number, days: number): StudyPlan {
+  const done = Math.max(0, Math.min(total, Math.floor(seen)));
+  const unseen = Math.max(0, total - done);
+  return {
+    unseen,
+    coverage: total > 0 ? Math.round((done / total) * 100) : 0,
+    perDay: paceFor(unseen, days),
+  };
+}

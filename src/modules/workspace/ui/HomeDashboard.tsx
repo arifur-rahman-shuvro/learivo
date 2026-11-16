@@ -1,15 +1,16 @@
 import FeaturesDialog from "../../../app/FeaturesDialog.tsx";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Button, ProgressRing, Spinner } from "../../../design-system/index.ts";
+import { Button, ProgressBar, ProgressRing, Spinner } from "../../../design-system/index.ts";
 import Home from "../../../app/screens/Home.tsx";
 import { DEFAULT_QUERY } from "../../question-bank/data/repo.ts";
+import { usePractice } from "../../practice/ui/practice.tsx";
 import { errorText, useBank } from "../../question-bank/ui/bank.tsx";
 import { DEFAULT_GOAL } from "../data/repo.ts";
 import {
   NO_EXAM,
   cleanExamTarget,
   daysUntil,
-  paceFor,
+  studyPlan,
   type ExamTarget,
 } from "../domain/examTarget.ts";
 import {
@@ -44,6 +45,8 @@ function Tile({ label, value }: { label: string; value: string }) {
 /** Home for a student who has questions: today's focus, goal, streak and weak areas. */
 export default function HomeDashboard({ onNavigate }: { onNavigate: (route: string) => void }) {
   const { repo: bank, rev: bankRev } = useBank();
+  const { attempts, rev: practiceRev } = usePractice();
+  const [seen, setSeen] = useState(0);
   const ws = useWorkspace();
   const { data } = useInsightsData();
   const [total, setTotal] = useState<number | null>(null);
@@ -68,11 +71,16 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
       ws.repo.dailyGoal(),
       ws.repo.homeLayout().catch(() => DEFAULT_HOME_LAYOUT),
       ws.repo.examTarget().catch(() => NO_EXAM),
+      attempts.past().then(
+        (m) => m.size,
+        () => 0,
+      ),
     ]).then(
-      ([page, cards, g, lay, ex]) => {
+      ([page, cards, g, lay, ex, practised]) => {
         if (!alive) return;
         const now = new Date();
         setTotal(page.total);
+        setSeen(practised);
         setDueCount(cards.filter((c) => isDue(c, now)).length);
         setGoal(g);
         setDraft(String(g));
@@ -87,7 +95,7 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
     return () => {
       alive = false;
     };
-  }, [bank, bankRev, ws.repo, ws.rev]);
+  }, [bank, bankRev, attempts, practiceRev, ws.repo, ws.rev]);
 
   const today = useMemo(() => new Date(), []);
   const view = useMemo(() => {
@@ -309,7 +317,7 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
           </div>
         ) : exam.date ? (
           <>
-            <ExamLine exam={exam} total={total} today={today} />
+            <ExamLine exam={exam} total={total} seen={seen} today={today} />
             <div className="flex gap-2">
               <Button size="sm" variant="ghost" onClick={() => setExamEditing(true)}>
                 Change exam
@@ -384,7 +392,17 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
   );
 }
 
-function ExamLine({ exam, total, today }: { exam: ExamTarget; total: number; today: Date }) {
+function ExamLine({
+  exam,
+  total,
+  seen,
+  today,
+}: {
+  exam: ExamTarget;
+  total: number;
+  seen: number;
+  today: Date;
+}) {
   const days = daysUntil(exam.date!, today);
   const name = exam.title || "Your exam";
   if (days < 0)
@@ -394,18 +412,19 @@ function ExamLine({ exam, total, today }: { exam: ExamTarget; total: number; tod
       </p>
     );
   if (days === 0) return <p className="m-0 text-xl font-bold">{name} is today.</p>;
-  const pace = paceFor(total, days);
+  const plan = studyPlan(total, seen, days);
   return (
     <>
       <p className="m-0 text-3xl font-bold">
         {days} day{days === 1 ? "" : "s"}
       </p>
-      <p className="m-0 text-sm text-muted">
-        until {name}
-        {pace
-          ? `. About ${pace} question${pace === 1 ? "" : "s"} a day covers your ${total}.`
-          : "."}
+      <p className="m-0 text-sm text-muted">until {name}.</p>
+      <p className="m-0 mt-1 text-sm">
+        {plan.perDay
+          ? `${plan.unseen.toLocaleString()} of your ${total.toLocaleString()} questions are not practised yet. About ${plan.perDay} a day finishes them in time.`
+          : `You have practised every question. Use the days left to revise your mistakes.`}
       </p>
+      <ProgressBar value={plan.coverage} label="Questions practised at least once" />
     </>
   );
 }

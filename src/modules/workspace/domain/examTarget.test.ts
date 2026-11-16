@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { NO_EXAM, cleanExamTarget, daysUntil, paceFor } from "./examTarget.ts";
+import { NO_EXAM, cleanExamTarget, daysUntil, paceFor, studyPlan } from "./examTarget.ts";
 
 describe("exam countdown", () => {
   const now = new Date(2026, 10, 15, 23, 30); // 15 Nov 2026, late evening
@@ -25,5 +25,19 @@ describe("exam countdown", () => {
     expect(paceFor(135, 10)).toBe(14);
     expect(paceFor(0, 10)).toBeNull();
     expect(paceFor(100, 0)).toBeNull();
+  });
+});
+
+describe("study plan", () => {
+  it("shares the unpractised questions over the days left", () => {
+    expect(studyPlan(200, 50, 10)).toEqual({ unseen: 150, coverage: 25, perDay: 15 });
+  });
+  it("has nothing to schedule once everything is practised", () => {
+    expect(studyPlan(40, 40, 5)).toEqual({ unseen: 0, coverage: 100, perDay: null });
+  });
+  it("keeps odd input in range", () => {
+    expect(studyPlan(10, 99, 3).unseen).toBe(0);
+    expect(studyPlan(10, -4, 3).unseen).toBe(10);
+    expect(studyPlan(0, 0, 3).coverage).toBe(0);
   });
 });
