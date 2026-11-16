@@ -202,4 +202,27 @@ describe("Practice", () => {
     expect(within(summary).getByText("Partly correct").nextSibling?.textContent).toBe("1");
     expect(within(summary).getByText("Score").nextSibling?.textContent).toBe("0.6 / 1");
   });
+
+  it("prints a paper from a saved exam", async () => {
+    const { ready } = setup([tf("Paper Q one"), tf("Paper Q two")]);
+    await ready;
+    fireEvent.click(
+      (await screen.findAllByRole("button", { name: /New exam|Create an exam/ }))[0]!,
+    );
+    fireEvent.change(await screen.findByLabelText("Title"), { target: { value: "Mock 2" } });
+    fireEvent.change(screen.getByLabelText("Number of questions for rule 1"), {
+      target: { value: "2" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save exam" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Print paper" }));
+    const dlg = await screen.findByRole("dialog", { name: "Print the exam paper" });
+    const frame = (await within(dlg).findByTitle("Paper preview")) as HTMLIFrameElement;
+    const html = frame.getAttribute("srcdoc") ?? "";
+    expect(html).toContain("Mock 2");
+    expect(html).toContain("Section A: Single best answer");
+    expect(html).toContain("Paper Q one");
+    expect(html).toContain("Answer key");
+    fireEvent.click(within(dlg).getByLabelText("Add an answer key on the last page"));
+    await waitFor(() => expect(frame.getAttribute("srcdoc")).not.toContain("Answer key"));
+  });
 });

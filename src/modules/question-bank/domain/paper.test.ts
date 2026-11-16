@@ -41,7 +41,7 @@ describe("printable paper", () => {
   it("writes the answers in a short form", () => {
     expect(answerText(sba)).toBe("B");
     expect(answerText(multi)).toBe("A, C");
-    expect(answerText(tf)).toBe("1) True   2) False");
+    expect(answerText(tf)).toBe("a) True   b) False");
     expect(answerText(fill)).toBe("1) sunlight / light");
   });
 
@@ -65,5 +65,43 @@ describe("printable paper", () => {
     const full = paperHtml([sba, multi], { title: "Quiz", key: true, explanations: true });
     expect(full).toContain("Because two.");
     expect(full).toContain("Choose all that apply.");
+  });
+
+  it("lays out an exam with its details and one section per type", () => {
+    const html = paperHtml([fill, sba, tf, multi], {
+      title: "Mock 1",
+      key: true,
+      explanations: false,
+      exam: {
+        instructions: "Answer all questions.",
+        minutes: 90,
+        marksCorrect: 2,
+        marksWrong: 0.5,
+      },
+    });
+    expect(html).toContain("4 questions");
+    expect(html).toContain("Total marks: 8");
+    expect(html).toContain("Time: 90 minutes");
+    expect(html).toContain("0.5 deducted for each wrong answer");
+    expect(html).toContain("Answer all questions.");
+    const order = ["Section A", "Section B", "Section C", "Section D"].map((x) => html.indexOf(x));
+    expect(order.every((i) => i > 0)).toBe(true);
+    expect(order).toEqual([...order].sort((a, b) => a - b));
+    expect(html.indexOf("Pick <b>B</b>".replace(/</g, "&lt;").replace(/>/g, "&gt;"))).toBeLessThan(
+      html.indexOf("Primes"),
+    );
+    // The key follows the printed order: the single-best-answer question comes first.
+    expect(html.indexOf("<li>B</li>")).toBeGreaterThan(html.indexOf("Answer key"));
+  });
+
+  it("says no time limit for an untimed exam", () => {
+    const html = paperHtml([sba], {
+      title: "T",
+      key: false,
+      explanations: false,
+      exam: { instructions: "", minutes: null, marksCorrect: 1, marksWrong: 0 },
+    });
+    expect(html).toContain("No time limit");
+    expect(html).not.toContain("deducted");
   });
 });

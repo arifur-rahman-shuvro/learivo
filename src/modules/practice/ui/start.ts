@@ -1,5 +1,6 @@
 import type { QuestionRepo } from "../../question-bank/data/repo.ts";
 import { pathOf } from "../../question-bank/data/repo.ts";
+import type { QuestionInput } from "../../question-bank/domain/model.ts";
 import type { AttemptRepo, AttemptWithItems, Exam } from "../data/repo.ts";
 import {
   applyFilter,
@@ -97,6 +98,17 @@ export async function startExam(
       snapshot: snapshotOf(q, pathOf(q.nodeId, nodes), exam.randomize),
     })),
   });
+}
+
+/** Draws an exam's questions by its rules without starting an attempt, for a printed paper. */
+export async function drawExamPaper(questions: QuestionRepo, exam: Exam): Promise<QuestionInput[]> {
+  const [pool, nodes] = await Promise.all([
+    fetchPool(questions, { nodeId: null, tagId: null, collectionId: null }),
+    questions.taxonomy(),
+  ]);
+  const drawn = drawByRules(exam.rules, pool, makeInside(nodes));
+  if (drawn.length === 0) throw new Error(NO_QUESTIONS);
+  return exam.randomize ? shuffled(drawn) : drawn;
 }
 
 /** A new practice session from the questions the student missed or skipped. */

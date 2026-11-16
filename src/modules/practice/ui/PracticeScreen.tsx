@@ -10,6 +10,7 @@ import Player from "./Player.tsx";
 import { clock, handoff, usePractice } from "./practice.tsx";
 import { useWorkspace } from "../../workspace/ui/workspace.tsx";
 import Results from "./Results.tsx";
+import { ExamPaperDialog } from "./ExamPaperDialog.tsx";
 import { countAvailable, startExam, startPractice, type PracticeSetup } from "./start.ts";
 
 type View = { name: "home" } | { name: "play"; id: string } | { name: "results"; id: string };
@@ -82,6 +83,7 @@ function Home({ onOpen }: { onOpen: (v: View) => void }) {
   const [recent, setRecent] = useState<Attempt[] | null>(null);
   const [exams, setExams] = useState<Exam[] | null>(null);
   const [builder, setBuilder] = useState<null | "new" | Exam>(null);
+  const [paperOf, setPaperOf] = useState<Exam | null>(null);
   useIntent((i) => {
     if (i.kind === "open" && i.target === "exam") setBuilder("new");
   });
@@ -363,6 +365,9 @@ function Home({ onOpen }: { onOpen: (v: View) => void }) {
                     <Button size="sm" variant="ghost" onClick={() => setBuilder(x)}>
                       Edit
                     </Button>
+                    <Button size="sm" variant="secondary" onClick={() => setPaperOf(x)}>
+                      Print paper
+                    </Button>
                     <Button
                       size="sm"
                       loading={busy === x.id}
@@ -417,6 +422,8 @@ function Home({ onOpen }: { onOpen: (v: View) => void }) {
           </ul>
         )}
       </section>
+
+      {paperOf && <ExamPaperDialog exam={paperOf} bank={repo} onClose={() => setPaperOf(null)} />}
 
       {builder !== null && (
         <ExamBuilder exam={builder === "new" ? null : builder} onClose={() => setBuilder(null)} />

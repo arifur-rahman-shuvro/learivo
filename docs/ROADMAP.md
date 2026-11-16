@@ -181,7 +181,7 @@ Done and pushed:
 - Study planner: with an exam date set, Home shows how many questions are not practised yet, the daily quota that finishes them in time, and a coverage bar.
 - First-run sample questions: on the empty welcome screen, "Try sample questions" adds five (subject Sample, tag sample) so practice and exams can be tried at once.
 - Question list: difficulty shown as five dots; filters can be saved as named views (kept on this device) and brought back from a menu.
-- Printable paper: select questions, tap Print paper, choose a title and an optional answer key (with or without explanations), then print or save as PDF.
+- Printable exam paper: on each saved exam in Practice, Print paper draws the exam's questions by its rules and lays out a paper with the title, instructions, time, marks scheme and one section per question type, with an optional answer key (with or without explanations). Print or save as PDF; Pick different questions redraws.
 - Duplicates (Questions screen): finds questions saved twice (same wording and type, spacing and case ignored), keeps the oldest, archives the rest and moves their tags and collections across. Archived copies can be restored.
 - Interactive user guide: six first steps that tick themselves from the student's own data, plus short answers (marks, AI import, revision, offline, privacy, shortcuts). Opened from the account menu, All features and the welcome screen.
 

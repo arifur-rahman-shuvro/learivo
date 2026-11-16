@@ -1,48 +1,52 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Dialog } from "../../../design-system/index.ts";
-import { paperHtml } from "../domain/paper.ts";
-import type { QuestionInput } from "../domain/model.ts";
-import { errorText, useBank } from "./bank.tsx";
+import type { QuestionInput } from "../../question-bank/domain/model.ts";
+import { paperHtml } from "../../question-bank/domain/paper.ts";
+import type { QuestionRepo } from "../../question-bank/data/repo.ts";
+import { drawExamPaper } from "./start.ts";
+import { errorText } from "../../question-bank/ui/bank.tsx";
+import type { Exam } from "../data/repo.ts";
 
-/** Turns selected questions into a paper that can be printed or saved as a PDF. */
-export function PaperDialog({
-  open,
-  ids,
+/** Makes a printable paper from a saved exam: its details, then the questions in sections by type. */
+export function ExamPaperDialog({
+  exam,
+  bank,
   onClose,
 }: {
-  open: boolean;
-  ids: string[];
+  exam: Exam;
+  bank: QuestionRepo;
   onClose: () => void;
 }) {
-  const { repo } = useBank();
   const [questions, setQuestions] = useState<QuestionInput[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [title, setTitle] = useState("Question paper");
   const [key, setKey] = useState(true);
   const [explanations, setExplanations] = useState(false);
   const frame = useRef<HTMLIFrameElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    let alive = true;
+  // Picks the exam's questions by its rules; called again for a different set.
+  const load = useCallback(() => {
     setQuestions(null);
     setError(null);
-    repo.getMany(ids).then(
-      (rows) => {
-        if (!alive) return;
-        const byId = new Map(rows.map((r) => [r.id, r]));
-        setQuestions(ids.flatMap((id) => (byId.has(id) ? [byId.get(id) as QuestionInput] : [])));
-      },
-      (e) => alive && setError(errorText(e)),
-    );
-    return () => {
-      alive = false;
-    };
-  }, [open, ids, repo]);
+    drawExamPaper(bank, exam).then(setQuestions, (e) => setError(errorText(e)));
+  }, [bank, exam]);
+  useEffect(load, [load]);
 
   const html = useMemo(
-    () => (questions ? paperHtml(questions, { title, key, explanations }) : ""),
-    [questions, title, key, explanations],
+    () =>
+      questions
+        ? paperHtml(questions, {
+            title: exam.title,
+            key,
+            explanations,
+            exam: {
+              instructions: exam.instructions,
+              minutes: exam.timeLimitSec ? Math.round(exam.timeLimitSec / 60) : null,
+              marksCorrect: exam.marksCorrect,
+              marksWrong: exam.marksWrong,
+            },
+          })
+        : "",
+    [questions, exam, key, explanations],
   );
 
   const print = () => {
@@ -56,7 +60,7 @@ export function PaperDialog({
     const url = URL.createObjectURL(new Blob([html], { type: "text/html" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = "question-paper.html";
+    a.download = `${exam.title.replace(/[^\w-]+/g, "-").slice(0, 40) || "exam"}-paper.html`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -65,9 +69,9 @@ export function PaperDialog({
 
   return (
     <Dialog
-      open={open}
+      open
       variant="modal"
-      title="Print a paper"
+      title="Print the exam paper"
       onClose={onClose}
       footer={
         <>
@@ -85,18 +89,14 @@ export function PaperDialog({
     >
       <div className="flex flex-col gap-3">
         <p className="m-0 text-sm text-muted">
-          Makes a paper from the {ids.length} selected question{ids.length === 1 ? "" : "s"}. In the
-          print window choose &quot;Save as PDF&quot; to keep a file.
+          The paper has your exam&apos;s title, instructions, time and marks, with the questions in
+          sections by type. In the print window choose &quot;Save as PDF&quot; to keep a file.
         </p>
-        <label className="flex flex-col gap-1 text-sm font-semibold">
-          Paper title
-          <input
-            className="lv-input font-normal"
-            value={title}
-            maxLength={80}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-        </label>
+        <div>
+          <Button variant="secondary" size="sm" disabled={!questions} onClick={load}>
+            Pick different questions
+          </Button>
+        </div>
         <label className="flex items-center gap-2 text-sm">
           <input
             type="checkbox"
@@ -121,6 +121,7 @@ export function PaperDialog({
             {error}
           </p>
         )}
+        {!questions && !error && <p className="m-0 text-sm text-muted">Picking questions…</p>}
         {questions && (
           <iframe
             ref={frame}
