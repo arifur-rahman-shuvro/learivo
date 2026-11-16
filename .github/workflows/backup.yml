@@ -1,7 +1,7 @@
 name: Weekly backup
 
 # Saves an encrypted copy of the database every Sunday and keeps it for 30 days.
-# It does nothing until the owner adds two repository secrets (see docs/RUNBOOK.md):
+# It fails (red) until the owner adds two repository secrets (see docs/RUNBOOK.md):
 #   BACKUP_DB_URL     the database connection string
 #   BACKUP_PASSPHRASE a long passphrase used to encrypt the file
 on:
@@ -22,12 +22,11 @@ jobs:
       - name: Check the secrets exist
         id: gate
         run: |
-          if [ -z "$DB_URL" ] || [ -z "$PASSPHRASE" ]; then
-            echo "Backup secrets are not set; nothing to do."
-            echo "run=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          fi
+          missing=0
+          if [ -z "$DB_URL" ]; then echo "::error::Secret BACKUP_DB_URL is empty or missing (check the name, and that it is a Repository secret)."; missing=1; fi
+          if [ -z "$PASSPHRASE" ]; then echo "::error::Secret BACKUP_PASSPHRASE is empty or missing."; missing=1; fi
+          if [ "$missing" = 1 ]; then exit 1; fi
+          echo "run=true" >> "$GITHUB_OUTPUT"
       - name: Dump the public and auth schemas
         if: steps.gate.outputs.run == 'true'
         run: |
