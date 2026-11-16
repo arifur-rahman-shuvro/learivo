@@ -2,6 +2,7 @@ import FeaturesDialog from "../../../app/FeaturesDialog.tsx";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button, ProgressBar, ProgressRing, Spinner } from "../../../design-system/index.ts";
 import Home from "../../../app/screens/Home.tsx";
+import { SAMPLE_QUESTIONS } from "../../question-bank/domain/sample.ts";
 import { DEFAULT_QUERY } from "../../question-bank/data/repo.ts";
 import { usePractice } from "../../practice/ui/practice.tsx";
 import { errorText, useBank } from "../../question-bank/ui/bank.tsx";
@@ -44,7 +45,7 @@ function Tile({ label, value }: { label: string; value: string }) {
 
 /** Home for a student who has questions: today's focus, goal, streak and weak areas. */
 export default function HomeDashboard({ onNavigate }: { onNavigate: (route: string) => void }) {
-  const { repo: bank, rev: bankRev } = useBank();
+  const { repo: bank, rev: bankRev, refresh: refreshBank } = useBank();
   const { attempts, rev: practiceRev } = usePractice();
   const [seen, setSeen] = useState(0);
   const ws = useWorkspace();
@@ -145,7 +146,16 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
 
   // Nothing to show yet, or the data could not load: the starter page.
   if (total === null) return <div role="status" aria-label="Loading" className="min-h-40" />;
-  if (total <= 0) return <Home onNavigate={onNavigate} />;
+  if (total <= 0)
+    return (
+      <Home
+        onNavigate={onNavigate}
+        onSamples={async () => {
+          await bank.create(SAMPLE_QUESTIONS);
+          refreshBank();
+        }}
+      />
+    );
 
   const done = view?.today ?? 0;
   const blocks: Record<HomeSectionId, ReactNode> = {

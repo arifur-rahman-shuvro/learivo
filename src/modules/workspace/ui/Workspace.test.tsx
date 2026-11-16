@@ -526,3 +526,13 @@ describe("Home week chart", () => {
     expect(screen.getByText(/No answers yet this week/)).toBeTruthy();
   });
 });
+
+describe("Home: sample questions", () => {
+  it("adds sample questions from the welcome screen and then shows the dashboard", async () => {
+    const { bank } = await setup(() => <HomeDashboard onNavigate={() => undefined} />);
+    fireEvent.click(await screen.findByRole("button", { name: "Try sample questions" }));
+    expect(await screen.findByText("Questions")).toBeTruthy();
+    await waitFor(async () => expect(await bank.exportAll()).toHaveLength(5));
+    expect(screen.queryByRole("button", { name: "Try sample questions" })).toBeNull();
+  });
+});

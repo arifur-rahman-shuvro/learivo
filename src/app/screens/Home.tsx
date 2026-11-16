@@ -53,8 +53,16 @@ function ExampleCard() {
   );
 }
 
-export default function Home({ onNavigate }: { onNavigate: (route: string) => void }) {
+export default function Home({
+  onNavigate,
+  onSamples,
+}: {
+  onNavigate: (route: string) => void;
+  /** Adds a few sample questions. Left out where there is no bank to add to. */
+  onSamples?: () => Promise<void>;
+}) {
   const [features, setFeatures] = useState(false);
+  const [adding, setAdding] = useState(false);
   return (
     <div className="flex flex-col gap-5">
       <section className="lv-card grid gap-6 p-5 sm:p-7 md:grid-cols-[1.15fr_1fr] md:items-center">
@@ -85,6 +93,18 @@ export default function Home({ onNavigate }: { onNavigate: (route: string) => vo
             >
               Import questions
             </Button>
+            {onSamples && (
+              <Button
+                variant="secondary"
+                disabled={adding}
+                onClick={() => {
+                  setAdding(true);
+                  void onSamples().finally(() => setAdding(false));
+                }}
+              >
+                Try sample questions
+              </Button>
+            )}
             <Button variant="secondary" onClick={() => setFeatures(true)}>
               All features
             </Button>
