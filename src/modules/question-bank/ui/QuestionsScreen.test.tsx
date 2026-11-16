@@ -187,4 +187,18 @@ describe("Add questions hub", () => {
     expect(screen.queryByLabelText("Saved views")).toBeNull();
     localStorage.clear();
   });
+
+  it("makes a printable paper from the selected questions", async () => {
+    const repo = new MemoryRepo();
+    await repo.create([tf("Paper question")]);
+    renderScreen(repo);
+    fireEvent.click(await screen.findByLabelText(/Select: Paper question/));
+    fireEvent.click(screen.getByRole("button", { name: "Print paper" }));
+    const dlg = await screen.findByRole("dialog", { name: "Print a paper" });
+    const frame = (await within(dlg).findByTitle("Paper preview")) as HTMLIFrameElement;
+    expect(frame.getAttribute("srcdoc")).toContain("Paper question");
+    expect(frame.getAttribute("srcdoc")).toContain("Answer key");
+    fireEvent.click(within(dlg).getByLabelText("Add an answer key on the last page"));
+    await waitFor(() => expect(frame.getAttribute("srcdoc")).not.toContain("Answer key"));
+  });
 });

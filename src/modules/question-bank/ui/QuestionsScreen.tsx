@@ -1,4 +1,5 @@
 import { DifficultyDots } from "./DifficultyDots.tsx";
+import { PaperDialog } from "./PaperDialog.tsx";
 import { SavedViews } from "./SavedViews.tsx";
 import AddHub, { type AddChoice } from "./AddHub.tsx";
 import { useEffect, useMemo, useState } from "react";
@@ -93,6 +94,8 @@ export default function QuestionsScreen() {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkPick, setBulkPick] = useState<BulkPick>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [paper, setPaper] = useState(false);
+  const selectedIds = useMemo(() => [...selected], [selected]);
   const [typed, setTyped] = useState("");
   const [bulkBusy, setBulkBusy] = useState(false);
   const [notice, setNotice] = useState<string>();
@@ -402,6 +405,8 @@ export default function QuestionsScreen() {
         </p>
       )}
 
+      <PaperDialog open={paper} ids={selectedIds} onClose={() => setPaper(false)} />
+
       {selected.size > 0 && (
         <div
           role="region"
@@ -411,6 +416,9 @@ export default function QuestionsScreen() {
           <span className="mr-2 text-sm font-semibold">{selected.size} selected</span>
           {!archive && (
             <>
+              <Button variant="secondary" size="sm" onClick={() => setPaper(true)}>
+                Print paper
+              </Button>
               <Button
                 variant="secondary"
                 size="sm"
