@@ -201,4 +201,19 @@ describe("Add questions hub", () => {
     fireEvent.click(within(dlg).getByLabelText("Add an answer key on the last page"));
     await waitFor(() => expect(frame.getAttribute("srcdoc")).not.toContain("Answer key"));
   });
+
+  it("finds a question saved twice and archives the extra copy", async () => {
+    const repo = new MemoryRepo();
+    await repo.create([tf("Same question"), tf("Other question")]);
+    await repo.create([tf("Same  question ")]);
+    renderScreen(repo);
+    fireEvent.click(await screen.findByRole("button", { name: "Duplicates" }));
+    const dlg = await screen.findByRole("dialog", { name: "Find duplicates" });
+    expect(await within(dlg).findByText("1 extra copy")).toBeTruthy();
+    fireEvent.click(within(dlg).getByRole("button", { name: "Archive all 1 extra copy" }));
+    expect(await within(dlg).findByText("Archived 1 extra copy.")).toBeTruthy();
+    expect(await within(dlg).findByText(/No duplicates found/)).toBeTruthy();
+    const archived = await repo.list({ ...DEFAULT_QUERY, status: "archived" });
+    expect(archived.total).toBe(1);
+  });
 });

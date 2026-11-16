@@ -1,4 +1,5 @@
 import { DifficultyDots } from "./DifficultyDots.tsx";
+import { DuplicatesDialog } from "./DuplicatesDialog.tsx";
 import { PaperDialog } from "./PaperDialog.tsx";
 import { SavedViews } from "./SavedViews.tsx";
 import AddHub, { type AddChoice } from "./AddHub.tsx";
@@ -54,7 +55,7 @@ function useDebounced<T>(value: T, ms: number): T {
   return v;
 }
 
-type Panel = null | "hub" | "import" | "export" | "manage";
+type Panel = null | "hub" | "import" | "export" | "manage" | "duplicates";
 type BulkPick = "classify" | "tag" | "collection" | null;
 
 export default function QuestionsScreen() {
@@ -241,6 +242,11 @@ export default function QuestionsScreen() {
           <Button variant="secondary" onClick={() => setPanel("manage")}>
             Organize
           </Button>
+          {!empty && (
+            <Button variant="secondary" onClick={() => setPanel("duplicates")}>
+              Duplicates
+            </Button>
+          )}
         </div>
       </header>
 
@@ -669,6 +675,7 @@ export default function QuestionsScreen() {
       {panel === "import" && <ImportDialog initial={importFrom} onClose={() => setPanel(null)} />}
       {panel === "export" && <ExportDialog onClose={() => setPanel(null)} />}
       {panel === "manage" && <ManageDialog onClose={() => setPanel(null)} />}
+      {panel === "duplicates" && <DuplicatesDialog onClose={() => setPanel(null)} />}
 
       <Dialog
         open={confirmDelete}

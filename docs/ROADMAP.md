@@ -182,6 +182,7 @@ Done and pushed:
 - First-run sample questions: on the empty welcome screen, "Try sample questions" adds five (subject Sample, tag sample) so practice and exams can be tried at once.
 - Question list: difficulty shown as five dots; filters can be saved as named views (kept on this device) and brought back from a menu.
 - Printable paper: select questions, tap Print paper, choose a title and an optional answer key (with or without explanations), then print or save as PDF.
+- Duplicates (Questions screen): finds questions saved twice (same wording and type, spacing and case ignored), keeps the oldest, archives the rest and moves their tags and collections across. Archived copies can be restored.
 - Interactive user guide: six first steps that tick themselves from the student's own data, plus short answers (marks, AI import, revision, offline, privacy, shortcuts). Opened from the account menu, All features and the welcome screen.
 
-Still open from the proposal: confidence mark, result breakdown per subject and time, subject colours, duplicate merge.
+Still open from the proposal: confidence mark, result breakdown per subject and time, subject colours.
