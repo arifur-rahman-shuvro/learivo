@@ -176,6 +176,8 @@ Done and pushed:
 - Settings > Change password (re-checks the current password first, then sets the new one, minimum 8 characters).
 - Home > All features: every feature grouped, with an icon, a one-line description, search and a direct link. Also on the welcome screen.
 - Add questions hub (write, make a prompt, paste, upload, add a subject) and a tidier Import dialog (Make a prompt, Paste JSON, Upload file, with a step line for each).
+- Home > This week: seven-day activity bars.
+- Back up and restore (Settings and All features): one JSON file with questions, notes, bookmarks, flashcards, glossary, exam target and daily goal. Restore shows a preview and only adds what is missing; nothing is overwritten or deleted. Practice history is not included.
 - Interactive user guide: six first steps that tick themselves from the student's own data, plus short answers (marks, ChatGPT import, revision, offline, privacy, shortcuts). Opened from the account menu, All features and the welcome screen.
 
-Still open from the proposal: confidence mark, result breakdown per subject and time, subject colours, question list upgrade and saved filters, Home weekly chart, first-run sample bank, study planner, full backup and restore, duplicate merge, printable paper.
+Still open from the proposal: confidence mark, result breakdown per subject and time, subject colours, question list upgrade and saved filters, first-run sample bank, study planner, duplicate merge, printable paper.

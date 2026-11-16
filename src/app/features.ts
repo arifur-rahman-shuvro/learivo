@@ -28,7 +28,7 @@ export interface Feature {
   /** Opens a named part of the screen, see Intent "open". */
   target?: string;
   /** Opens the add form, or the import dialog. */
-  action?: "add" | "import" | "guide";
+  action?: "add" | "import" | "guide" | "backup";
 }
 
 export interface FeatureGroup {
@@ -172,6 +172,14 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
         icon: "guide",
         route: "#/home",
         action: "guide",
+      },
+      {
+        id: "backup",
+        title: "Back up and restore",
+        description: "Save everything to one file, or restore from one.",
+        icon: "export",
+        route: "#/home",
+        action: "backup",
       },
     ],
   },

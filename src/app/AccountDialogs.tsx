@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { openBackup } from "./backupStore.ts";
 import { Avatar, Button, Dialog, ThemeSwitcher } from "../design-system/index.ts";
 import {
   AVATARS,
@@ -310,6 +311,24 @@ export function SettingsDialog({
             </div>
           </section>
         )}
+        <section className="flex flex-col gap-2">
+          <h3 className="m-0 text-base font-semibold">Back up and restore</h3>
+          <p className="m-0 text-sm text-muted">
+            Save your questions, notes, flashcards and more in one file, or restore from one.
+          </p>
+          <div>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                onClose();
+                openBackup();
+              }}
+            >
+              Back up and restore
+            </Button>
+          </div>
+        </section>
         <ChangePassword />
         <section className="flex flex-col gap-2">
           <h3 className="m-0 text-base font-semibold">Shortcuts</h3>

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Button, Dialog } from "../design-system/index.ts";
 import { FeatureIcon } from "./FeatureIcon.tsx";
 import { FEATURE_GROUPS, type Feature } from "./features.ts";
+import { openBackup } from "./backupStore.ts";
 import { openGuide } from "./guide.ts";
 import { sendIntent } from "./intents.ts";
 
@@ -29,6 +30,10 @@ export default function FeaturesDialog({
     onClose();
     if (f.action === "guide") {
       openGuide();
+      return;
+    }
+    if (f.action === "backup") {
+      openBackup();
       return;
     }
     if (f.action) sendIntent({ kind: f.action });
