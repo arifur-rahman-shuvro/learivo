@@ -58,7 +58,7 @@ export const PROMPT_TYPES: { id: QuestionType; label: string }[] = [
   { id: "sba", label: "Single best answer (SBA)" },
   { id: "single_choice", label: "Single choice" },
   { id: "multi_select", label: "Multiple answer" },
-  { id: "true_false", label: "True / False (5 statements)" },
+  { id: "true_false", label: "True / False (several statements)" },
   { id: "fill_blank", label: "Fill in the blank" },
 ];
 
@@ -141,7 +141,9 @@ function typeRules(spec: PromptSpec): string[] {
     lines.push('sba and single_choice: exactly ONE option has "correct": true.');
   }
   if (allowed.includes("multi_select")) {
-    lines.push("multi_select: one or more options are correct (usually 2 or 3). Never mark all 5.");
+    lines.push(
+      "multi_select: one or more options are correct (usually 2 or 3). Never mark every option correct.",
+    );
   }
   if (allowed.includes("true_false")) {
     lines.push(
@@ -169,6 +171,61 @@ function explanationRule(spec: PromptSpec): string {
   return spec.explanation === "short"
     ? 'Give every question an "explanation" of one or two sentences saying why the answer is right.'
     : 'Give every question a detailed "explanation": why the answer is right, why the main wrong options are wrong, and one point worth remembering.';
+}
+
+/** What separates a real exam question from a weak practice question. Only used when writing new questions. */
+function qualityRules(spec: PromptSpec): string[] {
+  const rules = [
+    "",
+    "QUALITY STANDARD",
+    "Write like an experienced examiner who sets real papers for this exam, not like a textbook summary.",
+    "- One question tests one clear point. The stem holds every fact needed, so a well-prepared student can answer without seeing the options.",
+    "- Prefer application over recall: at least half of the questions should present a short scenario, case, data or problem and ask what follows from it. Use plain recall only for essential facts.",
+    "- End the stem with a clear question or instruction. Word it positively; avoid NOT or EXCEPT unless the point really needs it, and then write the word in capitals.",
+    '- Every question has ONE defensible correct answer that a standard textbook or guideline supports. Do not invent facts, numbers, drug doses, names or studies. If you are not sure of an answer, either leave that question out or tag it "check-answer".',
+    "- Wrong options (distractors) must be plausible to a student who half-knows the topic: real, related concepts that are wrong for this exact case. Make them similar in length, wording and detail to the correct option. Do not make the correct option the longest or most detailed one.",
+    '- No clues: no grammar that gives the answer away, no repeated words from the stem only in the correct option, no overlapping or duplicate options, no "all of the above", "none of the above", "always" or "never". Put the correct option in a different position from question to question.',
+    "- Cover the topic widely: no two questions may test the same point or give away each other's answer. Spread them across the subtopics.",
+  ];
+  if (spec.difficulty === "mixed") {
+    rules.push(
+      "- Difficulty mix: about 20% easy (1 to 2), 50% medium (3), 30% hard (4 to 5). Hard means needs reasoning or several steps, not obscure trivia.",
+    );
+  }
+  if (spec.types.length === 0 || spec.types.includes("true_false")) {
+    rules.push(
+      '- True/false: every statement must be clearly true or clearly false on its own, with no "depends". Mix true and false statements; do not make them all the same.',
+    );
+  }
+  if (spec.types.length === 0 || spec.types.includes("multi_select")) {
+    rules.push(
+      "- Multiple answer: judge each option separately; each must be clearly correct or clearly wrong.",
+    );
+  }
+  if (spec.types.length === 0 || spec.types.includes("fill_blank")) {
+    rules.push(
+      "- Fill in the blank: blank out a key term or value, not a trivial word. Each blank has a short answer (one to three words) and list common accepted spellings.",
+    );
+  }
+  if (spec.explanation !== "none") {
+    rules.push(
+      "- The explanation must agree with the marked answer and teach the point; never write an explanation that supports a different option.",
+    );
+  }
+  if (/bangla|bengali|বাংলা/i.test(`${spec.questionLanguage} ${spec.explanationLanguage}`)) {
+    rules.push(
+      "- Write natural, exam-style Bangla. Keep standard technical terms in English where students normally use the English term.",
+    );
+  }
+  rules.push(
+    "",
+    "BEFORE YOU REPLY, CHECK EVERY QUESTION",
+    "1. Is the marked answer really correct, and is every other option really wrong?",
+    "2. Could a strong student argue for a second answer? If yes, rewrite the question or remove it.",
+    "3. Is it a duplicate or near-duplicate of another question in this reply? If yes, replace it.",
+    "4. Is the JSON valid: straight double quotes, no trailing commas, no line breaks inside text values (use a space), no markdown inside values?",
+  );
+  return rules;
 }
 
 /** The full prompt, ready to paste. Everything the student typed is quoted as plain text, never run. */
@@ -215,11 +272,7 @@ export function buildPrompt(spec: PromptSpec): string {
   }
 
   if (spec.mode === "create") {
-    lines.push(
-      "- Each question must test one clear point and have one defensible answer. Do not invent facts.",
-      '- Make wrong options plausible. Do not use "all of the above" or "none of the above". Vary where the correct answer sits.',
-      "- Do not repeat a question.",
-    );
+    lines.push(...qualityRules(spec));
   } else {
     lines.push(
       '- If the source shows the answer key, use it. If it does not, work out the most likely answer yourself and add the tag "check-answer".',

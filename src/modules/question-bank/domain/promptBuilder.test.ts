@@ -135,3 +135,24 @@ describe("applyDefaults", () => {
     expect(applyDefaults(q, NO_DEFAULTS)).toEqual(q);
   });
 });
+
+describe("quality standard", () => {
+  it("is added when writing new questions, with checks before the reply", () => {
+    const p = buildPrompt({ ...DEFAULT_SPEC, subject: "Anatomy" });
+    expect(p).toContain("QUALITY STANDARD");
+    expect(p).toContain("BEFORE YOU REPLY, CHECK EVERY QUESTION");
+    expect(p).toContain("Difficulty mix");
+    expect(p).toContain("True/false: every statement");
+  });
+
+  it("only mentions rules for the chosen types and a fixed difficulty", () => {
+    const p = buildPrompt({ ...DEFAULT_SPEC, types: ["sba"], difficulty: 4 });
+    expect(p).not.toContain("Difficulty mix");
+    expect(p).not.toContain("True/false: every statement");
+    expect(p).not.toContain("Fill in the blank: blank out");
+  });
+
+  it("is left out when converting existing questions", () => {
+    expect(buildPrompt({ ...DEFAULT_SPEC, mode: "convert" })).not.toContain("QUALITY STANDARD");
+  });
+});
