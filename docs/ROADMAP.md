@@ -166,3 +166,16 @@ Built on what already exists (practice palette and flags, goal ring, exam countd
 13. **Printable paper.** A built exam as a print-friendly page.
 
 Deferred by the owner: AI helpers, sharing, Go API features. Not planned: image questions (Learivo stores no images).
+
+## Progress on Phase 10 to 12 (2026-11-16)
+
+Done and pushed:
+
+- Mistake reasons (M13): tag why a wrong answer was missed on Results; Insights shows where marks go. The Review > Mistakes tab is the mistake notebook.
+- Insights overview redesigned: accuracy ring and streak, strongest and weakest subject, reason chart, 12-week activity heatmap.
+- Settings > Change password (re-checks the current password first, then sets the new one, minimum 8 characters).
+- Home > All features: every feature grouped, with an icon, a one-line description, search and a direct link. Also on the welcome screen.
+- Add questions hub (write, make a prompt, paste, upload, add a subject) and a tidier Import dialog (Make a prompt, Paste JSON, Upload file, with a step line for each).
+- Interactive user guide: six first steps that tick themselves from the student's own data, plus short answers (marks, ChatGPT import, revision, offline, privacy, shortcuts). Opened from the account menu, All features and the welcome screen.
+
+Still open from the proposal: confidence mark, result breakdown per subject and time, subject colours, question list upgrade and saved filters, Home weekly chart, first-run sample bank, study planner, full backup and restore, duplicate merge, printable paper.
