@@ -245,3 +245,4 @@ Order: 13, 14, 15, 16. Each item is pushed on its own with tests, and the phone 
 - 2026-11-17: Questions search stays pinned on phones while scrolling; list loads with placeholder rows instead of a spinner.
 - 2026-11-17: Questions list loads the next page automatically on scroll (button kept as fallback). New-question draft autosave already existed.
 - 2026-11-17: Guide, Backup and AI connection dialogs download only when first opened.
+- 2026-11-17: Optimisation audit. First load on a phone-width sign-in page is about 780 kB uncompressed (about 190 kB gzipped); error monitoring code loads only when a DSN is set. Database advisors show no performance problems; the 11 "unused index" notes are foreign-key indexes on a small database and are kept for growth.
