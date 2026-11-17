@@ -1,3 +1,4 @@
+import { showToast } from "../../../app/toast.ts";
 import { useIntent } from "../../../app/intents.ts";
 import GlossaryText from "./GlossaryText.tsx";
 import { useEffect, useMemo, useState } from "react";
@@ -62,7 +63,6 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState<string>();
   const [noteSearch, setNoteSearch] = useState("");
-  const [notice, setNotice] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [noteFor, setNoteFor] = useState<null | { questionId: string | null; note: Note | null }>(
     null,
@@ -140,7 +140,7 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
     try {
       await fn();
       ws.refresh();
-      if (done) setNotice(done);
+      if (done) showToast(done);
     } catch (e) {
       setError(errorText(e));
     }
@@ -191,7 +191,6 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
             aria-selected={tab === k}
             onClick={() => {
               setTab(k);
-              setNotice(undefined);
             }}
             className={`-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-semibold ${
               tab === k ? "border-accent text-fg" : "border-transparent text-muted"
@@ -205,14 +204,6 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
         ))}
       </div>
 
-      {notice && (
-        <p
-          role="status"
-          className="m-0 rounded-control border border-line bg-surface-2 px-3 py-2 text-sm font-medium"
-        >
-          {notice}
-        </p>
-      )}
       {error && (
         <p
           role="alert"

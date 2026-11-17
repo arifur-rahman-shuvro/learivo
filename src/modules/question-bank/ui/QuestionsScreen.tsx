@@ -1,3 +1,4 @@
+import { showToast } from "../../../app/toast.ts";
 import { QuestionRow } from "./QuestionRow.tsx";
 import { DuplicatesDialog } from "./DuplicatesDialog.tsx";
 import { SavedViews } from "./SavedViews.tsx";
@@ -98,7 +99,6 @@ export default function QuestionsScreen() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [typed, setTyped] = useState("");
   const [bulkBusy, setBulkBusy] = useState(false);
-  const [notice, setNotice] = useState<string>();
 
   useEffect(() => {
     let alive = true;
@@ -121,6 +121,7 @@ export default function QuestionsScreen() {
     });
     try {
       await ws.repo.setBookmark(id, on);
+      showToast(on ? "Bookmarked" : "Bookmark removed");
     } catch (e) {
       setError(errorText(e));
       ws.refresh();
@@ -271,7 +272,7 @@ export default function QuestionsScreen() {
     setError(undefined);
     try {
       await repo.bulk([...selected], action);
-      setNotice(done);
+      showToast(done);
       setSelected(new Set());
       setBulkPick(null);
       refresh();
@@ -496,14 +497,6 @@ export default function QuestionsScreen() {
         </section>
       )}
 
-      {notice && (
-        <p
-          role="status"
-          className="m-0 rounded-control border border-line bg-surface-2 px-3 py-2 text-sm font-medium"
-        >
-          {notice}
-        </p>
-      )}
       {error && (
         <p
           role="alert"
