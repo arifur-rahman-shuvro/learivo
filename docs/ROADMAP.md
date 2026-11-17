@@ -244,3 +244,4 @@ Order: 13, 14, 15, 16. Each item is pushed on its own with tests, and the phone 
 - 2026-11-17: weak areas have a Practise button (Home, Insights); Home shows a 7-day revision forecast.
 - 2026-11-17: Questions search stays pinned on phones while scrolling; list loads with placeholder rows instead of a spinner.
 - 2026-11-17: Questions list loads the next page automatically on scroll (button kept as fallback). New-question draft autosave already existed.
+- 2026-11-17: Guide, Backup and AI connection dialogs download only when first opened.

@@ -12,9 +12,9 @@ import App from "../App.tsx";
 import { useAuth } from "../auth/AuthProvider.tsx";
 import AuthScreen from "../auth/AuthScreen.tsx";
 import AccountMenu from "./AccountMenu.tsx";
-import { AiConnectionDialog } from "../modules/ai/AiConnectionDialog.tsx";
-import GuideDialog from "./GuideDialog.tsx";
-import BackupDialog from "./BackupDialog.tsx";
+import { useAiDialogOpen } from "../modules/ai/keys.ts";
+import { useGuideOpen } from "./guide.ts";
+import { useBackupOpen } from "./backupStore.ts";
 import { SupabaseProfile } from "../modules/profile/data/supabaseProfile.ts";
 import type { ProfileRepo } from "../modules/profile/data/repo.ts";
 import { useFocusMode } from "./focus.ts";
@@ -36,10 +36,38 @@ import type { WorkspaceRepo } from "../modules/workspace/data/repo.ts";
 import { WorkspaceProvider } from "../modules/workspace/ui/workspace.tsx";
 import HomeDashboard from "../modules/workspace/ui/HomeDashboard.tsx";
 
+const GuideDialog = lazy(() => import("./GuideDialog.tsx"));
+const BackupDialog = lazy(() => import("./BackupDialog.tsx"));
+const AiConnectionDialog = lazy(() =>
+  import("../modules/ai/AiConnectionDialog.tsx").then((m) => ({ default: m.AiConnectionDialog })),
+);
 const PracticeScreen = lazy(() => import("../modules/practice/ui/PracticeScreen.tsx"));
 const QuestionsScreen = lazy(() => import("../modules/question-bank/ui/QuestionsScreen.tsx"));
 const ReviewScreen = lazy(() => import("../modules/workspace/ui/ReviewScreen.tsx"));
 const InsightsScreen = lazy(() => import("../modules/workspace/ui/InsightsScreen.tsx"));
+
+/** Downloads each dialog's code only the first time it is opened. */
+function GuideGate({ onNavigate }: { onNavigate: (route: string) => void }) {
+  return useGuideOpen() ? (
+    <Suspense fallback={null}>
+      <GuideDialog onNavigate={onNavigate} />
+    </Suspense>
+  ) : null;
+}
+function BackupGate() {
+  return useBackupOpen() ? (
+    <Suspense fallback={null}>
+      <BackupDialog />
+    </Suspense>
+  ) : null;
+}
+function AiGate() {
+  return useAiDialogOpen() ? (
+    <Suspense fallback={null}>
+      <AiConnectionDialog />
+    </Suspense>
+  ) : null;
+}
 
 export interface Repos {
   makeRepo?: (userId: string) => QuestionRepo;
@@ -72,8 +100,8 @@ function ModuleHost({
       <PracticeProvider attempts={attempts}>
         <WorkspaceProvider repo={workspace}>
           <Suspense fallback={<div role="status" aria-label="Loading" />}>
-            <GuideDialog onNavigate={onNavigate} />
-            <BackupDialog />
+            <GuideGate onNavigate={onNavigate} />
+            <BackupGate />
             {module === "home" ? (
               <HomeDashboard onNavigate={onNavigate} />
             ) : module === "questions" ? (
@@ -166,7 +194,7 @@ export default function AppShell({
         Skip to content
       </a>
       <CommandPalette onNavigate={go} />
-      <AiConnectionDialog />
+      <AiGate />
       <div className="relative z-10 mx-auto min-h-dvh max-w-[1280px] lg:grid lg:grid-cols-[260px_1fr]">
         <aside className="lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-6 lg:border-r lg:border-line lg:px-4 lg:py-6">
           <div className="hidden px-3 lg:block">
