@@ -22,7 +22,8 @@ import {
   type QuestionRecord,
   type TaxonomyNode,
 } from "../data/repo.ts";
-import { ExportDialog, ImportDialog } from "./ImportExportDialogs.tsx";
+import { ImportDialog } from "./ImportExportDialogs.tsx";
+import { ExportDialog } from "./ExportDialog.tsx";
 import { ManageDialog } from "./ManageDialog.tsx";
 import { QuestionEditor } from "./QuestionEditor.tsx";
 import { errorText, useBank, useLoad } from "./bank.tsx";
