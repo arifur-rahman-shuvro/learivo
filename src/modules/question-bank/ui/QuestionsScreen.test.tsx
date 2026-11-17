@@ -139,6 +139,7 @@ describe("Add questions hub", () => {
     const hub = await screen.findByRole("dialog", { name: "Add questions" });
     for (const name of [
       "Write one question",
+      "Generate with AI",
       "Make a prompt for AI",
       "Paste what AI gave you",
       "Upload a file",
@@ -152,6 +153,20 @@ describe("Add questions hub", () => {
       within(imp).getByRole("tab", { name: "Make a prompt" }).getAttribute("aria-selected"),
     ).toBe("true");
     expect(within(imp).getByRole("region", { name: "Your prompt" })).toBeTruthy();
+    expect(within(imp).queryByRole("region", { name: "Generate with AI" })).toBeNull();
+  });
+
+  it("opens the Generate with AI tab from the hub, without the copy-prompt box", async () => {
+    renderScreen(new MemoryRepo());
+    fireEvent.click(await screen.findByRole("button", { name: "Add questions" }));
+    const hub = await screen.findByRole("dialog", { name: "Add questions" });
+    fireEvent.click(within(hub).getByRole("button", { name: /Generate with AI/ }));
+    const imp = await screen.findByRole("dialog", { name: "Import questions" });
+    expect(
+      within(imp).getByRole("tab", { name: "Generate with AI" }).getAttribute("aria-selected"),
+    ).toBe("true");
+    expect(within(imp).getByRole("region", { name: "Generate with AI" })).toBeTruthy();
+    expect(within(imp).queryByRole("region", { name: "Your prompt" })).toBeNull();
   });
 
   it("opens the subject organizer from the hub", async () => {

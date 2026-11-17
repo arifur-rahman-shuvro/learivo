@@ -80,7 +80,7 @@ export default function QuestionsScreen() {
   const [error, setError] = useState<string>();
   const [editing, setEditing] = useState<null | "new" | string>(null);
   const [panel, setPanel] = useState<Panel>(null);
-  const [importFrom, setImportFrom] = useState<"paste" | "upload" | "prompt">("paste");
+  const [importFrom, setImportFrom] = useState<"paste" | "upload" | "prompt" | "ai">("paste");
   function choose(c: AddChoice) {
     if (c === "write") {
       setPanel(null);

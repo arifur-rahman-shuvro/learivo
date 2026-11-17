@@ -64,7 +64,7 @@ const EXAMPLE: QuestionInput = {
 };
 
 type Stage = "choose" | "review" | "importing" | "done";
-type Source = "paste" | "upload" | "prompt";
+type Source = "paste" | "upload" | "prompt" | "ai";
 
 interface Outcome {
   imported: number;
@@ -190,7 +190,7 @@ export function ImportDialog({
   initial = "paste",
 }: {
   onClose: () => void;
-  initial?: "paste" | "upload" | "prompt";
+  initial?: "paste" | "upload" | "prompt" | "ai";
 }) {
   const { repo, refresh } = useBank();
   const [stage, setStage] = useState<Stage>("choose");
@@ -365,19 +365,22 @@ export function ImportDialog({
             before anything is saved.
           </p>
           <p className="m-0 text-sm text-muted">
-            {source === "prompt"
-              ? "Step 1. Fill the form and copy the prompt. Give it to your AI chat with your notes or photos."
-              : source === "paste"
-                ? "Step 2. Paste the JSON that AI gave you, or JSON you wrote yourself."
-                : "Or upload a JSON or CSV file, such as one you exported earlier."}
+            {source === "ai"
+              ? "Fill the form and tap Generate. You will see the questions before anything is saved."
+              : source === "prompt"
+                ? "Step 1. Fill the form and copy the prompt. Give it to your AI chat with your notes or photos."
+                : source === "paste"
+                  ? "Step 2. Paste the JSON that AI gave you, or JSON you wrote yourself."
+                  : "Or upload a JSON or CSV file, such as one you exported earlier."}
           </p>
           <div
             role="tablist"
             aria-label="Import method"
-            className="grid grid-cols-3 gap-1 rounded-control bg-surface-2 p-1"
+            className="grid grid-cols-2 gap-1 rounded-control bg-surface-2 p-1 sm:grid-cols-4"
           >
             {(
               [
+                ["ai", "Generate with AI"],
                 ["prompt", "Make a prompt"],
                 ["paste", "Paste JSON"],
                 ["upload", "Upload file"],
@@ -403,19 +406,29 @@ export function ImportDialog({
             ))}
           </div>
 
-          {source === "prompt" ? (
+          {source === "ai" ? (
+            <div
+              role="tabpanel"
+              id="import-panel-ai"
+              aria-labelledby="import-tab-ai"
+              className="flex flex-col gap-3"
+            >
+              <PromptMaker
+                mode="ai"
+                onGenerated={(text) => {
+                  setPasted(text);
+                  void check(text, "json", "AI answer");
+                }}
+              />
+            </div>
+          ) : source === "prompt" ? (
             <div
               role="tabpanel"
               id="import-panel-prompt"
               aria-labelledby="import-tab-prompt"
               className="flex flex-col gap-3"
             >
-              <PromptMaker
-                onGenerated={(text) => {
-                  setPasted(text);
-                  void check(text, "json", "AI answer");
-                }}
-              />
+              <PromptMaker />
               <div>
                 <Button variant="secondary" onClick={() => setSource("paste")}>
                   I have the JSON, go to Paste

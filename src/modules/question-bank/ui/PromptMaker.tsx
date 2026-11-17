@@ -58,8 +58,11 @@ const LANGS = ["English", "Bangla", "Banglish (Bangla in English letters)"];
 
 /** Form that builds a ready-to-paste prompt for an AI chat. */
 export function PromptMaker({
+  mode = "prompt",
   onGenerated,
 }: {
+  /** "prompt" shows the prompt to copy. "ai" shows the Generate button instead. */
+  mode?: "prompt" | "ai";
   /** Receives the AI's reply when the student generates inside the app. */
   onGenerated?: (text: string) => void;
 }) {
@@ -381,7 +384,7 @@ export function PromptMaker({
         </p>
       </div>
 
-      {onGenerated && (
+      {mode === "ai" && onGenerated && (
         <section
           aria-label="Generate with AI"
           className="flex flex-col gap-2 rounded-control border border-line p-3"
@@ -406,6 +409,9 @@ export function PromptMaker({
                 <Button variant="ghost" onClick={openAiConnection}>
                   AI connection
                 </Button>
+                <Button variant="ghost" onClick={() => setSpec(DEFAULT_SPEC)}>
+                  Reset form
+                </Button>
               </div>
             </>
           ) : (
@@ -429,36 +435,40 @@ export function PromptMaker({
         </section>
       )}
 
-      <section aria-label="Your prompt" className="flex flex-col gap-2">
-        <h3 className="m-0 text-base font-semibold">Your prompt</h3>
-        <pre
-          tabIndex={0}
-          className="m-0 max-h-56 overflow-auto whitespace-pre-wrap break-words rounded-control border border-line bg-surface-2 p-2 font-mono text-xs"
-        >
-          {prompt}
-        </pre>
-        <div className="flex flex-wrap items-center gap-2">
-          <Button onClick={() => void copy()}>{copied === "ok" ? "Copied" : "Copy prompt"}</Button>
-          <Button variant="ghost" onClick={() => setSpec(DEFAULT_SPEC)}>
-            Reset form
-          </Button>
-          {copied === "fail" && (
-            <span role="alert" className="text-sm text-danger">
-              Could not copy. Select the prompt and copy it by hand.
-            </span>
-          )}
-        </div>
-        <ol className="m-0 pl-5 text-sm text-muted">
-          <li>Open your AI chat and paste this prompt.</li>
-          {convert ? (
-            <li>Attach your photos, screenshots or PDF in the same message, then send.</li>
-          ) : (
-            <li>Attach notes or pages if you want, or just send it.</li>
-          )}
-          <li>Copy the JSON it replies with, then come back to the Paste JSON tab.</li>
-          <li>If it stops early, reply &ldquo;continue&rdquo; and import each part.</li>
-        </ol>
-      </section>
+      {mode === "prompt" && (
+        <section aria-label="Your prompt" className="flex flex-col gap-2">
+          <h3 className="m-0 text-base font-semibold">Your prompt</h3>
+          <pre
+            tabIndex={0}
+            className="m-0 max-h-56 overflow-auto whitespace-pre-wrap break-words rounded-control border border-line bg-surface-2 p-2 font-mono text-xs"
+          >
+            {prompt}
+          </pre>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button onClick={() => void copy()}>
+              {copied === "ok" ? "Copied" : "Copy prompt"}
+            </Button>
+            <Button variant="ghost" onClick={() => setSpec(DEFAULT_SPEC)}>
+              Reset form
+            </Button>
+            {copied === "fail" && (
+              <span role="alert" className="text-sm text-danger">
+                Could not copy. Select the prompt and copy it by hand.
+              </span>
+            )}
+          </div>
+          <ol className="m-0 pl-5 text-sm text-muted">
+            <li>Open your AI chat and paste this prompt.</li>
+            {convert ? (
+              <li>Attach your photos, screenshots or PDF in the same message, then send.</li>
+            ) : (
+              <li>Attach notes or pages if you want, or just send it.</li>
+            )}
+            <li>Copy the JSON it replies with, then come back to the Paste JSON tab.</li>
+            <li>If it stops early, reply &ldquo;continue&rdquo; and import each part.</li>
+          </ol>
+        </section>
+      )}
     </div>
   );
 }

@@ -206,7 +206,7 @@ describe("Smart import", () => {
         ),
       );
       open();
-      fireEvent.click(screen.getByRole("tab", { name: "Make a prompt" }));
+      fireEvent.click(screen.getByRole("tab", { name: "Generate with AI" }));
       fireEvent.click(screen.getByRole("button", { name: "Generate questions" }));
       await screen.findByRole("region", { name: "Preview" });
       expect(screen.getByText(/Written by AI/)).toBeTruthy();
@@ -218,7 +218,7 @@ describe("Smart import", () => {
       localStorage.clear();
       reloadAi();
       open();
-      fireEvent.click(screen.getByRole("tab", { name: "Make a prompt" }));
+      fireEvent.click(screen.getByRole("tab", { name: "Generate with AI" }));
       expect(screen.getByRole("button", { name: "Connect an AI" })).toBeTruthy();
       expect(screen.queryByRole("button", { name: "Generate questions" })).toBeNull();
     });

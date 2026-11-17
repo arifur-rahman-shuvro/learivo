@@ -3,7 +3,7 @@ import { Dialog, Button } from "../../../design-system/index.ts";
 import { FeatureIcon } from "../../../app/FeatureIcon.tsx";
 import type { FeatureIcon as IconName } from "../../../app/features.ts";
 
-export type AddChoice = "write" | "prompt" | "paste" | "upload" | "subject";
+export type AddChoice = "write" | "ai" | "prompt" | "paste" | "upload" | "subject";
 
 const CHOICES: { id: AddChoice; icon: IconName; title: string; text: ReactNode }[] = [
   {
@@ -11,6 +11,12 @@ const CHOICES: { id: AddChoice; icon: IconName; title: string; text: ReactNode }
     icon: "add",
     title: "Write one question",
     text: "Type a question and its options yourself.",
+  },
+  {
+    id: "ai",
+    icon: "prompt",
+    title: "Generate with AI",
+    text: "Connect your own AI account. Learivo writes the questions, and you check them before saving.",
   },
   {
     id: "prompt",
