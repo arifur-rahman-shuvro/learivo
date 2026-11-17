@@ -248,3 +248,4 @@ Order: 13, 14, 15, 16. Each item is pushed on its own with tests, and the phone 
 - 2026-11-17: Optimisation audit. First load on a phone-width sign-in page is about 780 kB uncompressed (about 190 kB gzipped); error monitoring code loads only when a DSN is set. Database advisors show no performance problems; the 11 "unused index" notes are foreign-key indexes on a small database and are kept for growth.
 - 2026-11-17: Empty screens show an icon that matches what is missing (questions, search, insights, exams, mistakes, bookmarks, notes, caught up).
 - 2026-11-17: One toast style for short confirmations (bulk actions, bookmarks, Review actions).
+- 2026-11-17: Dialogs and toasts fade and rise in briefly; off with reduced motion or Low effects.

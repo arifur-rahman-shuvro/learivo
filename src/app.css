@@ -225,6 +225,25 @@ h3 {
   animation-delay: -15s;
 }
 
+/* Short entrance animations for dialogs and toasts. Switched off by the rule below. */
+@keyframes lv-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes lv-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+.lv-fade-in {
+  animation: lv-fade-in 160ms var(--lv-ease, ease-out);
+}
+.lv-rise-in {
+  animation: lv-rise-in 200ms var(--lv-ease, ease-out);
+}
+
 /* Respect reduced motion and the Low effects switch */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -234,6 +253,10 @@ h3 {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
+}
+html[data-effects="low"] .lv-fade-in,
+html[data-effects="low"] .lv-rise-in {
+  animation: none;
 }
 html[data-effects="low"] .lv-bg-art {
   display: none;

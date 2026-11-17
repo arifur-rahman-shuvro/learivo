@@ -63,14 +63,18 @@ export function Dialog({
       : "bottom-0 max-h-[92dvh] w-full rounded-t-card lg:bottom-0 lg:left-auto lg:right-0 lg:top-0 lg:max-h-none lg:h-dvh lg:w-[34rem] lg:rounded-none lg:rounded-l-card";
   return (
     <div className="fixed inset-0 z-40">
-      <div aria-hidden="true" className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div
+        aria-hidden="true"
+        className="lv-fade-in absolute inset-0 bg-black/50"
+        onClick={onClose}
+      />
       <div
         ref={ref}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`absolute flex flex-col border border-line bg-surface-1 shadow-[var(--lv-shadow-raised)] outline-none ${panel}`}
+        className={`lv-rise-in absolute flex flex-col border border-line bg-surface-1 shadow-[var(--lv-shadow-raised)] outline-none ${panel}`}
       >
         <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5">
           <h2 id={titleId} className="m-0 text-lg font-bold">

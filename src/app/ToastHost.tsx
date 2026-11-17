@@ -18,7 +18,10 @@ export default function ToastHost() {
       className="pointer-events-none fixed inset-x-0 bottom-20 z-50 flex justify-center px-4 lg:bottom-6"
     >
       {toast && (
-        <p className="pointer-events-auto m-0 max-w-md rounded-control border border-line bg-surface px-4 py-2.5 text-sm font-semibold shadow-lg">
+        <p
+          key={toast.id}
+          className="lv-rise-in pointer-events-auto m-0 max-w-md rounded-control border border-line bg-surface px-4 py-2.5 text-sm font-semibold shadow-lg"
+        >
           {toast.message}
         </p>
       )}
