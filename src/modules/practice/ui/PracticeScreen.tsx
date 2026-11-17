@@ -4,6 +4,8 @@ import {
   Badge,
   Button,
   EmptyState,
+  Picker,
+  type PickerOption,
   PlusIcon,
   PracticeIcon,
   Spinner,
@@ -23,12 +25,12 @@ import { countAvailable, startExam, startPractice, type PracticeSetup } from "./
 type View = { name: "home" } | { name: "play"; id: string } | { name: "results"; id: string };
 
 function nodeOptions(nodes: readonly TaxonomyNode[]) {
-  const out: { id: string; label: string }[] = [];
+  const out: PickerOption[] = [];
   const walk = (parent: string | null, depth: number) => {
     for (const n of nodes
       .filter((x) => x.parentId === parent)
       .sort((a, b) => a.name.localeCompare(b.name))) {
-      out.push({ id: n.id, label: `${" ".repeat(depth)}${n.name}` });
+      out.push({ value: n.id, label: n.name, depth });
       if (depth < KIND_BY_DEPTH.length - 1) walk(n.id, depth + 1);
     }
   };
@@ -310,64 +312,38 @@ function Home({ onOpen }: { onOpen: (v: View) => void }) {
         <section aria-label="Start practice" className="mt-4 flex flex-col gap-4">
           <h2 className="sr-only">Start a practice session</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <label className="flex flex-col gap-1.5 text-sm font-semibold">
-              Subject
-              <select
-                className="lv-input"
-                value={setup.nodeId ?? ""}
-                onChange={(e) => patch({ nodeId: e.target.value || null })}
-              >
-                <option value="">All subjects</option>
-                {options.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm font-semibold">
-              Tag
-              <select
-                className="lv-input"
-                value={setup.tagId ?? ""}
-                onChange={(e) => patch({ tagId: e.target.value || null })}
-              >
-                <option value="">Any tag</option>
-                {(tags.data ?? []).map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm font-semibold">
-              Collection
-              <select
-                className="lv-input"
-                value={setup.collectionId ?? ""}
-                onChange={(e) => patch({ collectionId: e.target.value || null })}
-              >
-                <option value="">Any collection</option>
-                {(collections.data ?? []).map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1.5 text-sm font-semibold">
-              Which questions
-              <select
-                className="lv-input"
-                value={setup.filter}
-                onChange={(e) => patch({ filter: e.target.value as PracticeFilter })}
-              >
-                <option value="all">All</option>
-                <option value="unattempted">Not attempted yet</option>
-                <option value="incorrect">Last answered wrong</option>
-                <option value="bookmarked">Bookmarked</option>
-              </select>
-            </label>
+            <Picker
+              label="Subject"
+              emptyLabel="All subjects"
+              value={setup.nodeId ?? ""}
+              options={options}
+              onChange={(v) => patch({ nodeId: v || null })}
+            />
+            <Picker
+              label="Tag"
+              emptyLabel="Any tag"
+              value={setup.tagId ?? ""}
+              options={(tags.data ?? []).map((t) => ({ value: t.id, label: t.name }))}
+              onChange={(v) => patch({ tagId: v || null })}
+            />
+            <Picker
+              label="Collection"
+              emptyLabel="Any collection"
+              value={setup.collectionId ?? ""}
+              options={(collections.data ?? []).map((c) => ({ value: c.id, label: c.name }))}
+              onChange={(v) => patch({ collectionId: v || null })}
+            />
+            <Picker
+              label="Which questions"
+              value={setup.filter}
+              options={[
+                { value: "all", label: "All" },
+                { value: "unattempted", label: "Not attempted yet" },
+                { value: "incorrect", label: "Last answered wrong" },
+                { value: "bookmarked", label: "Bookmarked" },
+              ]}
+              onChange={(v) => patch({ filter: v as PracticeFilter })}
+            />
             <label className="flex flex-col gap-1.5 text-sm font-semibold">
               Number of questions
               <input

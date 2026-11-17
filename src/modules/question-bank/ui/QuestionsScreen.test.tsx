@@ -29,6 +29,12 @@ function renderScreen(repo: MemoryRepo) {
 
 afterEach(cleanup);
 
+/** Opens a choice field's sheet and taps one option. */
+async function pick(field: string, option: string) {
+  fireEvent.click(await screen.findByRole("button", { name: new RegExp(`^${field}:`) }));
+  fireEvent.click(await screen.findByRole("option", { name: option }));
+}
+
 describe("QuestionsScreen", () => {
   it("deletes selected questions straight from the list, after typing DELETE", async () => {
     const repo = new MemoryRepo();
@@ -185,9 +191,7 @@ describe("Add questions hub", () => {
       { ...tf("Hard one"), difficulty: 5 },
     ]);
     renderScreen(repo);
-    fireEvent.change(await screen.findByLabelText("Filter by difficulty"), {
-      target: { value: "5" },
-    });
+    await pick("Difficulty", "Level 5");
     await waitFor(() => expect(screen.queryByText("Easy one")).toBeNull());
     expect(screen.getByRole("img", { name: "Level 5 of 5" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Save this view" }));
@@ -229,7 +233,7 @@ describe("Add questions hub", () => {
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
     fireEvent.click(toggle);
     expect(toggle.getAttribute("aria-expanded")).toBe("true");
-    fireEvent.change(screen.getByLabelText("Filter by difficulty"), { target: { value: "5" } });
+    await pick("Difficulty", "Level 5");
     await waitFor(() => expect(screen.queryByText("Easy one")).toBeNull());
     expect(screen.getByRole("button", { name: "Filters (1)" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Remove filter: Difficulty 5" }));

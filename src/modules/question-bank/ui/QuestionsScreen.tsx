@@ -10,6 +10,7 @@ import {
   Dialog,
   EmptyState,
   ListSkeleton,
+  Picker,
   PlusIcon,
   QuestionsIcon,
   SearchIcon,
@@ -133,6 +134,15 @@ export default function QuestionsScreen() {
   const collections = useLoad((r) => r.collections());
   const nodes = useMemo(() => taxonomy.data ?? [], [taxonomy.data]);
   const options = useMemo(() => nodeOptions(nodes), [nodes]);
+  const subjectOptions = useMemo(
+    () =>
+      options.map((o) => ({
+        value: o.id,
+        label: o.label.trim(),
+        depth: o.label.length - o.label.trimStart().length,
+      })),
+    [options],
+  );
 
   const effective: QuestionQuery = useMemo(
     () => ({ ...query, search, offset: 0, limit: PAGE }),
@@ -381,92 +391,59 @@ export default function QuestionsScreen() {
             id="question-filters"
             className={`${filtersOpen ? "grid" : "hidden"} grid-cols-2 gap-2 md:grid md:grid-cols-3 xl:grid-cols-6`}
           >
-            <select
-              className="lv-input"
-              aria-label="Filter by type"
+            <Picker
+              hideLabel
+              label="Type"
+              emptyLabel="All types"
               value={query.qtypes[0] ?? ""}
-              onChange={(e) =>
-                patch({ qtypes: e.target.value ? [e.target.value as QuestionType] : [] })
-              }
-            >
-              <option value="">All types</option>
-              {QUESTION_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {TYPE_LABELS[t]}
-                </option>
-              ))}
-            </select>
-            <select
-              className="lv-input"
-              aria-label="Filter by subject"
+              options={QUESTION_TYPES.map((t) => ({ value: t, label: TYPE_LABELS[t] }))}
+              onChange={(v) => patch({ qtypes: v ? [v as QuestionType] : [] })}
+            />
+            <Picker
+              hideLabel
+              label="Subject"
+              emptyLabel="All subjects"
               value={query.unclassified ? "__none" : (query.nodeId ?? "")}
-              onChange={(e) => {
-                const v = e.target.value;
-                patch({
-                  nodeId: v && v !== "__none" ? v : null,
-                  unclassified: v === "__none",
-                });
-              }}
-            >
-              <option value="">All subjects</option>
-              <option value="__none">Unclassified</option>
-              {options.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-            <select
-              className="lv-input"
-              aria-label="Filter by difficulty"
-              value={query.difficulties[0] ?? ""}
-              onChange={(e) =>
-                patch({ difficulties: e.target.value ? [Number(e.target.value)] : [] })
+              options={[{ value: "__none", label: "Unclassified" }, ...subjectOptions]}
+              onChange={(v) =>
+                patch({ nodeId: v && v !== "__none" ? v : null, unclassified: v === "__none" })
               }
-            >
-              <option value="">Any difficulty</option>
-              {[1, 2, 3, 4, 5].map((d) => (
-                <option key={d} value={d}>
-                  Level {d}
-                </option>
-              ))}
-            </select>
-            <select
-              className="lv-input"
-              aria-label="Filter by tag"
+            />
+            <Picker
+              hideLabel
+              label="Difficulty"
+              emptyLabel="Any difficulty"
+              value={query.difficulties[0] ? String(query.difficulties[0]) : ""}
+              options={[1, 2, 3, 4, 5].map((d) => ({ value: String(d), label: `Level ${d}` }))}
+              onChange={(v) => patch({ difficulties: v ? [Number(v)] : [] })}
+            />
+            <Picker
+              hideLabel
+              label="Tag"
+              emptyLabel="All tags"
               value={query.tagId ?? ""}
-              onChange={(e) => patch({ tagId: e.target.value || null })}
-            >
-              <option value="">All tags</option>
-              {(tags.data ?? []).map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-            <select
-              className="lv-input"
-              aria-label="Filter by collection"
+              options={(tags.data ?? []).map((t) => ({ value: t.id, label: t.name }))}
+              onChange={(v) => patch({ tagId: v || null })}
+            />
+            <Picker
+              hideLabel
+              label="Collection"
+              emptyLabel="All collections"
               value={query.collectionId ?? ""}
-              onChange={(e) => patch({ collectionId: e.target.value || null })}
-            >
-              <option value="">All collections</option>
-              {(collections.data ?? []).map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <select
-              className="lv-input"
-              aria-label="Sort"
+              options={(collections.data ?? []).map((c) => ({ value: c.id, label: c.name }))}
+              onChange={(v) => patch({ collectionId: v || null })}
+            />
+            <Picker
+              hideLabel
+              label="Sort"
               value={query.sort}
-              onChange={(e) => patch({ sort: e.target.value as QuestionQuery["sort"] })}
-            >
-              <option value="updated">Last edited</option>
-              <option value="created">Newest</option>
-              <option value="stem">Alphabetical</option>
-            </select>
+              options={[
+                { value: "updated", label: "Last edited" },
+                { value: "created", label: "Newest" },
+                { value: "stem", label: "Alphabetical" },
+              ]}
+              onChange={(v) => patch({ sort: v as QuestionQuery["sort"] })}
+            />
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {filtered && (

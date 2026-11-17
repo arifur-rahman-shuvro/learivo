@@ -250,3 +250,4 @@ Order: 13, 14, 15, 16. Each item is pushed on its own with tests, and the phone 
 - 2026-11-17: One toast style for short confirmations (bulk actions, bookmarks, Review actions).
 - 2026-11-17: Dialogs and toasts fade and rise in briefly; off with reduced motion or Low effects.
 - 2026-11-17: CI opens the built app at 360, 390 and 430 px and fails if the first screen is blank, logs errors, or runs off the side (`pnpm smoke`). Large files are left as they are unless a change needs them split.
+- 2026-11-17: Choice fields on Practice setup and the Questions filter bar open a roomy sheet (search, nested subjects, tick on current) instead of the phone plain radio list. New `Picker` component.
