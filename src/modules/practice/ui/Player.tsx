@@ -37,6 +37,10 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
   const opened = useRef(Date.now());
   const sent = useRef(false);
   const flagRef = useRef<(() => void) | null>(null);
+  // Seconds on each question, counted only while the page is visible.
+  const secs = useRef<number[]>([]);
+  const indexRef = useRef(0);
+  indexRef.current = index;
 
   useEffect(() => {
     let alive = true;
@@ -45,6 +49,7 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
         if (!alive) return;
         if (!a || a.status === "submitted") return setMissing(true);
         setAttempt(a);
+        secs.current = a.items.map((i) => i.seconds);
         if (a.instantFeedback) {
           setChecked(new Set(a.items.filter((i) => isAnswered(i.response)).map((i) => i.position)));
         }
@@ -78,6 +83,22 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
     return () => clearInterval(t);
   }, []);
 
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (document.visibilityState === "hidden") return;
+      secs.current[indexRef.current] = (secs.current[indexRef.current] ?? 0) + 1;
+    }, 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Leaving a question saves its time, so a closed tab does not lose it.
+  useEffect(() => {
+    return () => {
+      const left = secs.current[index];
+      if (left) attempts.patchItem(attemptId, index, { seconds: left }).catch(() => undefined);
+    };
+  }, [index, attempts, attemptId]);
+
   const startedMs = attempt ? new Date(attempt.startedAt).getTime() : 0;
   const limit = attempt?.timeLimitSec ?? null;
   const remaining = limit === null ? null : limit - Math.floor((now - startedMs) / 1000);
@@ -102,6 +123,7 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
             verdict: v.verdict,
             credit: v.credit,
             marks: marksFor(v, a.marksCorrect, a.marksWrong),
+            seconds: secs.current[position] ?? 0,
           })),
           { ...t, secondsSpent: Math.max(0, spent) },
         );

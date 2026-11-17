@@ -1,3 +1,4 @@
+import { shortTime } from "../../practice/domain/pace.ts";
 import PractiseArea from "./PractiseArea.tsx";
 import { useIntent } from "../../../app/intents.ts";
 import { useMemo, useState } from "react";
@@ -23,6 +24,7 @@ import {
   byReason,
   examHistory,
   overall,
+  speedByArea,
   streak,
   studyTimeByDay,
 } from "../domain/insights.ts";
@@ -159,6 +161,11 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
       reasons: byReason(facts),
       activity: activityByDay(facts, today, 84),
       extremes: bestAndWorst(facts),
+      speed: speedByArea(facts, depth),
+      avgSeconds: (() => {
+        const t = facts.filter((f) => (f.seconds ?? 0) > 0);
+        return t.length >= 5 ? t.reduce((n, f) => n + (f.seconds ?? 0), 0) / t.length : null;
+      })(),
     };
   }, [data, today, depth]);
 
@@ -371,6 +378,11 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
               <p className="m-0 text-sm text-muted">
                 Total: {clock(view.totalSeconds)} across {view.sessions} sessions.
               </p>
+              {view.avgSeconds !== null && (
+                <p className="m-0 text-sm">
+                  You take about <strong>{shortTime(view.avgSeconds)}</strong> per question.
+                </p>
+              )}
               <div
                 className="flex h-32 items-end gap-1.5"
                 role="img"
@@ -410,6 +422,28 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
                   </tbody>
                 </table>
               </details>
+            </section>
+          )}
+          {tab === "time" && view.speed.length > 0 && (
+            <section aria-label="Time per question" className="lv-card flex flex-col gap-3 p-5">
+              <h2 className="m-0 text-lg font-semibold">Time per question, by subject</h2>
+              <p className="m-0 text-sm text-muted">
+                Slowest first. Subjects with fewer than 5 timed answers are left out.
+              </p>
+              <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+                {view.speed.slice(0, 8).map((r) => (
+                  <li key={r.name} className="flex flex-col gap-1">
+                    <div className="flex items-baseline justify-between gap-3 text-sm">
+                      <span className="min-w-0 truncate font-semibold">{r.name}</span>
+                      <span className="font-mono">{shortTime(r.average)}</span>
+                    </div>
+                    <ProgressBar
+                      value={r.average / view.speed[0]!.average}
+                      label={`${r.name}: ${shortTime(r.average)} per question`}
+                    />
+                  </li>
+                ))}
+              </ul>
             </section>
           )}
           {tab === "achievements" && (

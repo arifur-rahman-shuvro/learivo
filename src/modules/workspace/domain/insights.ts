@@ -10,6 +10,8 @@ export interface Fact {
   correct: boolean;
   /** The student's reason for a missed question, when they gave one. */
   reason?: Reason | null;
+  /** Seconds spent on the question, when recorded. */
+  seconds?: number;
 }
 
 export interface SessionSummary {
@@ -229,4 +231,28 @@ export function dueForecast(
     if (row) row.count += 1;
   }
   return out;
+}
+
+export interface SpeedRow {
+  name: string;
+  /** Average seconds per answered question. */
+  average: number;
+  timed: number;
+}
+
+/** Seconds per question by subject (or chapter), slowest first. Areas with few timed answers are left out. */
+export function speedByArea(facts: readonly Fact[], depth: 1 | 2 = 1, minTimed = 5): SpeedRow[] {
+  const map = new Map<string, { total: number; timed: number }>();
+  for (const f of facts) {
+    if (!f.seconds || f.seconds <= 0) continue;
+    const name = f.path.slice(0, depth).join(" › ") || "Unclassified";
+    const row = map.get(name) ?? { total: 0, timed: 0 };
+    row.total += f.seconds;
+    row.timed += 1;
+    map.set(name, row);
+  }
+  return [...map.entries()]
+    .filter(([, r]) => r.timed >= minTimed)
+    .map(([name, r]) => ({ name, average: r.total / r.timed, timed: r.timed }))
+    .sort((a, b) => b.average - a.average || a.name.localeCompare(b.name));
 }

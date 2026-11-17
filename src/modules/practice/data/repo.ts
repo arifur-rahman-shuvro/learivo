@@ -26,6 +26,8 @@ export interface AttemptItem {
   flagged: boolean;
   /** The student's own reason for missing it; set after the session. */
   mistakeReason: Reason | null;
+  /** Seconds spent looking at this question, summed over every visit. */
+  seconds: number;
   verdict: Verdict | null;
   /** Share of full credit earned, 0 to 1. */
   credit: number | null;
@@ -74,6 +76,7 @@ export interface NewAttempt {
 export interface ItemPatch {
   response?: Response | null;
   flagged?: boolean;
+  seconds?: number;
   /** Can be set after the attempt is submitted. */
   mistakeReason?: Reason | null;
 }
@@ -84,6 +87,8 @@ export interface Graded {
   verdict: Verdict;
   credit: number;
   marks: number;
+  /** Seconds spent on the question. Left out, the stored value stays. */
+  seconds?: number;
 }
 
 export interface Totals {

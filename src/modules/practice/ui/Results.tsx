@@ -1,3 +1,4 @@
+import { paceNote, paceOf, shortTime } from "../domain/pace.ts";
 import GlossaryText from "../../workspace/ui/GlossaryText.tsx";
 import { useEffect, useMemo, useState } from "react";
 import { Badge, Button, ProgressRing, Spinner } from "../../../design-system/index.ts";
@@ -35,6 +36,18 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
       alive = false;
     };
   }, [attempts, attemptId]);
+
+  const pace = useMemo(
+    () =>
+      paceOf(
+        (a?.items ?? []).map((i) => ({
+          position: i.position,
+          seconds: i.seconds,
+          verdict: i.verdict,
+        })),
+      ),
+    [a],
+  );
 
   const bySubject = useMemo(() => {
     const map = new Map<string, { right: number; total: number }>();
@@ -137,6 +150,7 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
               answered === 0 ? "-" : `${Math.round((answeredCredit / answered) * 100)}%`,
             ],
             ["Time", clock(a.secondsSpent)],
+            ...(pace ? [["Per question", shortTime(pace.average)]] : []),
           ].map(([k, v]) => (
             <div key={k}>
               <dt className="text-xs font-semibold text-muted">{k}</dt>
@@ -145,6 +159,35 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
           ))}
         </dl>
       </section>
+
+      {pace && (pace.slowest.length > 0 || paceNote(pace)) && (
+        <section aria-label="Pace" className="lv-card flex flex-col gap-3 p-5">
+          <h2 className="m-0 text-lg font-semibold">Pace</h2>
+          {paceNote(pace) && <p className="m-0 text-sm">{paceNote(pace)}</p>}
+          {pace.slowest.length > 0 && (
+            <ul className="m-0 flex list-none flex-col gap-2 p-0">
+              {pace.slowest.map((x) => (
+                <li key={x.position}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShow("all");
+                      setOpen(x.position);
+                    }}
+                    className="flex w-full items-center justify-between gap-3 rounded-control text-left text-sm"
+                  >
+                    <span className="min-w-0 truncate">
+                      <span className="font-mono text-muted">{x.position + 1}</span>{" "}
+                      {a.items[x.position]?.snapshot.stem}
+                    </span>
+                    <span className="shrink-0 font-mono font-semibold">{shortTime(x.seconds)}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       {bySubject.length > 0 && (
         <section aria-label="By subject" className="lv-card p-5">
@@ -223,6 +266,11 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
                     {i.verdict !== "unanswered" && i.marks !== null ? ` · ${i.marks}` : ""}
                   </Badge>
                   {i.mistakeReason && <Badge tone="neutral">{reasonLabel(i.mistakeReason)}</Badge>}
+                  {i.seconds > 0 && (
+                    <span className="shrink-0 font-mono text-xs text-muted">
+                      {shortTime(i.seconds)}
+                    </span>
+                  )}
                 </button>
                 {isOpen && (
                   <div className="mt-3 flex flex-col gap-3 border-t border-line pt-3">

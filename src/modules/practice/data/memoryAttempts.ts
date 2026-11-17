@@ -52,6 +52,7 @@ export class MemoryAttempts implements AttemptRepo {
       response: null,
       flagged: false,
       mistakeReason: null,
+      seconds: 0,
       verdict: null,
       credit: null,
       marks: null,
@@ -114,6 +115,7 @@ export class MemoryAttempts implements AttemptRepo {
     if (patch.mistakeReason !== undefined) item.mistakeReason = patch.mistakeReason;
     if ("response" in patch) item.response = patch.response ?? null;
     if (patch.flagged !== undefined) item.flagged = patch.flagged;
+    if (patch.seconds !== undefined) item.seconds = Math.max(0, Math.round(patch.seconds));
   }
 
   async submit(attemptId: string, graded: Graded[], totals: Totals) {
@@ -126,6 +128,7 @@ export class MemoryAttempts implements AttemptRepo {
         item.verdict = g.verdict;
         item.credit = g.credit;
         item.marks = g.marks;
+        if (g.seconds !== undefined) item.seconds = Math.max(0, Math.round(g.seconds));
       }
     }
     Object.assign(a, {
@@ -157,6 +160,7 @@ export class MemoryAttempts implements AttemptRepo {
           path: item.snapshot.path,
           correct: item.verdict === "correct",
           reason: item.mistakeReason,
+          seconds: item.seconds,
         });
       }
     }

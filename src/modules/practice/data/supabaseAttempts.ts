@@ -44,6 +44,7 @@ interface ItemRow {
   response: Response | null;
   flagged: boolean;
   mistake_reason: Reason | null;
+  seconds: number;
   is_correct: boolean | null;
   credit: number | string | null;
   marks: number | string | null;
@@ -183,7 +184,7 @@ export class SupabaseAttempts implements AttemptRepo {
       await this.db
         .from("attempt_items")
         .select(
-          "position, question_id, snapshot, response, flagged, mistake_reason, is_correct, credit, marks, answered_at",
+          "position, question_id, snapshot, response, flagged, mistake_reason, seconds, is_correct, credit, marks, answered_at",
         )
         .eq("attempt_id", id)
         .order("position")
@@ -196,6 +197,7 @@ export class SupabaseAttempts implements AttemptRepo {
       response: r.response,
       flagged: r.flagged,
       mistakeReason: r.mistake_reason ?? null,
+      seconds: r.seconds ?? 0,
       verdict: toVerdict(r.is_correct, num(r.credit), r.response),
       credit: num(r.credit),
       marks: num(r.marks),
@@ -221,6 +223,8 @@ export class SupabaseAttempts implements AttemptRepo {
       update.answered_at = patch.response ? new Date().toISOString() : null;
     }
     if (patch.flagged !== undefined) update.flagged = patch.flagged;
+    if (patch.seconds !== undefined)
+      update.seconds = Math.max(0, Math.min(86400, Math.round(patch.seconds)));
     if (patch.mistakeReason !== undefined) update.mistake_reason = patch.mistakeReason;
     if (Object.keys(update).length === 0) return;
     const res = await this.db
@@ -240,6 +244,9 @@ export class SupabaseAttempts implements AttemptRepo {
           is_correct: g.verdict === "unanswered" ? false : g.verdict === "correct",
           credit: g.credit,
           marks: g.marks,
+          ...(g.seconds === undefined
+            ? {}
+            : { seconds: Math.max(0, Math.min(86400, Math.round(g.seconds))) }),
         })
         .eq("attempt_id", attemptId)
         .eq("position", g.position);
@@ -274,7 +281,7 @@ export class SupabaseAttempts implements AttemptRepo {
         await this.db
           .from("attempt_items")
           .select(
-            "is_correct, mistake_reason, response, path:snapshot->path, attempts!inner(submitted_at, status)",
+            "is_correct, mistake_reason, seconds, response, path:snapshot->path, attempts!inner(submitted_at, status)",
           )
           .not("is_correct", "is", null)
           .not("response", "is", null)
@@ -284,6 +291,7 @@ export class SupabaseAttempts implements AttemptRepo {
       ) as unknown as {
         is_correct: boolean;
         mistake_reason: Reason | null;
+        seconds: number | null;
         path: string[] | null;
         attempts: { submitted_at: string };
       }[];
@@ -293,6 +301,7 @@ export class SupabaseAttempts implements AttemptRepo {
           path: r.path ?? [],
           correct: r.is_correct,
           reason: r.mistake_reason,
+          seconds: r.seconds ?? 0,
         });
       }
       if (rows.length < 1000) break;

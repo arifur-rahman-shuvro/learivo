@@ -268,3 +268,5 @@ Written after reading the code of every module, not from memory. Each item names
 | 23    | Images in questions              | Statements and explanations are text only. Medical questions need images and tables. Needs storage rules and a database change, so the owner approves the plan first.                                                                           |
 
 Progress notes for these phases are added below as each item is pushed.
+
+- Phase 17 (2026-11-18): time per question. New column `attempt_items.seconds` (M14, tested locally, applied to production). Player counts seconds per question while the page is visible and saves them on leaving a question and on submit. Results show per-question time, average per question and the slowest questions with one plain note about pace. Insights (Study time) show average time per question and time per subject. Sessions finished before this change have no per-question time and are left out of these numbers. "Practise missed questions" after results already existed, so it is removed from Phase 22.
