@@ -70,7 +70,7 @@ export interface NewAttempt {
   /** Set when a session started offline and is recorded later; defaults to now. */
   startedAt?: string;
   /** Each item carries the question it came from, so the history can be recorded. */
-  items: { questionId: string; snapshot: Snapshot }[];
+  items: { questionId: string | null; snapshot: Snapshot }[];
 }
 
 export interface ItemPatch {

@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it } from "vitest";
 import { MemoryRepo } from "../modules/question-bank/data/memoryRepo.ts";
 import { BankProvider } from "../modules/question-bank/ui/bank.tsx";
 import { MemoryWorkspace } from "../modules/workspace/data/memoryWorkspace.ts";
+import { MemoryAttempts } from "../modules/practice/data/memoryAttempts.ts";
+import { PracticeProvider } from "../modules/practice/ui/practice.tsx";
 import { WorkspaceProvider } from "../modules/workspace/ui/workspace.tsx";
 import { blankQuestion } from "../modules/question-bank/domain/model.ts";
 import BackupDialog from "./BackupDialog.tsx";
@@ -12,7 +14,9 @@ function setup(bank = new MemoryRepo(), ws = new MemoryWorkspace()) {
   render(
     <BankProvider repo={bank}>
       <WorkspaceProvider repo={ws}>
-        <BackupDialog />
+        <PracticeProvider attempts={new MemoryAttempts()}>
+          <BackupDialog />
+        </PracticeProvider>
       </WorkspaceProvider>
     </BankProvider>,
   );

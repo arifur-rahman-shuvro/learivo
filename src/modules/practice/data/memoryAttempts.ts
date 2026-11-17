@@ -14,7 +14,7 @@ import type {
 } from "./repo.ts";
 
 interface Stored extends AttemptWithItems {
-  questionIds: string[];
+  questionIds: (string | null)[];
 }
 
 /** In-memory attempts for tests and demos. Follows the same rules as the database. */

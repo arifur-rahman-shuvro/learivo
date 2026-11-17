@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Button, Dialog } from "../design-system/index.ts";
 import { useBank, errorText } from "../modules/question-bank/ui/bank.tsx";
+import { usePractice } from "../modules/practice/ui/practice.tsx";
 import { useWorkspace } from "../modules/workspace/ui/workspace.tsx";
 import {
   buildBackup,
@@ -49,6 +50,7 @@ export default function BackupDialog() {
   const open = useBackupOpen();
   const { repo: bank, refresh: refreshBank } = useBank();
   const { repo: ws, refresh: refreshWs } = useWorkspace();
+  const { attempts, refresh: refreshPractice } = usePractice();
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -69,7 +71,7 @@ export default function BackupDialog() {
     setError(null);
     setMessage(null);
     try {
-      const b = await buildBackup(bank, ws);
+      const b = await buildBackup(bank, ws, attempts);
       save(
         `learivo-backup-${new Date().toISOString().slice(0, 10)}.json`,
         JSON.stringify(b, null, 2),
@@ -77,7 +79,8 @@ export default function BackupDialog() {
       markBackedUp();
       setMessage(
         `Saved ${plural(b.questions.length, "question")}, ${plural(b.notes.length, "note")}, ` +
-          `${plural(b.flashcards.length, "flashcard")} and ${plural(b.glossary.length, "glossary term")}.`,
+          `${plural(b.flashcards.length, "flashcard")}, ${plural(b.glossary.length, "glossary term")}, ` +
+          `${plural(b.attempts.length, "finished session")} and ${plural(b.cards.length, "revision card")}.`,
       );
     } catch (e) {
       setError(errorText(e));
@@ -112,12 +115,13 @@ export default function BackupDialog() {
     if (!preview) return;
     setBusy(true);
     setError(null);
-    const r = await restoreBackup(preview.backup, bank, ws);
+    const r = await restoreBackup(preview.backup, bank, ws, attempts);
     setBusy(false);
     setPreview(null);
     setResult(r);
     refreshBank();
     refreshWs();
+    refreshPractice();
   };
 
   return (
@@ -132,8 +136,9 @@ export default function BackupDialog() {
         <section className="flex flex-col gap-2">
           <h3 className="m-0 text-base font-semibold">Save a backup</h3>
           <p className="m-0 text-sm text-muted">
-            One file with your questions, notes, bookmarks, flashcards, glossary and exam goals.
-            Practice history is not included. Keep the file somewhere safe.
+            One file with your questions, notes, bookmarks, flashcards, glossary, exam goals, saved
+            exams, finished practice and exam sessions (the latest 500) and your revision schedule.
+            Keep the file somewhere safe.
           </p>
           <div>
             <Button variant="secondary" size="sm" disabled={busy} onClick={download}>
@@ -176,6 +181,18 @@ export default function BackupDialog() {
               <li>
                 {plural(preview.backup.glossary.length, "glossary term")} (duplicates skipped)
               </li>
+              {preview.backup.attempts.length > 0 && (
+                <li>
+                  {plural(preview.backup.attempts.length, "finished session")} of practice and exams
+                  (those already here are skipped)
+                </li>
+              )}
+              {preview.backup.exams.length > 0 && (
+                <li>{plural(preview.backup.exams.length, "saved exam")}</li>
+              )}
+              {preview.backup.cards.length > 0 && (
+                <li>{plural(preview.backup.cards.length, "revision card")} with their schedule</li>
+              )}
             </ul>
             {preview.existing > 0 && (
               <p className="m-0 text-sm text-muted">
@@ -209,6 +226,13 @@ export default function BackupDialog() {
               Added {plural(result.questions, "question")}, {plural(result.notes, "note")},{" "}
               {plural(result.bookmarks, "bookmark")}, {plural(result.flashcards, "flashcard")} and{" "}
               {plural(result.glossary, "glossary term")}.
+              {(result.attempts > 0 || result.exams > 0 || result.cards > 0) && (
+                <>
+                  {" "}
+                  Also {plural(result.attempts, "finished session")},{" "}
+                  {plural(result.exams, "saved exam")} and {plural(result.cards, "revision card")}.
+                </>
+              )}
             </p>
             {result.failure && <p className="m-0 text-danger">{result.failure}</p>}
           </section>
