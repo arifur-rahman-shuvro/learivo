@@ -10,7 +10,7 @@ import {
   Dialog,
   EmptyState,
   PlusIcon,
-  Spinner,
+  ListSkeleton,
 } from "../../../design-system/index.ts";
 import { QUESTION_TYPES, TYPE_LABELS, type QuestionType } from "../domain/model.ts";
 import {
@@ -312,7 +312,12 @@ export default function QuestionsScreen() {
       </div>
 
       {!empty && (
-        <section aria-label="Search and filters" className="lv-card flex flex-col gap-3 p-4">
+        <section
+          aria-label="Search and filters"
+          className={`lv-card flex flex-col gap-3 p-4 ${
+            filtersOpen || selected.size > 0 ? "" : "max-md:sticky max-md:top-2 max-md:z-10"
+          }`}
+        >
           <div className="flex gap-2">
             <input
               type="search"
@@ -629,9 +634,7 @@ export default function QuestionsScreen() {
       )}
 
       {loading && items.length === 0 && !error ? (
-        <div className="grid place-items-center py-16">
-          <Spinner />
-        </div>
+        <ListSkeleton />
       ) : empty ? (
         <div className="lv-card">
           <EmptyState

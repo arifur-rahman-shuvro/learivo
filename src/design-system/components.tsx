@@ -235,3 +235,17 @@ export function ThemeBackground() {
   const { themeId } = useTheme();
   return <>{slots[themeId].Background()}</>;
 }
+
+/* ---------- Skeleton list (placeholder rows while a list loads) ---------- */
+export function ListSkeleton({ rows = 5 }: { rows?: number }) {
+  return (
+    <div role="status" aria-label="Loading" className="flex flex-col gap-3">
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="lv-card flex flex-col gap-2 p-4" aria-hidden="true">
+          <div className="h-4 w-3/4 animate-pulse rounded bg-surface-3 motion-reduce:animate-none" />
+          <div className="h-3 w-1/3 animate-pulse rounded bg-surface-3 motion-reduce:animate-none" />
+        </div>
+      ))}
+    </div>
+  );
+}

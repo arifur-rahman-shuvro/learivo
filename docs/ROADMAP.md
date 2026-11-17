@@ -242,3 +242,4 @@ Order: 13, 14, 15, 16. Each item is pushed on its own with tests, and the phone 
 - Generate with AI now has its own place: Add questions > Generate with AI (its own tab in the import dialog). Make a prompt shows only the prompt to copy.
 
 - 2026-11-17: weak areas have a Practise button (Home, Insights); Home shows a 7-day revision forecast.
+- 2026-11-17: Questions search stays pinned on phones while scrolling; list loads with placeholder rows instead of a spinner.
