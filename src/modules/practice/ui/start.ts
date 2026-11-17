@@ -1,3 +1,4 @@
+import type { TaxonomyNode } from "../../question-bank/data/repo.ts";
 import type { QuestionRepo } from "../../question-bank/data/repo.ts";
 import { pathOf } from "../../question-bank/data/repo.ts";
 import type { QuestionInput } from "../../question-bank/domain/model.ts";
@@ -98,6 +99,45 @@ export async function startExam(
       snapshot: snapshotOf(q, pathOf(q.nodeId, nodes), exam.randomize),
     })),
   });
+}
+
+/** Finds the subject or chapter a name like "Anatomy › Heart" points at. */
+export function nodeIdForName(nodes: readonly TaxonomyNode[], name: string): string | null {
+  let parent: string | null = null;
+  let found: TaxonomyNode | undefined;
+  for (const part of name.split(" › ")) {
+    found = nodes.find((n) => n.parentId === parent && n.name === part);
+    if (!found) return null;
+    parent = found.id;
+  }
+  return found?.id ?? null;
+}
+
+/** A ten-question session on one weak area, ready to play. */
+export async function startForArea(
+  questions: QuestionRepo,
+  attempts: AttemptRepo,
+  areaName: string,
+  workspace?: WorkspaceRepo,
+  count = 10,
+): Promise<string> {
+  const nodeId = nodeIdForName(await questions.taxonomy(), areaName);
+  if (!nodeId) throw new Error("That area is not in your subjects any more.");
+  return startPractice(
+    questions,
+    attempts,
+    {
+      nodeId,
+      tagId: null,
+      collectionId: null,
+      filter: "all",
+      count,
+      minutes: null,
+      instantFeedback: true,
+      shuffleOptions: true,
+    },
+    workspace,
+  );
 }
 
 /** Draws an exam's questions by its rules without starting an attempt, for a printed paper. */

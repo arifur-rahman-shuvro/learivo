@@ -32,6 +32,7 @@ import {
 } from "../domain/homeLayout.ts";
 import { openBackup } from "../../../app/backupStore.ts";
 import { shouldRemindBackup, snoozeBackupReminder } from "../../../app/backupReminder.ts";
+import PractiseArea from "./PractiseArea.tsx";
 import CustomizeDialog from "./CustomizeDialog.tsx";
 import { useInsightsData } from "./useInsightsData.ts";
 import { useWorkspace } from "./workspace.tsx";
@@ -289,9 +290,12 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
         {view && view.weak.length > 0 ? (
           <ul className="m-0 flex list-none flex-col gap-2 p-0">
             {view.weak.map((a) => (
-              <li key={a.name} className="flex items-baseline justify-between gap-3 text-sm">
+              <li key={a.name} className="flex items-center justify-between gap-3 text-sm">
                 <span className="min-w-0 truncate font-semibold">{a.name}</span>
-                <span className="font-mono text-muted">{Math.round(a.accuracy * 100)}%</span>
+                <span className="flex shrink-0 items-center gap-3">
+                  <span className="font-mono text-muted">{Math.round(a.accuracy * 100)}%</span>
+                  <PractiseArea area={a.name} onNavigate={onNavigate} />
+                </span>
               </li>
             ))}
           </ul>

@@ -1,3 +1,4 @@
+import PractiseArea from "./PractiseArea.tsx";
 import { useIntent } from "../../../app/intents.ts";
 import { useMemo, useState } from "react";
 import { achievements } from "../domain/achievements.ts";
@@ -264,6 +265,11 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
                       <p className="m-0 text-sm text-muted">
                         {Math.round(a.accuracy * 100)}% · {a.correct} of {a.total}
                       </p>
+                      {tone === "danger" && (
+                        <div className="mt-1">
+                          <PractiseArea area={a.name} onNavigate={onNavigate} />
+                        </div>
+                      )}
                     </div>
                   ))}
                 </section>
