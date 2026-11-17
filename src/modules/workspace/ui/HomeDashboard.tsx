@@ -32,6 +32,8 @@ import {
 } from "../domain/homeLayout.ts";
 import { openBackup } from "../../../app/backupStore.ts";
 import { shouldRemindBackup, snoozeBackupReminder } from "../../../app/backupReminder.ts";
+import ForecastBars from "./ForecastBars.tsx";
+import { dueForecast, type ActivityDay } from "../domain/insights.ts";
 import PractiseArea from "./PractiseArea.tsx";
 import CustomizeDialog from "./CustomizeDialog.tsx";
 import { useInsightsData } from "./useInsightsData.ts";
@@ -87,6 +89,7 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
   const { data } = useInsightsData();
   const [total, setTotal] = useState<number | null>(null);
   const [dueCount, setDueCount] = useState(0);
+  const [forecast, setForecast] = useState<ActivityDay[]>([]);
   const [goal, setGoal] = useState(DEFAULT_GOAL);
   const [layout, setLayout] = useState<HomeLayout>(DEFAULT_HOME_LAYOUT);
   const [customizing, setCustomizing] = useState(false);
@@ -118,6 +121,7 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
         setTotal(page.total);
         setSeen(practised);
         setDueCount(cards.filter((c) => isDue(c, now)).length);
+        setForecast(dueForecast(cards, now));
         setGoal(g);
         setDraft(String(g));
         setLayout(lay);
@@ -215,6 +219,11 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
           <Button onClick={() => onNavigate("#/review")}>Start revision</Button>
         ) : (
           <Button onClick={() => onNavigate("#/practice")}>Start practice</Button>
+        )}
+        {forecast.some((d) => d.count > 0) && (
+          <div className="w-full">
+            <ForecastBars days={forecast} />
+          </div>
         )}
       </section>
     ),

@@ -240,3 +240,5 @@ Order: 13, 14, 15, 16. Each item is pushed on its own with tests, and the phone 
 - Phase 15 partly done: Home reminds the student to back up when the bank has 10 or more questions and no backup was saved in 14 days (Later waits a week). Not built: Mistakes grouped by reason (the reason lives on each attempt item, so it needs the question_history database function changed), tap-to-practise on Insights, revision forecast.
 - Phase 16 partly done: an automatic accessibility check now runs on Home, Questions, Practice, Review and Insights in CI. It found and fixed empty-state headings that skipped a level. Not built: skeleton loading, different empty-state pictures, font and dialog code splitting, file splitting, phone-width smoke test.
 - Generate with AI now has its own place: Add questions > Generate with AI (its own tab in the import dialog). Make a prompt shows only the prompt to copy.
+
+- 2026-11-17: weak areas have a Practise button (Home, Insights); Home shows a 7-day revision forecast.

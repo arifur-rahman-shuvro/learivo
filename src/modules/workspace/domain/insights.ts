@@ -211,3 +211,22 @@ export function bestAndWorst(facts: readonly Fact[], minAnswers = 3) {
   if (areas.length < 2) return { best: null, worst: null };
   return { best: areas[areas.length - 1]!, worst: areas[0]! };
 }
+
+/** Cards coming due on each of the next `days` days, starting today. Overdue cards count today. */
+export function dueForecast(
+  cards: readonly { due: string }[],
+  today: Date,
+  days = 7,
+): ActivityDay[] {
+  const start = dayKey(today);
+  const out: ActivityDay[] = Array.from({ length: days }, (_, i) => ({
+    day: shiftDay(start, i),
+    count: 0,
+  }));
+  for (const c of cards) {
+    const k = dayKey(c.due);
+    const row = out.find((d) => d.day === (k < start ? start : k));
+    if (row) row.count += 1;
+  }
+  return out;
+}

@@ -258,3 +258,19 @@ describe("insight helpers", () => {
     expect(r.worst?.name).toBe("B");
   });
 });
+
+describe("dueForecast", () => {
+  it("counts overdue cards today and buckets later ones by day", async () => {
+    const { dueForecast } = await import("./insights.ts");
+    const today = new Date(2026, 10, 17, 10);
+    const at = (d: number) => new Date(2026, 10, d, 8).toISOString();
+    const out = dueForecast(
+      [{ due: at(10) }, { due: at(17) }, { due: at(19) }, { due: at(30) }],
+      today,
+    );
+    expect(out).toHaveLength(7);
+    expect(out[0]).toEqual({ day: "2026-11-17", count: 2 });
+    expect(out[2]!.count).toBe(1);
+    expect(out.reduce((n, d) => n + d.count, 0)).toBe(3);
+  });
+});
