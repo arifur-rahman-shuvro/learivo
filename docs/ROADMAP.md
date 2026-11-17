@@ -187,3 +187,48 @@ Done and pushed:
 - Interactive user guide: six first steps that tick themselves from the student's own data, plus short answers (marks, AI import, revision, offline, privacy, shortcuts). Opened from the account menu, All features and the welcome screen.
 
 Still open from the proposal: confidence mark, result breakdown per subject and time, subject colours.
+
+## Polish and re-engineering roadmap (2026-11-17)
+
+Found by running the app at phone width (390 px) with sample data, plus a look at bundle size and code.
+
+What is already good: clean Home, clear empty states, consistent cards, lazy-loaded screens, Sentry only loads when a key is set.
+
+What is rough:
+
+- **Practice session:** one long scrolling page. The bottom tab bar stays on screen during a timed exam. Check answer, Next and the question grid are far apart. Flag, Bookmark and Note look like plain text.
+- **Practice start:** four dropdowns and several fields before the first question. No one-tap start.
+- **Question list:** seven filter controls stacked on a phone, and a very long page. Stems are cut to one line.
+- **Mistakes tab:** cannot group by the reason the student chose.
+- **Empty and loading:** every empty screen uses the same picture. Loading is a blank area.
+- **Weight:** Questions screen is 79 kB and Import/Export is an 800-line file. Five font families ship.
+- **Safety nets:** no reminder to back up. Accessibility is checked by hand, not on every screen in CI.
+
+### Phase 13: Practice that feels fast (build first)
+
+1. Focus mode: hide the tab bar and header during a session, slim progress bar on top, sticky bottom bar with Previous, Check or Next. Question grid opens as a bottom sheet.
+2. Icon buttons with labels for Flag, Bookmark, Note. Keyboard shortcuts on desktop (1 to 5, N, P, F).
+3. Quick start on Practice: presets (Quick 10, Due now, My mistakes, Flagged, Weak areas) and Continue where you left off. The long form folds into "Custom".
+4. Remember the last custom settings.
+
+### Phase 14: Question bank at scale
+
+5. Filters in one sheet with removable chips and a sticky search box. Two-line stems.
+6. Row actions menu, and the list loads more as you scroll.
+7. Editor: autosave a draft, paste many options at once.
+8. Subject colours (needs one database column).
+
+### Phase 15: Review and insights depth
+
+9. Mistakes grouped by reason (careless, not known, mixed up, guessed).
+10. Insights: tap a weak subject to practise it. Revision forecast for the next 7 days.
+11. Backup reminder on Home when the last backup is old.
+
+### Phase 16: Finish and harden
+
+12. Skeleton loading, a different picture per empty screen, one toast style, light motion that respects reduced-motion.
+13. Accessibility check of every screen on every theme as a test in CI.
+14. Weight: load dialogs on demand, load only the fonts the chosen theme uses.
+15. Split files over 500 lines. Add a phone-width smoke test of the main flows to CI.
+
+Order: 13, 14, 15, 16. Each item is pushed on its own with tests, and the phone check list goes to the owner after each phase.
