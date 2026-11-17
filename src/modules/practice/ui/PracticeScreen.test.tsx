@@ -225,4 +225,40 @@ describe("Practice", () => {
     fireEvent.click(within(dlg).getByLabelText("Add an answer key on the last page"));
     await waitFor(() => expect(frame.getAttribute("srcdoc")).not.toContain("Answer key"));
   });
+
+  describe("focus mode", () => {
+    it("shows progress, opens the question list as a sheet, and moves with keys", async () => {
+      const { ready } = setup();
+      await ready;
+      await startPractice();
+      await screen.findByText(/Question 1 of 3/);
+      expect(screen.getByRole("progressbar", { name: "0 of 3 answered" })).toBeTruthy();
+      fireEvent.click(screen.getByRole("button", { name: "Questions" }));
+      const sheet = await screen.findByRole("dialog", { name: "Questions" });
+      fireEvent.click(within(sheet).getByRole("button", { name: "Question 3" }));
+      await screen.findByText(/Question 3 of 3/);
+      fireEvent.keyDown(window, { key: "p" });
+      await screen.findByText(/Question 2 of 3/);
+      fireEvent.keyDown(window, { key: "ArrowRight" });
+      await screen.findByText(/Question 3 of 3/);
+      fireEvent.keyDown(window, { key: "f" });
+      await waitFor(() => expect(screen.getByRole("button", { name: "Remove flag" })).toBeTruthy());
+    });
+
+    it("asks the shell to hide the tab bar while a session is open", async () => {
+      const { ready } = setup();
+      await ready;
+      const { useFocusMode } = await import("../../../app/focus.ts");
+      let seen = false;
+      function Probe() {
+        seen = useFocusMode();
+        return null;
+      }
+      render(<Probe />);
+      expect(seen).toBe(false);
+      await startPractice();
+      await screen.findByText(/Question 1 of 3/);
+      await waitFor(() => expect(seen).toBe(true));
+    });
+  });
 });

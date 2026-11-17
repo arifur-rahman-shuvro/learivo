@@ -1,6 +1,7 @@
+import { useRequestFocus } from "../../../app/focus.ts";
 import GlossaryText from "../../workspace/ui/GlossaryText.tsx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Dialog, Spinner } from "../../../design-system/index.ts";
+import { Button, Dialog, ProgressBar, Spinner } from "../../../design-system/index.ts";
 import { errorText } from "../../question-bank/ui/bank.tsx";
 import { TYPE_LABELS } from "../../question-bank/domain/model.ts";
 import type { AttemptWithItems } from "../data/repo.ts";
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
+  useRequestFocus();
   const { attempts, refresh } = usePractice();
   const ws = useWorkspace();
   const [marks, setMarks] = useState<Set<string>>(new Set());
@@ -29,10 +31,12 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
   const [index, setIndex] = useState(0);
   const [checked, setChecked] = useState<Set<number>>(new Set());
   const [confirm, setConfirm] = useState(false);
+  const [grid, setGrid] = useState(false);
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const opened = useRef(Date.now());
   const sent = useRef(false);
+  const flagRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -128,6 +132,31 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
     if (attempt && remaining !== null && remaining <= 0) void submit(attempt);
   }, [attempt, remaining, submit]);
 
+  // Desktop shortcuts: N or right arrow for next, P or left arrow for previous, F to flag.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const t = e.target as HTMLElement | null;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (
+        t &&
+        (t.tagName === "INPUT" ||
+          t.tagName === "TEXTAREA" ||
+          t.tagName === "SELECT" ||
+          t.isContentEditable)
+      ) {
+        return;
+      }
+      if (!attempt) return;
+      const last = attempt.items.length - 1;
+      const k = e.key.toLowerCase();
+      if (k === "n" || k === "arrowright") setIndex((i) => Math.min(last, i + 1));
+      else if (k === "p" || k === "arrowleft") setIndex((i) => Math.max(0, i - 1));
+      else if (k === "f") flagRef.current?.();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [attempt]);
+
   const item = attempt?.items[index];
   const answeredCount = useMemo(
     () => attempt?.items.filter((i) => isAnswered(i.response)).length ?? 0,
@@ -174,6 +203,7 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
     attempts.patchItem(attemptId, position, { flagged: next }).catch((e) => setError(errorText(e)));
   }
 
+  flagRef.current = () => flag(index);
   const noteFor = item.questionId
     ? (notes.find((n) => n.questionId === item.questionId) ?? null)
     : null;
@@ -203,7 +233,7 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
     <div className="flex flex-col gap-4">
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <h1 id="module-title" className="m-0 truncate text-2xl font-bold">
+          <h1 id="module-title" className="m-0 truncate text-xl font-bold sm:text-2xl">
             {attempt.title}
           </h1>
           <p className="m-0 text-sm text-muted">
@@ -220,11 +250,18 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
               {clock(remaining)}
             </span>
           )}
+          <Button variant="secondary" size="sm" className="lg:hidden" onClick={() => setGrid(true)}>
+            Questions
+          </Button>
           <Button variant="secondary" size="sm" onClick={onLeave}>
             Save and leave
           </Button>
         </div>
       </header>
+      <ProgressBar
+        value={(answeredCount / total) * 100}
+        label={`${answeredCount} of ${total} answered`}
+      />
 
       {error && (
         <p
@@ -265,7 +302,37 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
               <GlossaryText className="text-sm" text={snap.explanation} />
             </div>
           )}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-1">
+            <IconToggle
+              label={item.flagged ? "Remove flag" : "Flag for review"}
+              text="Flag"
+              pressed={item.flagged}
+              onClick={() => flag(index)}
+              path="M5 3v18M5 4h11l-2 4 2 4H5"
+            />
+            {item.questionId && (
+              <>
+                <IconToggle
+                  label={marks.has(item.questionId) ? "Bookmarked" : "Bookmark"}
+                  text="Save"
+                  pressed={marks.has(item.questionId)}
+                  onClick={() => void toggleBookmark(item.questionId!)}
+                  path="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"
+                />
+                <IconToggle
+                  label={noteFor ? "Edit note" : "Note"}
+                  text={noteFor ? "Note ✓" : "Note"}
+                  pressed={Boolean(noteFor)}
+                  onClick={() => setNoting(true)}
+                  path="M5 4h14v12l-4 4H5V4Zm9 16v-4h4M8 9h8M8 13h5"
+                />
+              </>
+            )}
+          </div>
+          <div className="flex items-center justify-between gap-2 border-t border-line bg-surface-1 p-3 max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:z-30 max-lg:pb-[max(0.75rem,env(safe-area-inset-bottom))] lg:pt-4 lg:px-0 lg:pb-0">
+            <Button variant="secondary" disabled={index === 0} onClick={() => setIndex(index - 1)}>
+              Previous
+            </Button>
             {attempt.instantFeedback && !locked && (
               <Button
                 disabled={!isAnswered(item.response)}
@@ -274,74 +341,51 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
                 Check answer
               </Button>
             )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => flag(index)}
-              aria-pressed={item.flagged}
-            >
-              {item.flagged ? "Remove flag" : "Flag for review"}
-            </Button>
-            {item.questionId && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  aria-pressed={marks.has(item.questionId)}
-                  onClick={() => void toggleBookmark(item.questionId!)}
-                >
-                  {marks.has(item.questionId) ? "Bookmarked" : "Bookmark"}
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setNoting(true)}>
-                  {noteFor ? "Edit note" : "Note"}
-                </Button>
-              </>
-            )}
-          </div>
-          <div className="flex items-center justify-between gap-2 border-t border-line pt-4">
-            <Button variant="secondary" disabled={index === 0} onClick={() => setIndex(index - 1)}>
-              Previous
-            </Button>
             {index < total - 1 ? (
-              <Button onClick={() => setIndex(index + 1)}>Next</Button>
+              <Button
+                variant={attempt.instantFeedback && !locked ? "secondary" : "primary"}
+                onClick={() => setIndex(index + 1)}
+              >
+                Next
+              </Button>
             ) : (
               <Button onClick={() => setConfirm(true)}>Finish</Button>
             )}
           </div>
         </section>
 
-        <aside aria-label="Question list" className="lv-card flex flex-col gap-3 p-4 lg:self-start">
-          <div className="grid grid-cols-6 gap-1.5 lg:grid-cols-5">
-            {attempt.items.map((i) => {
-              const done = isAnswered(i.response);
-              const current = i.position === index;
-              return (
-                <button
-                  key={i.position}
-                  type="button"
-                  aria-label={`Question ${i.position + 1}${done ? ", answered" : ""}${i.flagged ? ", flagged" : ""}`}
-                  aria-current={current ? "true" : undefined}
-                  onClick={() => setIndex(i.position)}
-                  className={`relative grid h-9 place-items-center rounded-control border text-sm font-semibold ${
-                    current ? "border-accent" : "border-line"
-                  } ${done ? "bg-surface-3" : ""}`}
-                >
-                  {i.position + 1}
-                  {i.flagged && (
-                    <span
-                      aria-hidden
-                      className="absolute right-0.5 top-0.5 size-1.5 rounded-pill bg-accent"
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
+        <aside
+          aria-label="Question list"
+          className="lv-card flex flex-col gap-3 p-4 max-lg:hidden lg:self-start"
+        >
+          <QuestionGrid items={attempt.items} index={index} onPick={setIndex} />
           <Button variant="secondary" onClick={() => setConfirm(true)}>
             Submit
           </Button>
         </aside>
       </div>
+
+      <Dialog open={grid} variant="drawer" title="Questions" onClose={() => setGrid(false)}>
+        <div className="flex flex-col gap-3">
+          <QuestionGrid
+            items={attempt.items}
+            index={index}
+            onPick={(i) => {
+              setIndex(i);
+              setGrid(false);
+            }}
+          />
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setGrid(false);
+              setConfirm(true);
+            }}
+          >
+            Submit
+          </Button>
+        </div>
+      </Dialog>
 
       {noting && item.questionId && (
         <NoteDialog
@@ -375,6 +419,86 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
           After you submit you cannot change your answers.
         </p>
       </Dialog>
+    </div>
+  );
+}
+
+function IconToggle({
+  label,
+  text,
+  pressed,
+  onClick,
+  path,
+}: {
+  label: string;
+  text: string;
+  pressed: boolean;
+  onClick: () => void;
+  path: string;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={pressed}
+      onClick={onClick}
+      className={`inline-flex min-h-11 items-center gap-1.5 rounded-control px-3 text-sm font-semibold ${
+        pressed ? "bg-surface-3 text-accent" : "text-muted"
+      }`}
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill={pressed ? "currentColor" : "none"}
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d={path} />
+      </svg>
+      <span aria-hidden="true">{text}</span>
+    </button>
+  );
+}
+
+function QuestionGrid({
+  items,
+  index,
+  onPick,
+}: {
+  items: AttemptWithItems["items"];
+  index: number;
+  onPick: (position: number) => void;
+}) {
+  return (
+    <div className="grid grid-cols-6 gap-1.5 lg:grid-cols-5">
+      {items.map((i) => {
+        const done = isAnswered(i.response);
+        const current = i.position === index;
+        return (
+          <button
+            key={i.position}
+            type="button"
+            aria-label={`Question ${i.position + 1}${done ? ", answered" : ""}${i.flagged ? ", flagged" : ""}`}
+            aria-current={current ? "true" : undefined}
+            onClick={() => onPick(i.position)}
+            className={`relative grid h-11 place-items-center rounded-control border text-sm font-semibold ${
+              current ? "border-accent" : "border-line"
+            } ${done ? "bg-surface-3" : ""}`}
+          >
+            {i.position + 1}
+            {i.flagged && (
+              <span
+                aria-hidden
+                className="absolute right-0.5 top-0.5 size-1.5 rounded-pill bg-accent"
+              />
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 }

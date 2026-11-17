@@ -17,6 +17,7 @@ import GuideDialog from "./GuideDialog.tsx";
 import BackupDialog from "./BackupDialog.tsx";
 import { SupabaseProfile } from "../modules/profile/data/supabaseProfile.ts";
 import type { ProfileRepo } from "../modules/profile/data/repo.ts";
+import { useFocusMode } from "./focus.ts";
 import StatusBanner from "./StatusBanner.tsx";
 import SyncIndicator from "./SyncIndicator.tsx";
 import CommandPalette from "./CommandPalette.tsx";
@@ -124,6 +125,7 @@ export default function AppShell({
 }: Repos = {}) {
   const [hash, go] = useHash();
   const { status, user } = useAuth();
+  const focus = useFocusMode();
   if (hash === LAB_ROUTE) return <App />;
   if (status === "loading") return <div role="status" aria-label="Loading" className="min-h-dvh" />;
   if (status === "signed-out") return <AuthScreen />;
@@ -175,7 +177,9 @@ export default function AppShell({
               Add question
             </Button>
           </div>
-          <div className="fixed inset-x-0 bottom-0 z-20 p-3 lg:static lg:p-0">
+          <div
+            className={`fixed inset-x-0 bottom-0 z-20 p-3 lg:static lg:p-0 ${focus ? "max-lg:hidden" : ""}`}
+          >
             <BottomNav
               ids={modules.map((m) => m.id)}
               activeId={current.id}
@@ -184,8 +188,10 @@ export default function AppShell({
           </div>
         </aside>
 
-        <div className="flex min-w-0 flex-col gap-5 px-4 pb-28 pt-4 sm:px-6 lg:px-8 lg:pb-10 lg:pt-5">
-          <header className="flex items-center justify-between">
+        <div
+          className={`flex min-w-0 flex-col gap-5 px-4 pt-4 sm:px-6 lg:px-8 lg:pb-10 lg:pt-5 pb-28`}
+        >
+          <header className={`flex items-center justify-between ${focus ? "max-lg:hidden" : ""}`}>
             <div className="lg:hidden">
               <LogoWordmark />
             </div>
