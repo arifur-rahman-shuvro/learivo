@@ -1,6 +1,13 @@
 import { useIntent } from "../../../app/intents.ts";
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Button, EmptyState, PlusIcon, Spinner } from "../../../design-system/index.ts";
+import {
+  Badge,
+  Button,
+  EmptyState,
+  PlusIcon,
+  PracticeIcon,
+  Spinner,
+} from "../../../design-system/index.ts";
 import { KIND_BY_DEPTH, type TaxonomyNode } from "../../question-bank/data/repo.ts";
 import { errorText, useBank, useLoad } from "../../question-bank/ui/bank.tsx";
 import type { Attempt, Exam } from "../data/repo.ts";
@@ -459,6 +466,7 @@ function Home({ onOpen }: { onOpen: (v: View) => void }) {
           <div className="lv-card">
             <EmptyState
               title="No exams yet"
+              icon={<PracticeIcon size={36} />}
               description="Build an exam from your subjects with a time limit and marking, then sit it whenever you like."
               action={<Button onClick={() => setBuilder("new")}>Create an exam</Button>}
             />

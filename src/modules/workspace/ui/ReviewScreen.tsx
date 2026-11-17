@@ -1,7 +1,15 @@
 import { useIntent } from "../../../app/intents.ts";
 import GlossaryText from "./GlossaryText.tsx";
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Button, EmptyState, Spinner } from "../../../design-system/index.ts";
+import {
+  Badge,
+  Button,
+  CheckIcon,
+  EmptyState,
+  QuestionsIcon,
+  ReviewIcon,
+  Spinner,
+} from "../../../design-system/index.ts";
 import type { QuestionRecord } from "../../question-bank/data/repo.ts";
 import { TYPE_LABELS } from "../../question-bank/domain/model.ts";
 import { errorText, useBank } from "../../question-bank/ui/bank.tsx";
@@ -239,6 +247,7 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
             <div className="lv-card">
               <EmptyState
                 title="No mistakes to review"
+                icon={<CheckIcon size={36} />}
                 description="Questions you last answered wrong in a session appear here."
               />
             </div>
@@ -285,6 +294,7 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
             <div className="lv-card">
               <EmptyState
                 title="No bookmarks yet"
+                icon={<ReviewIcon size={36} />}
                 description="Tap Bookmark on a question while you practise to keep it here."
               />
             </div>
@@ -328,6 +338,7 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
           <div className="lv-card">
             <EmptyState
               title="No notes yet"
+              icon={<QuestionsIcon size={36} />}
               description="Write a note on a question while you practise, or start a free note here."
               action={
                 <Button onClick={() => setNoteFor({ questionId: null, note: null })}>
@@ -443,6 +454,7 @@ function DueNow({
       <div className="lv-card">
         <EmptyState
           title="You are all caught up"
+          icon={<CheckIcon size={36} />}
           description={
             next
               ? `Next card is due ${new Date(next.due).toLocaleString(undefined, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}. Questions you miss in a session join the queue by themselves.`

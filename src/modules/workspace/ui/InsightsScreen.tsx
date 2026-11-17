@@ -6,6 +6,7 @@ import {
   Badge,
   Button,
   EmptyState,
+  InsightsIcon,
   ProgressBar,
   ProgressRing,
   Spinner,
@@ -190,6 +191,7 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
         <div className="lv-card">
           <EmptyState
             title="Nothing to show yet"
+            icon={<InsightsIcon size={36} />}
             description="Finish a practice session or an exam and your results appear here."
             action={<Button onClick={() => onNavigate("#/practice")}>Start practising</Button>}
           />

@@ -8,8 +8,10 @@ import {
   Button,
   Dialog,
   EmptyState,
-  PlusIcon,
   ListSkeleton,
+  PlusIcon,
+  QuestionsIcon,
+  SearchIcon,
 } from "../../../design-system/index.ts";
 import { QUESTION_TYPES, TYPE_LABELS, type QuestionType } from "../domain/model.ts";
 import {
@@ -657,6 +659,7 @@ export default function QuestionsScreen() {
         <div className="lv-card">
           <EmptyState
             title={archive ? "The archive is empty" : "Add your first questions"}
+            icon={<QuestionsIcon size={36} />}
             description={
               archive
                 ? "Questions you archive appear here. You can restore them at any time."
@@ -680,6 +683,7 @@ export default function QuestionsScreen() {
         <div className="lv-card">
           <EmptyState
             title="No questions match"
+            icon={<SearchIcon size={36} />}
             description="Try a different search or clear the filters."
             action={
               <Button variant="secondary" onClick={clearFilters}>
