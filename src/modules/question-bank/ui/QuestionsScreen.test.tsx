@@ -202,4 +202,23 @@ describe("Add questions hub", () => {
     const archived = await repo.list({ ...DEFAULT_QUERY, status: "archived" });
     expect(archived.total).toBe(1);
   });
+
+  it("shows active filters as chips you can remove, and a Filters button for phones", async () => {
+    const repo = new MemoryRepo();
+    await repo.create([
+      { ...tf("Easy one"), difficulty: 1 },
+      { ...tf("Hard one"), difficulty: 5 },
+    ]);
+    renderScreen(repo);
+    const toggle = await screen.findByRole("button", { name: "Filters" });
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    fireEvent.change(screen.getByLabelText("Filter by difficulty"), { target: { value: "5" } });
+    await waitFor(() => expect(screen.queryByText("Easy one")).toBeNull());
+    expect(screen.getByRole("button", { name: "Filters (1)" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Remove filter: Difficulty 5" }));
+    expect(await screen.findByText("Easy one")).toBeTruthy();
+    expect(screen.queryByRole("list", { name: "Active filters" })).toBeNull();
+  });
 });

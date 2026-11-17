@@ -184,6 +184,53 @@ export default function QuestionsScreen() {
     query.tagId !== null ||
     query.collectionId !== null;
   const archive = query.status === "archived";
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const activeChips: { id: string; label: string; clear: () => void }[] = [];
+  if (search !== "") {
+    activeChips.push({ id: "search", label: `"${search}"`, clear: () => setSearchText("") });
+  }
+  if (query.qtypes[0]) {
+    activeChips.push({
+      id: "type",
+      label: TYPE_LABELS[query.qtypes[0]],
+      clear: () => patch({ qtypes: [] }),
+    });
+  }
+  if (query.unclassified) {
+    activeChips.push({
+      id: "subject",
+      label: "Unclassified",
+      clear: () => patch({ unclassified: false }),
+    });
+  } else if (query.nodeId) {
+    activeChips.push({
+      id: "subject",
+      label: options.find((o) => o.id === query.nodeId)?.label.trim() ?? "Subject",
+      clear: () => patch({ nodeId: null }),
+    });
+  }
+  if (query.difficulties[0]) {
+    activeChips.push({
+      id: "difficulty",
+      label: `Difficulty ${query.difficulties[0]}`,
+      clear: () => patch({ difficulties: [] }),
+    });
+  }
+  if (query.tagId) {
+    activeChips.push({
+      id: "tag",
+      label: (tags.data ?? []).find((t) => t.id === query.tagId)?.name ?? "Tag",
+      clear: () => patch({ tagId: null }),
+    });
+  }
+  if (query.collectionId) {
+    activeChips.push({
+      id: "collection",
+      label:
+        (collections.data ?? []).find((c) => c.id === query.collectionId)?.name ?? "Collection",
+      clear: () => patch({ collectionId: null }),
+    });
+  }
 
   function clearFilters() {
     setSearchText("");
@@ -266,15 +313,48 @@ export default function QuestionsScreen() {
 
       {!empty && (
         <section aria-label="Search and filters" className="lv-card flex flex-col gap-3 p-4">
-          <input
-            type="search"
-            className="lv-input"
-            aria-label="Search questions"
-            placeholder="Search questions and explanations"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-          <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
+          <div className="flex gap-2">
+            <input
+              type="search"
+              className="lv-input min-w-0 flex-1"
+              aria-label="Search questions"
+              placeholder="Search questions and explanations"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
+            <Button
+              variant="secondary"
+              className="md:hidden"
+              aria-expanded={filtersOpen}
+              aria-controls="question-filters"
+              onClick={() => setFiltersOpen((v) => !v)}
+            >
+              Filters{activeChips.length > 0 ? ` (${activeChips.length})` : ""}
+            </Button>
+          </div>
+          {activeChips.length > 0 && (
+            <ul aria-label="Active filters" className="m-0 flex list-none flex-wrap gap-1.5 p-0">
+              {activeChips.map((c) => (
+                <li key={c.id}>
+                  <button
+                    type="button"
+                    aria-label={`Remove filter: ${c.label}`}
+                    onClick={c.clear}
+                    className="inline-flex min-h-8 items-center gap-1 rounded-pill border border-line bg-surface-2 px-2.5 text-xs font-semibold"
+                  >
+                    {c.label}
+                    <span aria-hidden="true" className="text-muted">
+                      ×
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div
+            id="question-filters"
+            className={`${filtersOpen ? "grid" : "hidden"} grid-cols-2 gap-2 md:grid md:grid-cols-3 xl:grid-cols-6`}
+          >
             <select
               className="lv-input"
               aria-label="Filter by type"
