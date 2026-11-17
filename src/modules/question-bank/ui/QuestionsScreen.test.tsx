@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { ThemeProvider } from "../../../themes/ThemeProvider.tsx";
 import { MemoryRepo } from "../data/memoryRepo.ts";
@@ -235,5 +235,28 @@ describe("Add questions hub", () => {
     fireEvent.click(screen.getByRole("button", { name: "Remove filter: Difficulty 5" }));
     expect(await screen.findByText("Easy one")).toBeTruthy();
     expect(screen.queryByRole("list", { name: "Active filters" })).toBeNull();
+  });
+
+  it("loads the next page when the end of the list scrolls into view", async () => {
+    const repo = new MemoryRepo();
+    await repo.create(Array.from({ length: 60 }, (_, i) => tf(`Question number ${i}`)));
+    let fire: (() => void) | null = null;
+    class FakeObserver {
+      constructor(cb: (e: { isIntersecting: boolean }[]) => void) {
+        fire = () => cb([{ isIntersecting: true }]);
+      }
+      observe() {}
+      disconnect() {}
+    }
+    vi.stubGlobal("IntersectionObserver", FakeObserver);
+    try {
+      renderScreen(repo);
+      await screen.findByText("Show more (10 left)", { exact: false });
+      fire!();
+      await waitFor(() => expect(screen.queryByText(/Show more/)).toBeNull());
+      expect(screen.getAllByRole("listitem").length).toBeGreaterThanOrEqual(60);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

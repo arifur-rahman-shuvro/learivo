@@ -2,7 +2,7 @@ import { DifficultyDots } from "./DifficultyDots.tsx";
 import { DuplicatesDialog } from "./DuplicatesDialog.tsx";
 import { SavedViews } from "./SavedViews.tsx";
 import AddHub, { type AddChoice } from "./AddHub.tsx";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useIntent } from "../../../app/intents.ts";
 import {
   Badge,
@@ -173,6 +173,24 @@ export default function QuestionsScreen() {
     }
     setMore(false);
   }
+
+  // Load the next page when the end of the list scrolls into view. The button stays as a fallback.
+  const endRef = useRef<HTMLDivElement | null>(null);
+  const loadMoreRef = useRef(loadMore);
+  loadMoreRef.current = loadMore;
+  const canLoadMore = items.length < total && !more;
+  useEffect(() => {
+    const el = endRef.current;
+    if (!el || !canLoadMore || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) void loadMoreRef.current();
+      },
+      { rootMargin: "300px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [canLoadMore, items.length]);
 
   const patch = (p: Partial<QuestionQuery>) => setQuery((q) => ({ ...q, ...p }));
   const filtered =
@@ -730,7 +748,7 @@ export default function QuestionsScreen() {
             })}
           </ul>
           {items.length < total && (
-            <div className="flex justify-center py-2">
+            <div ref={endRef} className="flex justify-center py-2">
               <Button variant="secondary" loading={more} onClick={() => void loadMore()}>
                 Show more ({total - items.length} left)
               </Button>
