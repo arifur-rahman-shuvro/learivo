@@ -252,3 +252,19 @@ Order: 13, 14, 15, 16. Each item is pushed on its own with tests, and the phone 
 - 2026-11-17: CI opens the built app at 360, 390 and 430 px and fails if the first screen is blank, logs errors, or runs off the side (`pnpm smoke`). Large files are left as they are unless a change needs them split.
 - 2026-11-17: Choice fields on Practice setup and the Questions filter bar open a roomy sheet (search, nested subjects, tick on current) instead of the phone plain radio list. New `Picker` component.
 - 2026-11-17: Every dropdown now uses the Picker sheet, and short either-or choices (True/False, explanation length, options per question) use a sliding Segmented control. One shared subjectOptions helper.
+
+## Upgrade and strengthening roadmap (2026-11-17, Phases 17 to 23)
+
+Written after reading the code of every module, not from memory. Each item names the gap that was found. Order is by value for a daily-use study app and by risk (database changes are additive and tested locally first).
+
+| Phase | Goal                             | Gap found in the code                                                                                                                                                                                                                           |
+| ----- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 17    | Time per question                | Only the whole-session time is stored. `attempt_items` has no per-question seconds, so Results cannot show slow questions and Insights cannot show speed per subject.                                                                           |
+| 18    | Backup v2                        | The backup holds questions, notes, bookmarks, flashcards, glossary, target and goal. It leaves out practice and exam history, exam definitions, revision (FSRS) state, mistake reasons and saved views. A restore loses the student's progress. |
+| 19    | Duplicate detection v2           | Detection matches only identical wording after trim, case and spacing. Punctuation, accents, number formats, reordered options and small rewordings are missed. Import and AI results are checked against exact copies only.                    |
+| 20    | AI hardening and end-to-end test | AI is tested with a fake network only. No time-out, cancel, retry or progress. Generated questions are not checked against the bank for near copies before import.                                                                              |
+| 21    | Motion and SVG polish            | Animated score ring on Results, drawn charts, per-theme illustrations, Home and Insights skeletons, page transitions. All respecting reduced motion.                                                                                            |
+| 22    | Practice depth                   | Retry only the wrong ones after results, mark for review, pause and resume, per-question timer display, question quality hints.                                                                                                                 |
+| 23    | Images in questions              | Statements and explanations are text only. Medical questions need images and tables. Needs storage rules and a database change, so the owner approves the plan first.                                                                           |
+
+Progress notes for these phases are added below as each item is pushed.
