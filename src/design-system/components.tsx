@@ -223,7 +223,7 @@ export function EmptyState({
   return (
     <div className="flex flex-col items-center gap-3 px-6 py-10 text-center">
       <Art />
-      <h3 className="text-lg font-semibold">{title}</h3>
+      <h2 className="text-lg font-semibold">{title}</h2>
       <p className="max-w-sm text-muted">{description}</p>
       {action}
     </div>

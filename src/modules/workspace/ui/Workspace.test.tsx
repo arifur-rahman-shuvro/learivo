@@ -538,3 +538,22 @@ describe("Home: sample questions", () => {
     );
   });
 });
+
+describe("Home: backup reminder", () => {
+  it("nudges once there are enough questions, and Later hides it", async () => {
+    localStorage.clear();
+    await setup(
+      () => <HomeDashboard onNavigate={() => undefined} />,
+      async ({ bank }) => {
+        await bank.create(Array.from({ length: 10 }, (_, i) => tf(`Reminder ${i}`)));
+      },
+    );
+    const note = await screen.findByRole("region", { name: "Backup reminder" });
+    fireEvent.click(within(note).getByRole("button", { name: "Later" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("region", { name: "Backup reminder" })).toBeNull(),
+    );
+    expect(localStorage.getItem("learivo.backupLater")).not.toBeNull();
+    localStorage.clear();
+  });
+});

@@ -10,6 +10,7 @@ import {
   type Backup,
   type RestoreResult,
 } from "./backupData.ts";
+import { markBackedUp } from "./backupReminder.ts";
 import { closeBackup, useBackupOpen } from "./backupStore.ts";
 
 function readText(file: File): Promise<string> {
@@ -73,6 +74,7 @@ export default function BackupDialog() {
         `learivo-backup-${new Date().toISOString().slice(0, 10)}.json`,
         JSON.stringify(b, null, 2),
       );
+      markBackedUp();
       setMessage(
         `Saved ${plural(b.questions.length, "question")}, ${plural(b.notes.length, "note")}, ` +
           `${plural(b.flashcards.length, "flashcard")} and ${plural(b.glossary.length, "glossary term")}.`,

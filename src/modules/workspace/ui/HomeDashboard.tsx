@@ -30,9 +30,43 @@ import {
   type HomeLayout,
   type HomeSectionId,
 } from "../domain/homeLayout.ts";
+import { openBackup } from "../../../app/backupStore.ts";
+import { shouldRemindBackup, snoozeBackupReminder } from "../../../app/backupReminder.ts";
 import CustomizeDialog from "./CustomizeDialog.tsx";
 import { useInsightsData } from "./useInsightsData.ts";
 import { useWorkspace } from "./workspace.tsx";
+
+/** A quiet reminder to save a backup file when it has been a while. */
+function BackupNudge({ total }: { total: number }) {
+  const [hidden, setHidden] = useState(false);
+  if (hidden || !shouldRemindBackup(total)) return null;
+  return (
+    <section
+      aria-label="Backup reminder"
+      className="lv-card flex flex-wrap items-center justify-between gap-3 p-4"
+    >
+      <p className="m-0 min-w-0 flex-1 text-sm">
+        <span className="font-semibold">Save a backup.</span> You have not saved one in a while, and
+        your {total.toLocaleString()} questions are worth keeping safe.
+      </p>
+      <div className="flex gap-2">
+        <Button size="sm" onClick={openBackup}>
+          Back up now
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => {
+            snoozeBackupReminder();
+            setHidden(true);
+          }}
+        >
+          Later
+        </Button>
+      </div>
+    </section>
+  );
+}
 
 function Tile({ label, value }: { label: string; value: string }) {
   return (
@@ -376,6 +410,7 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
           </Button>
         </div>
       </header>
+      <BackupNudge total={total} />
       <div className="grid gap-5 lg:grid-cols-2">
         {shown.map((id) =>
           blocks[id] ? (
