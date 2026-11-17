@@ -18,36 +18,20 @@ import {
 import { QUESTION_TYPES, TYPE_LABELS, type QuestionType } from "../domain/model.ts";
 import {
   DEFAULT_QUERY,
-  KIND_BY_DEPTH,
   pathOf,
   type BulkAction,
   type QuestionQuery,
   type QuestionRecord,
-  type TaxonomyNode,
 } from "../data/repo.ts";
 import { ImportDialog } from "./ImportExportDialogs.tsx";
 import { ExportDialog } from "./ExportDialog.tsx";
 import { ManageDialog } from "./ManageDialog.tsx";
+import { subjectOptions } from "./subjectOptions.ts";
 import { QuestionEditor } from "./QuestionEditor.tsx";
 import { errorText, useBank, useLoad } from "./bank.tsx";
 import { useWorkspace } from "../../workspace/ui/workspace.tsx";
 
 const PAGE = 50;
-
-/** Subject tree flattened for a select, with indentation. */
-function nodeOptions(nodes: readonly TaxonomyNode[]) {
-  const out: { id: string; label: string }[] = [];
-  const walk = (parent: string | null, depth: number) => {
-    for (const n of nodes
-      .filter((x) => x.parentId === parent)
-      .sort((a, b) => a.name.localeCompare(b.name))) {
-      out.push({ id: n.id, label: `${" ".repeat(depth)}${n.name}` });
-      if (depth < KIND_BY_DEPTH.length - 1) walk(n.id, depth + 1);
-    }
-  };
-  walk(null, 0);
-  return out;
-}
 
 function useDebounced<T>(value: T, ms: number): T {
   const [v, setV] = useState(value);
@@ -133,16 +117,7 @@ export default function QuestionsScreen() {
   const tags = useLoad((r) => r.tags());
   const collections = useLoad((r) => r.collections());
   const nodes = useMemo(() => taxonomy.data ?? [], [taxonomy.data]);
-  const options = useMemo(() => nodeOptions(nodes), [nodes]);
-  const subjectOptions = useMemo(
-    () =>
-      options.map((o) => ({
-        value: o.id,
-        label: o.label.trim(),
-        depth: o.label.length - o.label.trimStart().length,
-      })),
-    [options],
-  );
+  const options = useMemo(() => subjectOptions(nodes), [nodes]);
 
   const effective: QuestionQuery = useMemo(
     () => ({ ...query, search, offset: 0, limit: PAGE }),
@@ -236,7 +211,7 @@ export default function QuestionsScreen() {
   } else if (query.nodeId) {
     activeChips.push({
       id: "subject",
-      label: options.find((o) => o.id === query.nodeId)?.label.trim() ?? "Subject",
+      label: options.find((o) => o.value === query.nodeId)?.label ?? "Subject",
       clear: () => patch({ nodeId: null }),
     });
   }
@@ -404,7 +379,7 @@ export default function QuestionsScreen() {
               label="Subject"
               emptyLabel="All subjects"
               value={query.unclassified ? "__none" : (query.nodeId ?? "")}
-              options={[{ value: "__none", label: "Unclassified" }, ...subjectOptions]}
+              options={[{ value: "__none", label: "Unclassified" }, ...options]}
               onChange={(v) =>
                 patch({ nodeId: v && v !== "__none" ? v : null, unclassified: v === "__none" })
               }
@@ -549,71 +524,44 @@ export default function QuestionsScreen() {
             Clear selection
           </Button>
           {bulkPick === "classify" && (
-            <select
-              className="lv-input basis-full"
-              aria-label="Move to subject"
-              defaultValue=""
-              onChange={(e) =>
-                e.target.value !== "" &&
+            <Picker
+              className="basis-full"
+              label="Move to subject"
+              placeholder="Choose a subject, chapter or topic"
+              value=""
+              options={[{ value: "__none", label: "Remove classification" }, ...options]}
+              onChange={(v) =>
                 void bulk(
-                  { kind: "classify", nodeId: e.target.value === "__none" ? null : e.target.value },
+                  { kind: "classify", nodeId: v === "__none" ? null : v },
                   "Classification updated.",
                 )
               }
-            >
-              <option value="" disabled>
-                Choose a subject, chapter or topic
-              </option>
-              <option value="__none">Remove classification</option>
-              {options.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+            />
           )}
           {bulkPick === "tag" && (
-            <select
-              className="lv-input basis-full"
-              aria-label="Tag to add"
-              defaultValue=""
-              onChange={(e) =>
-                e.target.value &&
-                void bulk({ kind: "tag", tagId: e.target.value, add: true }, "Tag added.")
-              }
-            >
-              <option value="" disabled>
-                Choose a tag
-              </option>
-              {(tags.data ?? []).map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
+            <Picker
+              className="basis-full"
+              label="Tag to add"
+              placeholder="Choose a tag"
+              value=""
+              options={(tags.data ?? []).map((t) => ({ value: t.id, label: t.name }))}
+              onChange={(v) => void bulk({ kind: "tag", tagId: v, add: true }, "Tag added.")}
+            />
           )}
           {bulkPick === "collection" && (
-            <select
-              className="lv-input basis-full"
-              aria-label="Collection to add to"
-              defaultValue=""
-              onChange={(e) =>
-                e.target.value &&
+            <Picker
+              className="basis-full"
+              label="Collection to add to"
+              placeholder="Choose a collection"
+              value=""
+              options={(collections.data ?? []).map((c) => ({ value: c.id, label: c.name }))}
+              onChange={(v) =>
                 void bulk(
-                  { kind: "collection", collectionId: e.target.value, add: true },
+                  { kind: "collection", collectionId: v, add: true },
                   "Added to collection.",
                 )
               }
-            >
-              <option value="" disabled>
-                Choose a collection
-              </option>
-              {(collections.data ?? []).map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+            />
           )}
           {bulkPick && (tags.data ?? []).length === 0 && bulkPick === "tag" && (
             <p className="m-0 basis-full text-sm text-muted">

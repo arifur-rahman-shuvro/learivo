@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Dialog } from "./Dialog.tsx";
 import { CheckIcon, SearchIcon } from "./icons.tsx";
 
@@ -9,6 +9,8 @@ export interface PickerOption {
   depth?: number;
   /** Small text on the right, such as a count. */
   hint?: string;
+  /** A line of explanation under the label. */
+  description?: string;
 }
 
 interface Props {
@@ -21,6 +23,8 @@ interface Props {
   emptyLabel?: string;
   /** Show the search box from this many options. */
   searchFrom?: number;
+  /** Shown on the field when the value matches no option, for fields that start unchosen. */
+  placeholder?: string;
   /** Hide the text above the field (it still names the field and the sheet). */
   hideLabel?: boolean;
   className?: string;
@@ -51,11 +55,37 @@ export function Picker({
   emptyLabel,
   searchFrom = 8,
   hideLabel = false,
+  placeholder = "Choose",
   className = "",
 }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const listId = useId();
+  const listRef = useRef<HTMLUListElement>(null);
+
+  // Put the cursor on the current choice and bring it into view when the sheet opens.
+  useEffect(() => {
+    if (!open) return;
+    const t = window.setTimeout(() => {
+      const el = listRef.current?.querySelector<HTMLElement>('[aria-selected="true"]');
+      el?.scrollIntoView?.({ block: "center" });
+    }, 0);
+    return () => window.clearTimeout(t);
+  }, [open]);
+
+  const onListKey = (e: React.KeyboardEvent) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    const items = Array.from(
+      listRef.current?.querySelectorAll<HTMLElement>('[role="option"]') ?? [],
+    );
+    const i = items.indexOf(document.activeElement as HTMLElement);
+    const next =
+      items[e.key === "ArrowDown" ? Math.min(i + 1, items.length - 1) : Math.max(i - 1, 0)];
+    if (next) {
+      e.preventDefault();
+      next.focus();
+    }
+  };
 
   const all = useMemo<PickerOption[]>(
     () => (emptyLabel ? [{ value: "", label: emptyLabel }, ...options] : [...options]),
@@ -83,11 +113,13 @@ export function Picker({
         type="button"
         className="lv-input flex min-h-11 items-center justify-between gap-2 text-left font-normal"
         aria-haspopup="dialog"
-        aria-label={`${label}: ${current?.label.trim() ?? "none"}`}
+        aria-label={`${label}: ${current?.label.trim() ?? "none chosen"}`}
         onClick={() => setOpen(true)}
       >
-        <span className={`min-w-0 truncate ${value === "" && emptyLabel ? "text-muted" : ""}`}>
-          {current?.label.trim() ?? "Choose"}
+        <span
+          className={`min-w-0 truncate ${!current || (value === "" && emptyLabel) ? "text-muted" : ""}`}
+        >
+          {current?.label.trim() ?? placeholder}
         </span>
         <span className="shrink-0 text-muted">
           <Chevron />
@@ -116,6 +148,8 @@ export function Picker({
             </div>
           )}
           <ul
+            ref={listRef}
+            onKeyDown={onListKey}
             id={listId}
             role="listbox"
             aria-label={label}
@@ -149,10 +183,13 @@ export function Picker({
                         : "border-transparent hover:bg-surface-2"
                     }`}
                   >
-                    <span
-                      className={`min-w-0 ${depth === 0 && o.value !== "" ? "font-semibold" : ""}`}
-                    >
-                      {o.label.trim()}
+                    <span className="flex min-w-0 flex-col">
+                      <span className={depth === 0 && o.value !== "" ? "font-semibold" : ""}>
+                        {o.label.trim()}
+                      </span>
+                      {o.description && (
+                        <span className="text-xs font-normal text-muted">{o.description}</span>
+                      )}
                     </span>
                     <span className="flex shrink-0 items-center gap-2 text-sm text-muted">
                       {o.hint}

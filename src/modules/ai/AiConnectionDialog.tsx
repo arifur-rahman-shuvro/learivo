@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Dialog } from "../../design-system/index.ts";
+import { Button, Dialog, Picker } from "../../design-system/index.ts";
 import { keyGuidePrompt } from "./guidePrompt.ts";
 import {
   aiState,
@@ -83,22 +83,17 @@ function Inner() {
         </p>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="ai-provider" className="text-sm font-semibold">
-            AI provider
-          </label>
-          <select
-            id="ai-provider"
-            className="lv-input"
+          <Picker
+            label="AI provider"
             value={provider}
-            onChange={(e) => pick(e.target.value as ProviderId)}
-          >
-            {PROVIDERS.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.label}
-                {(saved.keys[p.id] ?? "").trim() ? " (connected)" : ""}
-              </option>
-            ))}
-          </select>
+            options={PROVIDERS.map((p) => ({
+              value: p.id,
+              label: p.label,
+              hint: (saved.keys[p.id] ?? "").trim() ? "Connected" : undefined,
+              description: p.cost,
+            }))}
+            onChange={(v) => pick(v as ProviderId)}
+          />
           <p className="m-0 text-xs text-muted">{info.cost}</p>
         </div>
 

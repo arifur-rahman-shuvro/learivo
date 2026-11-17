@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Button, Dialog, Field, Spinner } from "../../../design-system/index.ts";
+import { Badge, Button, Dialog, Field, Spinner, Picker } from "../../../design-system/index.ts";
 import { contentHash } from "../domain/hash.ts";
 import {
   QUESTION_TYPES,
@@ -361,21 +361,12 @@ export function QuestionEditor({ id, onClose, onManage }: Props) {
           )}
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="q-type" className="text-sm font-semibold">
-              Question type
-            </label>
-            <select
-              id="q-type"
-              className="lv-input"
+            <Picker
+              label="Question type"
               value={draft.qtype}
-              onChange={(e) => changeType(e.target.value as QuestionType)}
-            >
-              {QUESTION_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {TYPE_LABELS[t]}
-                </option>
-              ))}
-            </select>
+              options={QUESTION_TYPES.map((t) => ({ value: t, label: TYPE_LABELS[t] }))}
+              onChange={(v) => changeType(v as QuestionType)}
+            />
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -441,46 +432,37 @@ export function QuestionEditor({ id, onClose, onManage }: Props) {
               const options = nodes.filter((n) => n.parentId === parentId);
               if (options.length === 0 && !chain[depth]) return null;
               return (
-                <select
+                <Picker
                   key={depth}
-                  className="lv-input"
-                  aria-label={KIND_LABEL[depth]}
+                  hideLabel
+                  label={KIND_LABEL[depth]!}
+                  emptyLabel={`${KIND_LABEL[depth]}: none`}
                   value={chain[depth]?.id ?? ""}
-                  onChange={(e) => {
-                    const node = nodes.find((n) => n.id === e.target.value);
+                  options={options
+                    .sort((x, y) => x.name.localeCompare(y.name))
+                    .map((n) => ({ value: n.id, label: n.name }))}
+                  onChange={(v) => {
+                    const node = nodes.find((n) => n.id === v);
                     const names = draft.path.slice(0, depth);
                     set({ path: node ? [...names, node.name] : names });
                   }}
-                >
-                  <option value="">{KIND_LABEL[depth]}: none</option>
-                  {options.map((n) => (
-                    <option key={n.id} value={n.id}>
-                      {n.name}
-                    </option>
-                  ))}
-                </select>
+                />
               );
             })}
           </fieldset>
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="q-diff" className="text-sm font-semibold">
-              Difficulty
-            </label>
-            <select
-              id="q-diff"
-              className="lv-input"
-              value={draft.difficulty ?? ""}
-              onChange={(e) => set({ difficulty: e.target.value ? Number(e.target.value) : null })}
-            >
-              <option value="">Not set</option>
-              {[1, 2, 3, 4, 5].map((d) => (
-                <option key={d} value={d}>
-                  Level {d}
-                  {d === 1 ? " (easiest)" : d === 5 ? " (hardest)" : ""}
-                </option>
-              ))}
-            </select>
+            <Picker
+              label="Difficulty"
+              emptyLabel="Not set"
+              value={draft.difficulty ? String(draft.difficulty) : ""}
+              options={[1, 2, 3, 4, 5].map((d) => ({
+                value: String(d),
+                label: `Level ${d}`,
+                description: d === 1 ? "Easiest" : d === 5 ? "Hardest" : undefined,
+              }))}
+              onChange={(v) => set({ difficulty: v ? Number(v) : null })}
+            />
           </div>
 
           <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">

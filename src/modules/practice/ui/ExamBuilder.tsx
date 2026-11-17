@@ -1,25 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, Dialog } from "../../../design-system/index.ts";
-import { KIND_BY_DEPTH, type TaxonomyNode } from "../../question-bank/data/repo.ts";
+import { Button, Dialog, Picker } from "../../../design-system/index.ts";
+import { type TaxonomyNode } from "../../question-bank/data/repo.ts";
+import { subjectOptions } from "../../question-bank/ui/subjectOptions.ts";
 import { errorText, useBank } from "../../question-bank/ui/bank.tsx";
 import type { Exam, ExamInput } from "../data/repo.ts";
 import { checkRules, type ExamRule } from "../domain/session.ts";
 import { fetchPool, makeInside, usePractice } from "./practice.tsx";
 import type { QuestionRecord } from "../../question-bank/data/repo.ts";
-
-function options(nodes: readonly TaxonomyNode[]) {
-  const out: { id: string; label: string }[] = [];
-  const walk = (parent: string | null, depth: number) => {
-    for (const n of nodes
-      .filter((x) => x.parentId === parent)
-      .sort((a, b) => a.name.localeCompare(b.name))) {
-      out.push({ id: n.id, label: `${" ".repeat(depth)}${n.name}` });
-      if (depth < KIND_BY_DEPTH.length - 1) walk(n.id, depth + 1);
-    }
-  };
-  walk(null, 0);
-  return out;
-}
 
 const BLANK: ExamInput = {
   title: "",
@@ -59,7 +46,7 @@ export default function ExamBuilder({ exam, onClose }: { exam: Exam | null; onCl
     };
   }, [repo]);
 
-  const opts = useMemo(() => options(nodes), [nodes]);
+  const opts = useMemo(() => subjectOptions(nodes), [nodes]);
   const checks = useMemo(
     () => checkRules(draft.rules, pool, makeInside(nodes)),
     [draft.rules, pool, nodes],
@@ -208,19 +195,15 @@ export default function ExamBuilder({ exam, onClose }: { exam: Exam | null; onCl
           </p>
           {draft.rules.map((r, i) => (
             <div key={i} className="flex flex-wrap items-center gap-2">
-              <select
-                className="lv-input min-w-0 flex-1"
-                aria-label={`Subject for rule ${i + 1}`}
+              <Picker
+                hideLabel
+                className="min-w-0 flex-1"
+                label={`Subject for rule ${i + 1}`}
+                emptyLabel="Any subject"
                 value={r.nodeId ?? ""}
-                onChange={(e) => setRule(i, { nodeId: e.target.value || null })}
-              >
-                <option value="">Any subject</option>
-                {opts.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+                options={opts}
+                onChange={(v) => setRule(i, { nodeId: v || null })}
+              />
               <input
                 className="lv-input w-24"
                 type="number"

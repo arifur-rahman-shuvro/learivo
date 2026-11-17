@@ -7,3 +7,4 @@ export { Dialog } from "./Dialog.tsx";
 export { RichText, type TermSplitter } from "./RichText.tsx";
 export { Avatar } from "./Avatar.tsx";
 export { Picker, type PickerOption } from "./Picker.tsx";
+export { Segmented, type SegmentOption } from "./Segmented.tsx";

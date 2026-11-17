@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button } from "../../../design-system/index.ts";
+import { Button, Picker } from "../../../design-system/index.ts";
 import type { QuestionQuery } from "../data/repo.ts";
 
 /** The filters a student can save under a name. Page position is not part of a view. */
@@ -78,23 +78,19 @@ export function SavedViews({
     <div className="flex flex-wrap items-center gap-2">
       {views.length > 0 && (
         <>
-          <select
-            className="lv-input max-w-56"
-            aria-label="Saved views"
+          <Picker
+            hideLabel
+            className="max-w-56"
+            label="Saved views"
+            emptyLabel="Saved views"
             value={selected}
-            onChange={(e) => {
-              const v = views.find((x) => x.name === e.target.value);
-              setSelected(e.target.value);
+            options={views.map((v) => ({ value: v.name, label: v.name }))}
+            onChange={(name) => {
+              const v = views.find((x) => x.name === name);
+              setSelected(name);
               if (v) onApply(v.filters);
             }}
-          >
-            <option value="">Saved views</option>
-            {views.map((v) => (
-              <option key={v.name} value={v.name}>
-                {v.name}
-              </option>
-            ))}
-          </select>
+          />
           {selected && (
             <Button
               variant="ghost"

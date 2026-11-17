@@ -32,7 +32,10 @@ afterEach(cleanup);
 /** Opens a choice field's sheet and taps one option. */
 async function pick(field: string, option: string) {
   fireEvent.click(await screen.findByRole("button", { name: new RegExp(`^${field}:`) }));
-  fireEvent.click(await screen.findByRole("option", { name: option }));
+  // The current choice also carries a "Selected" tick in its name.
+  fireEvent.click(
+    await screen.findByRole("option", { name: new RegExp(`^${option}\\s*(Selected)?$`) }),
+  );
 }
 
 describe("QuestionsScreen", () => {
@@ -199,11 +202,11 @@ describe("Add questions hub", () => {
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
     fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
     expect(await screen.findByText("Easy one")).toBeTruthy();
-    fireEvent.change(screen.getByLabelText("Saved views"), { target: { value: "Hard ones" } });
+    await pick("Saved views", "Hard ones");
     await waitFor(() => expect(screen.queryByText("Easy one")).toBeNull());
     expect(screen.getByText("Hard one")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Delete view" }));
-    expect(screen.queryByLabelText("Saved views")).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Saved views:/ })).toBeNull();
     localStorage.clear();
   });
 

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Button } from "../../../design-system/index.ts";
+import { Button, Picker, Segmented } from "../../../design-system/index.ts";
 import { generateQuestions } from "../../ai/generate.ts";
 import { activeConfig, openAiConnection, useAiState } from "../../ai/keys.ts";
 import { AiError, providerOf } from "../../ai/providers.ts";
@@ -256,99 +256,55 @@ export function PromptMaker({
             />
           </div>
         )}
-        <div className="flex flex-col gap-1">
-          <label htmlFor="pm-opts" className="text-sm font-semibold">
-            Options per question
-          </label>
-          <select
-            id="pm-opts"
-            className="lv-input"
-            value={String(spec.optionCount)}
-            onChange={(e) =>
-              set(
-                "optionCount",
-                e.target.value === "auto" ? "auto" : (Number(e.target.value) as 2 | 3 | 4 | 5),
-              )
-            }
-          >
-            <option value="auto">AI decides (2 to 5)</option>
-            {[2, 3, 4, 5].map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="pm-diff" className="text-sm font-semibold">
-            Difficulty
-          </label>
-          <select
-            id="pm-diff"
-            className="lv-input"
-            value={String(spec.difficulty)}
-            onChange={(e) =>
-              set(
-                "difficulty",
-                e.target.value === "mixed"
-                  ? "mixed"
-                  : (Number(e.target.value) as 1 | 2 | 3 | 4 | 5),
-              )
-            }
-          >
-            <option value="mixed">Mixed (AI decides each)</option>
-            <option value="1">1 Very easy</option>
-            <option value="2">2 Easy</option>
-            <option value="3">3 Medium</option>
-            <option value="4">4 Hard</option>
-            <option value="5">5 Very hard</option>
-          </select>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="pm-expl" className="text-sm font-semibold">
-            Explanations
-          </label>
-          <select
-            id="pm-expl"
-            className="lv-input"
-            value={spec.explanation}
-            onChange={(e) => set("explanation", e.target.value as PromptSpec["explanation"])}
-          >
-            <option value="none">None</option>
-            <option value="short">Short</option>
-            <option value="detailed">Detailed</option>
-          </select>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="pm-ql" className="text-sm font-semibold">
-            Question language
-          </label>
-          <select
-            id="pm-ql"
-            className="lv-input"
-            value={spec.questionLanguage}
-            onChange={(e) => set("questionLanguage", e.target.value)}
-          >
-            {LANGS.map((l) => (
-              <option key={l}>{l}</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="pm-el" className="text-sm font-semibold">
-            Explanation language
-          </label>
-          <select
-            id="pm-el"
-            className="lv-input"
-            value={spec.explanationLanguage}
-            onChange={(e) => set("explanationLanguage", e.target.value)}
-          >
-            {LANGS.map((l) => (
-              <option key={l}>{l}</option>
-            ))}
-          </select>
-        </div>
+        <Segmented
+          label="Options per question"
+          value={String(spec.optionCount)}
+          options={[
+            { value: "auto", label: "Auto" },
+            { value: "2", label: "2" },
+            { value: "3", label: "3" },
+            { value: "4", label: "4" },
+            { value: "5", label: "5" },
+          ]}
+          onChange={(v) => set("optionCount", v === "auto" ? "auto" : (Number(v) as 2 | 3 | 4 | 5))}
+        />
+        <Picker
+          label="Difficulty"
+          value={String(spec.difficulty)}
+          options={[
+            { value: "mixed", label: "Mixed", description: "The AI decides each question" },
+            { value: "1", label: "1 Very easy" },
+            { value: "2", label: "2 Easy" },
+            { value: "3", label: "3 Medium" },
+            { value: "4", label: "4 Hard" },
+            { value: "5", label: "5 Very hard" },
+          ]}
+          onChange={(v) =>
+            set("difficulty", v === "mixed" ? "mixed" : (Number(v) as 1 | 2 | 3 | 4 | 5))
+          }
+        />
+        <Segmented
+          label="Explanations"
+          value={spec.explanation}
+          options={[
+            { value: "none", label: "None" },
+            { value: "short", label: "Short" },
+            { value: "detailed", label: "Detailed" },
+          ]}
+          onChange={(v) => set("explanation", v as PromptSpec["explanation"])}
+        />
+        <Picker
+          label="Question language"
+          value={spec.questionLanguage}
+          options={LANGS.map((l) => ({ value: l, label: l }))}
+          onChange={(v) => set("questionLanguage", v)}
+        />
+        <Picker
+          label="Explanation language"
+          value={spec.explanationLanguage}
+          options={LANGS.map((l) => ({ value: l, label: l }))}
+          onChange={(v) => set("explanationLanguage", v)}
+        />
       </div>
 
       <Field

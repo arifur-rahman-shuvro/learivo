@@ -5,12 +5,10 @@ import {
   Button,
   EmptyState,
   Picker,
-  type PickerOption,
   PlusIcon,
   PracticeIcon,
   Spinner,
 } from "../../../design-system/index.ts";
-import { KIND_BY_DEPTH, type TaxonomyNode } from "../../question-bank/data/repo.ts";
 import { errorText, useBank, useLoad } from "../../question-bank/ui/bank.tsx";
 import type { Attempt, Exam } from "../data/repo.ts";
 import type { PracticeFilter } from "../domain/session.ts";
@@ -19,24 +17,11 @@ import Player from "./Player.tsx";
 import { clock, handoff, usePractice } from "./practice.tsx";
 import { useWorkspace } from "../../workspace/ui/workspace.tsx";
 import Results from "./Results.tsx";
+import { subjectOptions } from "../../question-bank/ui/subjectOptions.ts";
 import { ExamPaperDialog } from "./ExamPaperDialog.tsx";
 import { countAvailable, startExam, startPractice, type PracticeSetup } from "./start.ts";
 
 type View = { name: "home" } | { name: "play"; id: string } | { name: "results"; id: string };
-
-function nodeOptions(nodes: readonly TaxonomyNode[]) {
-  const out: PickerOption[] = [];
-  const walk = (parent: string | null, depth: number) => {
-    for (const n of nodes
-      .filter((x) => x.parentId === parent)
-      .sort((a, b) => a.name.localeCompare(b.name))) {
-      out.push({ value: n.id, label: n.name, depth });
-      if (depth < KIND_BY_DEPTH.length - 1) walk(n.id, depth + 1);
-    }
-  };
-  walk(null, 0);
-  return out;
-}
 
 const DEFAULT_SETUP: PracticeSetup = {
   nodeId: null,
@@ -134,7 +119,7 @@ function Home({ onOpen }: { onOpen: (v: View) => void }) {
   const tags = useLoad((r) => r.tags());
   const collections = useLoad((r) => r.collections());
   const nodes = useMemo(() => taxonomy.data ?? [], [taxonomy.data]);
-  const options = useMemo(() => nodeOptions(nodes), [nodes]);
+  const options = useMemo(() => subjectOptions(nodes), [nodes]);
 
   const [setup, setSetup] = useState<PracticeSetup>(rememberedSetup);
   const [counts, setCounts] = useState<Record<string, number> | null>(null);

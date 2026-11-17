@@ -1,4 +1,4 @@
-import { Button } from "../../../design-system/index.ts";
+import { Button, Segmented } from "../../../design-system/index.ts";
 import { OPTION_MAX, OPTION_MIN, type AnswerSpec, type QuestionType } from "../domain/model.ts";
 
 interface Props {
@@ -31,19 +31,19 @@ export function AnswerEditor({ qtype, answer, onChange }: Props) {
         {options.map((o, i) => (
           <div key={i} className="flex items-center gap-2">
             {tf ? (
-              <select
-                className="lv-input w-auto shrink-0"
-                aria-label={`Statement ${i + 1} is`}
+              <Segmented
+                hideLabel
+                className="w-40 shrink-0"
+                label={`Statement ${i + 1} is`}
                 value={o.correct ? "T" : "F"}
-                onChange={(e) =>
-                  onChange({
-                    options: replace(options, i, { ...o, correct: e.target.value === "T" }),
-                  })
+                options={[
+                  { value: "T", label: "True" },
+                  { value: "F", label: "False" },
+                ]}
+                onChange={(v) =>
+                  onChange({ options: replace(options, i, { ...o, correct: v === "T" }) })
                 }
-              >
-                <option value="T">True</option>
-                <option value="F">False</option>
-              </select>
+              />
             ) : (
               <input
                 type={single ? "radio" : "checkbox"}
