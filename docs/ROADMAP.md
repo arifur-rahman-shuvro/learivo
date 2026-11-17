@@ -232,3 +232,7 @@ What is rough:
 15. Split files over 500 lines. Add a phone-width smoke test of the main flows to CI.
 
 Order: 13, 14, 15, 16. Each item is pushed on its own with tests, and the phone check list goes to the owner after each phase.
+
+### Progress on the polish roadmap (2026-11-17)
+
+- Phase 13 done: focus mode (no tab bar or header on phones during a session, progress bar, sticky Previous / Check / Next bar, question list as a sheet, Flag / Save / Note icon buttons, N, P, F and arrow-key shortcuts on desktop). Quick start on Practice (Quick 10, New questions, My mistakes, Bookmarked, with live counts), custom form folded away, last custom choices remembered. Shortcuts for choosing an option with 1 to 5 are not built yet.

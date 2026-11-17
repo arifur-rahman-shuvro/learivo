@@ -261,4 +261,33 @@ describe("Practice", () => {
       await waitFor(() => expect(seen).toBe(true));
     });
   });
+
+  describe("quick start", () => {
+    it("starts a ten-question session in one tap", async () => {
+      const { ready } = setup();
+      await ready;
+      const btn = await screen.findByRole("button", { name: /^Quick 10/ });
+      await waitFor(() => expect((btn as HTMLButtonElement).disabled).toBe(false));
+      fireEvent.click(btn);
+      await screen.findByText(/Question 1 of 3/); // the sample bank holds three questions
+    });
+
+    it("disables a preset when nothing matches and says so", async () => {
+      const { ready } = setup();
+      await ready;
+      const mistakes = await screen.findByRole("button", { name: /^My mistakes, 0 available/ });
+      expect((mistakes as HTMLButtonElement).disabled).toBe(true);
+      expect(within(mistakes).getByText("None yet")).toBeTruthy();
+    });
+
+    it("remembers the last custom choices", async () => {
+      localStorage.clear();
+      const { ready } = setup();
+      await ready;
+      await startPractice(2);
+      await screen.findByText(/Question 1 of 2/);
+      expect(JSON.parse(localStorage.getItem("learivo.practiceSetup") ?? "{}").count).toBe(2);
+      localStorage.clear();
+    });
+  });
 });

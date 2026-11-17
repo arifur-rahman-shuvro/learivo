@@ -40,6 +40,55 @@ const DEFAULT_SETUP: PracticeSetup = {
   shuffleOptions: true,
 };
 
+const SETUP_KEY = "learivo.practiceSetup";
+
+function rememberedSetup(): PracticeSetup {
+  try {
+    const raw: unknown = JSON.parse(window.localStorage.getItem(SETUP_KEY) ?? "null");
+    if (!raw || typeof raw !== "object") return DEFAULT_SETUP;
+    const o = raw as Partial<PracticeSetup>;
+    const filters: PracticeFilter[] = ["all", "unattempted", "incorrect", "bookmarked"];
+    return {
+      ...DEFAULT_SETUP,
+      filter: filters.includes(o.filter as PracticeFilter) ? (o.filter as PracticeFilter) : "all",
+      count: typeof o.count === "number" ? Math.min(200, Math.max(1, Math.floor(o.count))) : 20,
+      minutes: typeof o.minutes === "number" && o.minutes > 0 ? Math.min(600, o.minutes) : null,
+      instantFeedback: o.instantFeedback !== false,
+      shuffleOptions: o.shuffleOptions !== false,
+    };
+  } catch {
+    return DEFAULT_SETUP;
+  }
+}
+
+/** One-tap ways to start. They always draw from every subject. */
+const PRESETS: { id: string; label: string; hint: string; patch: Partial<PracticeSetup> }[] = [
+  {
+    id: "quick",
+    label: "Quick 10",
+    hint: "Ten random questions",
+    patch: { filter: "all", count: 10 },
+  },
+  {
+    id: "new",
+    label: "New questions",
+    hint: "Not attempted yet",
+    patch: { filter: "unattempted", count: 20 },
+  },
+  {
+    id: "mistakes",
+    label: "My mistakes",
+    hint: "Last answered wrong",
+    patch: { filter: "incorrect", count: 20 },
+  },
+  {
+    id: "saved",
+    label: "Bookmarked",
+    hint: "Questions you saved",
+    patch: { filter: "bookmarked", count: 20 },
+  },
+];
+
 const when = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
 
@@ -78,7 +127,8 @@ function Home({ onOpen }: { onOpen: (v: View) => void }) {
   const nodes = useMemo(() => taxonomy.data ?? [], [taxonomy.data]);
   const options = useMemo(() => nodeOptions(nodes), [nodes]);
 
-  const [setup, setSetup] = useState<PracticeSetup>(DEFAULT_SETUP);
+  const [setup, setSetup] = useState<PracticeSetup>(rememberedSetup);
+  const [counts, setCounts] = useState<Record<string, number> | null>(null);
   const [available, setAvailable] = useState<number | null>(null);
   const [recent, setRecent] = useState<Attempt[] | null>(null);
   const [exams, setExams] = useState<Exam[] | null>(null);
@@ -115,6 +165,23 @@ function Home({ onOpen }: { onOpen: (v: View) => void }) {
       alive = false;
     };
   }, [repo, attempts, workspace, rev, setup.nodeId, setup.tagId, setup.collectionId, setup.filter]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    let alive = true;
+    Promise.all(
+      PRESETS.map((p) =>
+        countAvailable(repo, attempts, { ...DEFAULT_SETUP, ...p.patch }, workspace).then(
+          (n) => [p.id, n] as const,
+        ),
+      ),
+    ).then(
+      (rows) => alive && setCounts(Object.fromEntries(rows)),
+      () => alive && setCounts(null),
+    );
+    return () => {
+      alive = false;
+    };
+  }, [repo, attempts, workspace, rev]);
 
   const patch = (p: Partial<PracticeSetup>) => setSetup((s) => ({ ...s, ...p }));
 
@@ -185,138 +252,194 @@ function Home({ onOpen }: { onOpen: (v: View) => void }) {
         </section>
       )}
 
-      <section aria-label="Start practice" className="lv-card flex flex-col gap-4 p-5">
-        <h2 className="m-0 text-lg font-semibold">Start a practice session</h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <label className="flex flex-col gap-1.5 text-sm font-semibold">
-            Subject
-            <select
-              className="lv-input"
-              value={setup.nodeId ?? ""}
-              onChange={(e) => patch({ nodeId: e.target.value || null })}
-            >
-              <option value="">All subjects</option>
-              {options.map((o) => (
-                <option key={o.id} value={o.id}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm font-semibold">
-            Tag
-            <select
-              className="lv-input"
-              value={setup.tagId ?? ""}
-              onChange={(e) => patch({ tagId: e.target.value || null })}
-            >
-              <option value="">Any tag</option>
-              {(tags.data ?? []).map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm font-semibold">
-            Collection
-            <select
-              className="lv-input"
-              value={setup.collectionId ?? ""}
-              onChange={(e) => patch({ collectionId: e.target.value || null })}
-            >
-              <option value="">Any collection</option>
-              {(collections.data ?? []).map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm font-semibold">
-            Which questions
-            <select
-              className="lv-input"
-              value={setup.filter}
-              onChange={(e) => patch({ filter: e.target.value as PracticeFilter })}
-            >
-              <option value="all">All</option>
-              <option value="unattempted">Not attempted yet</option>
-              <option value="incorrect">Last answered wrong</option>
-              <option value="bookmarked">Bookmarked</option>
-            </select>
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm font-semibold">
-            Number of questions
-            <input
-              className="lv-input"
-              type="number"
-              min={1}
-              max={200}
-              value={setup.count}
-              onChange={(e) =>
-                patch({
-                  count: Math.min(200, Math.max(1, Math.floor(Number(e.target.value)) || 1)),
-                })
-              }
-            />
-          </label>
-          <label className="flex flex-col gap-1.5 text-sm font-semibold">
-            Time limit (minutes)
-            <input
-              className="lv-input"
-              type="number"
-              min={1}
-              max={600}
-              placeholder="No limit"
-              value={setup.minutes ?? ""}
-              onChange={(e) =>
-                patch({
-                  minutes: e.target.value === "" ? null : Math.max(1, Number(e.target.value)),
-                })
-              }
-            />
-          </label>
-        </div>
-        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={setup.instantFeedback}
-              onChange={(e) => patch({ instantFeedback: e.target.checked })}
-              className="size-4 accent-[var(--lv-accent)]"
-            />
-            Show the answer after each question
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={setup.shuffleOptions}
-              onChange={(e) => patch({ shuffleOptions: e.target.checked })}
-              className="size-4 accent-[var(--lv-accent)]"
-            />
-            Shuffle options
-          </label>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <Button
-            loading={busy === "practice"}
-            disabled={available === 0}
-            onClick={() =>
-              void begin("practice", () => startPractice(repo, attempts, setup, workspace))
-            }
-          >
-            Start practice
-          </Button>
-          <span className="text-sm text-muted" aria-live="polite">
-            {available === null
-              ? ""
-              : available === 0
-                ? "No questions match these choices."
-                : `${available} question${available === 1 ? "" : "s"} available`}
-          </span>
+      <section aria-label="Quick start" className="flex flex-col gap-2">
+        <h2 className="m-0 text-lg font-semibold">Quick start</h2>
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+          {PRESETS.map((p) => {
+            const n = counts?.[p.id];
+            const empty = n === 0;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                disabled={empty || busy !== null}
+                aria-label={`${p.label}${n === undefined ? "" : `, ${n} available`}`}
+                onClick={() =>
+                  void begin(p.id, () =>
+                    startPractice(repo, attempts, { ...DEFAULT_SETUP, ...p.patch }, workspace),
+                  )
+                }
+                className="lv-card flex min-h-20 flex-col items-start justify-center gap-0.5 p-3 text-left disabled:opacity-50"
+              >
+                <span className="font-semibold">{busy === p.id ? "Starting…" : p.label}</span>
+                <span className="text-xs text-muted">
+                  {n === undefined || p.id === "quick"
+                    ? p.hint
+                    : empty
+                      ? "None yet"
+                      : `${n} ${p.hint.toLowerCase()}`}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </section>
+
+      <details className="lv-card group p-5" open={false}>
+        <summary className="cursor-pointer list-none text-lg font-semibold">
+          <span className="flex items-center justify-between gap-2">
+            Custom practice
+            <span
+              aria-hidden="true"
+              className="text-muted transition-transform group-open:rotate-90"
+            >
+              ›
+            </span>
+          </span>
+          <span className="block text-sm font-normal text-muted">
+            Pick a subject, tag, count and time
+          </span>
+        </summary>
+        <section aria-label="Start practice" className="mt-4 flex flex-col gap-4">
+          <h2 className="sr-only">Start a practice session</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <label className="flex flex-col gap-1.5 text-sm font-semibold">
+              Subject
+              <select
+                className="lv-input"
+                value={setup.nodeId ?? ""}
+                onChange={(e) => patch({ nodeId: e.target.value || null })}
+              >
+                <option value="">All subjects</option>
+                {options.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm font-semibold">
+              Tag
+              <select
+                className="lv-input"
+                value={setup.tagId ?? ""}
+                onChange={(e) => patch({ tagId: e.target.value || null })}
+              >
+                <option value="">Any tag</option>
+                {(tags.data ?? []).map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm font-semibold">
+              Collection
+              <select
+                className="lv-input"
+                value={setup.collectionId ?? ""}
+                onChange={(e) => patch({ collectionId: e.target.value || null })}
+              >
+                <option value="">Any collection</option>
+                {(collections.data ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm font-semibold">
+              Which questions
+              <select
+                className="lv-input"
+                value={setup.filter}
+                onChange={(e) => patch({ filter: e.target.value as PracticeFilter })}
+              >
+                <option value="all">All</option>
+                <option value="unattempted">Not attempted yet</option>
+                <option value="incorrect">Last answered wrong</option>
+                <option value="bookmarked">Bookmarked</option>
+              </select>
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm font-semibold">
+              Number of questions
+              <input
+                className="lv-input"
+                type="number"
+                min={1}
+                max={200}
+                value={setup.count}
+                onChange={(e) =>
+                  patch({
+                    count: Math.min(200, Math.max(1, Math.floor(Number(e.target.value)) || 1)),
+                  })
+                }
+              />
+            </label>
+            <label className="flex flex-col gap-1.5 text-sm font-semibold">
+              Time limit (minutes)
+              <input
+                className="lv-input"
+                type="number"
+                min={1}
+                max={600}
+                placeholder="No limit"
+                value={setup.minutes ?? ""}
+                onChange={(e) =>
+                  patch({
+                    minutes: e.target.value === "" ? null : Math.max(1, Number(e.target.value)),
+                  })
+                }
+              />
+            </label>
+          </div>
+          <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm font-semibold">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={setup.instantFeedback}
+                onChange={(e) => patch({ instantFeedback: e.target.checked })}
+                className="size-4 accent-[var(--lv-accent)]"
+              />
+              Show the answer after each question
+            </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={setup.shuffleOptions}
+                onChange={(e) => patch({ shuffleOptions: e.target.checked })}
+                className="size-4 accent-[var(--lv-accent)]"
+              />
+              Shuffle options
+            </label>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              loading={busy === "practice"}
+              disabled={available === 0}
+              onClick={() =>
+                void begin("practice", () => {
+                  try {
+                    window.localStorage.setItem(SETUP_KEY, JSON.stringify(setup));
+                  } catch {
+                    // Remembering the last choices is a convenience only.
+                  }
+                  return startPractice(repo, attempts, setup, workspace);
+                })
+              }
+            >
+              Start practice
+            </Button>
+            <span className="text-sm text-muted" aria-live="polite">
+              {available === null
+                ? ""
+                : available === 0
+                  ? "No questions match these choices."
+                  : `${available} question${available === 1 ? "" : "s"} available`}
+            </span>
+          </div>
+        </section>
+      </details>
 
       <section aria-label="Exams" className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
