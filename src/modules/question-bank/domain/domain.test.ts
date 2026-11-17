@@ -191,6 +191,31 @@ describe("import: JSON", () => {
     expect(r.ok && r.errors[0]!.message).toContain("Type must be one of");
   });
 
+  it("flags rows that nearly match the bank or an earlier row, but not changed meanings", () => {
+    const row = (stem: string) => ({ type: "true_false", stem, options: five(K(1)).options });
+    const existing = [
+      {
+        id: "e1",
+        stem: "Which nerve supplies the deltoid muscle of the shoulder?",
+        qtype: "true_false",
+        options: [],
+      },
+    ];
+    const r = analyzeImport(
+      JSON.stringify([
+        row("Which nerve supplies the deltoid muscle of the shoulder joint?"),
+        row("Which nerve does NOT supply the deltoid muscle of the shoulder?"),
+        row("Name the largest organ of the human body"),
+        row("Name the largest organ of the human body."),
+      ]),
+      "json",
+      none,
+      existing,
+    );
+    if (!r.ok) throw new Error("not ok");
+    expect(r.rows.map((x) => x.similar?.from ?? null)).toEqual(["bank", null, null, "file"]);
+  });
+
   it("accepts a bare list", () => {
     const r = analyzeImport(
       JSON.stringify([{ type: "true_false", stem: "x", options: five(K(1)).options }]),

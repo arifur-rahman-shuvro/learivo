@@ -27,3 +27,26 @@ describe("findDuplicates", () => {
     expect(findDuplicates([q("a", "One", "1"), q("b", "Two", "2")])).toEqual([]);
   });
 });
+
+describe("pairToGroup", () => {
+  const mk = (id: string, createdAt: string, tagIds: string[], collectionIds: string[] = []) => ({
+    id,
+    stem: id,
+    qtype: "sba",
+    createdAt,
+    tagIds,
+    collectionIds,
+  });
+  it("keeps the older question and moves what only the newer one has", async () => {
+    const { pairToGroup, pairKey } = await import("./duplicates.ts");
+    const old = mk("a", "2026-01-01", ["t1"]);
+    const fresh = mk("b", "2026-02-01", ["t1", "t2"], ["c1"]);
+    for (const g of [pairToGroup(old, fresh), pairToGroup(fresh, old)]) {
+      expect(g.keep.id).toBe("a");
+      expect(g.extras.map((e) => e.id)).toEqual(["b"]);
+      expect(g.moveTags).toEqual(["t2"]);
+      expect(g.moveCollections).toEqual(["c1"]);
+    }
+    expect(pairKey("b", "a")).toBe(pairKey("a", "b"));
+  });
+});

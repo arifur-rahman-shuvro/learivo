@@ -225,6 +225,35 @@ describe("Add questions hub", () => {
     expect(archived.total).toBe(1);
   });
 
+  it("lists reworded copies as possible duplicates and lets you keep the older one", async () => {
+    const repo = new MemoryRepo();
+    await repo.create([tf("Which nerve supplies the deltoid muscle of the shoulder?")]);
+    await repo.create([tf("Which nerve supplies the deltoid muscle of the shoulder joint?")]);
+    await repo.create([tf("Which artery supplies the appendix?")]);
+    renderScreen(repo);
+    fireEvent.click(await screen.findByRole("button", { name: "Duplicates" }));
+    const dlg = await screen.findByRole("dialog", { name: "Find duplicates" });
+    expect(await within(dlg).findByText("Possible duplicates (1)")).toBeTruthy();
+    fireEvent.click(within(dlg).getByRole("button", { name: "Keep the older one" }));
+    expect(await within(dlg).findByText("Archived 1 extra copy.")).toBeTruthy();
+    expect(await within(dlg).findByText(/No duplicates found/)).toBeTruthy();
+    expect((await repo.list({ ...DEFAULT_QUERY, status: "archived" })).total).toBe(1);
+  });
+
+  it("remembers a pair marked as not a duplicate", async () => {
+    localStorage.clear();
+    const repo = new MemoryRepo();
+    await repo.create([tf("Which nerve supplies the deltoid muscle of the shoulder?")]);
+    await repo.create([tf("Which nerve supplies the deltoid muscle of the shoulder joint?")]);
+    renderScreen(repo);
+    fireEvent.click(await screen.findByRole("button", { name: "Duplicates" }));
+    const dlg = await screen.findByRole("dialog", { name: "Find duplicates" });
+    fireEvent.click(await within(dlg).findByRole("button", { name: "Not a duplicate" }));
+    expect(await within(dlg).findByText(/No duplicates found/)).toBeTruthy();
+    expect(localStorage.getItem("learivo.notDuplicates")).toContain("|");
+    localStorage.clear();
+  });
+
   it("shows active filters as chips you can remove, and a Filters button for phones", async () => {
     const repo = new MemoryRepo();
     await repo.create([

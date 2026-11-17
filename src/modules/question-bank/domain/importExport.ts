@@ -1,3 +1,4 @@
+import { optionTexts, SimilarityIndex, type Comparable } from "./similarity.ts";
 import Papa from "papaparse";
 import { contentHash } from "./hash.ts";
 import {
@@ -22,10 +23,18 @@ export interface ImportIssue extends Issue {
 
 export type Duplicate = "bank" | "file" | null;
 
+/** A question that is not an exact copy but says nearly the same thing as another one. */
+export interface SimilarTo {
+  from: "bank" | "file";
+  stem: string;
+  why: string;
+}
+
 export interface ImportRow {
   row: number;
   input: QuestionInput;
   duplicate: Duplicate;
+  similar: SimilarTo | null;
 }
 
 export type ImportReport =
@@ -326,11 +335,13 @@ export function parseImportFile(
 /**
  * Read, validate and compare a file with the existing bank.
  * @param existingHashes content hashes already in the student's bank
+ * @param existing the bank's questions, to also spot near copies. Left out, only exact copies are found.
  */
 export function analyzeImport(
   content: string,
   format: ImportFormat,
   existingHashes: ReadonlySet<string>,
+  existing?: readonly Comparable[],
 ): ImportReport {
   const file = parseImportFile(content, format);
   if (!file.ok) return file;
@@ -347,9 +358,32 @@ export function analyzeImport(
     const hash = contentHash(r.input.stem, r.input.qtype);
     const duplicate: Duplicate = existingHashes.has(hash) ? "bank" : seen.has(hash) ? "file" : null;
     seen.add(hash);
-    rows.push({ row, input: r.input, duplicate });
+    rows.push({ row, input: r.input, duplicate, similar: null });
   }
+  markSimilar(rows, existing);
   return { ok: true, total: file.records.length, rows, errors, notice: file.notice };
+}
+
+/** Flags rows that nearly match a question in the bank, or an earlier row of the same file. */
+function markSimilar(rows: ImportRow[], existing: readonly Comparable[] | undefined) {
+  const mine = rows.map((r, i) => ({
+    id: `import:${i}`,
+    stem: r.input.stem,
+    qtype: r.input.qtype,
+    options: optionTexts(r.input.answer),
+  }));
+  const bank = existing && existing.length > 0 ? new SimilarityIndex(existing) : null;
+  const file = new SimilarityIndex(mine);
+  rows.forEach((r, i) => {
+    if (r.duplicate !== null) return;
+    const inBank = bank?.matches(mine[i]!)[0];
+    if (inBank) {
+      r.similar = { from: "bank", stem: inBank.item.stem, why: inBank.match.why };
+      return;
+    }
+    const earlier = file.matches(mine[i]!).find((h) => Number(h.item.id.slice(7)) < i);
+    if (earlier) r.similar = { from: "file", stem: earlier.item.stem, why: earlier.match.why };
+  });
 }
 
 // ---------------------------------------------------------------------------

@@ -46,3 +46,24 @@ export function findDuplicates<T extends Dupe>(questions: readonly T[]): Duplica
   }
   return out.sort((a, b) => a.keep.stem.localeCompare(b.keep.stem));
 }
+
+/** Turns two questions that look alike into a group: the older stays, the newer is the extra. */
+export function pairToGroup<T extends Dupe>(a: T, b: T): DuplicateGroup<T> {
+  const [keep, extra] = sortedPair(a, b);
+  return {
+    keep,
+    extras: [extra],
+    moveTags: extra.tagIds.filter((t) => !keep.tagIds.includes(t)),
+    moveCollections: extra.collectionIds.filter((c) => !keep.collectionIds.includes(c)),
+  };
+}
+
+function sortedPair<T extends Dupe>(a: T, b: T): [T, T] {
+  const order = a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id);
+  return order <= 0 ? [a, b] : [b, a];
+}
+
+/** A stable key for a pair, so "not a duplicate" can be remembered whichever order it comes in. */
+export function pairKey(idA: string, idB: string): string {
+  return idA < idB ? `${idA}|${idB}` : `${idB}|${idA}`;
+}

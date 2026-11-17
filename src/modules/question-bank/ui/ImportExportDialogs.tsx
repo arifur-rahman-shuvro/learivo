@@ -1,3 +1,4 @@
+import { loadComparables } from "./similar.ts";
 import { useRef, useState } from "react";
 import { Badge, Button, Dialog, ProgressBar } from "../../../design-system/index.ts";
 import {
@@ -49,6 +50,7 @@ export function ImportDialog({
   const [loaded, setLoaded] = useState<{ text: string; format: ImportFormat } | null>(null);
   const [report, setReport] = useState<ImportReport | null>(null);
   const [policy, setPolicy] = useState<"skip" | "keep" | "replace">("skip");
+  const [skipSimilar, setSkipSimilar] = useState(true);
   const [progress, setProgress] = useState(0);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [shown, setShown] = useState(5);
@@ -66,7 +68,7 @@ export function ImportDialog({
       const hashes = await repo.hashes();
       setLoaded({ text, format });
       setFileName(name);
-      setReport(analyzeImport(text, format, hashes));
+      setReport(analyzeImport(text, format, hashes, await loadComparables(repo)));
       setShown(5);
       setStage("review");
     } catch (e) {
@@ -130,7 +132,10 @@ export function ImportDialog({
   const rows = (report?.ok ? report.rows : []).map((r) =>
     hasDefaults(defaults) ? { ...r, input: applyDefaults(r.input, defaults) } : r,
   );
-  const toImport = rows.filter((r) => (policy === "keep" ? true : r.duplicate === null));
+  const similar = rows.filter((r) => r.duplicate === null && r.similar !== null);
+  const toImport = rows.filter((r) =>
+    policy === "keep" ? true : r.duplicate === null && (!skipSimilar || r.similar === null),
+  );
   const toReplace = policy === "replace" ? rows.filter((r) => r.duplicate === "bank") : [];
   const total = toImport.length + toReplace.length;
   const inBank = rows.filter((r) => r.duplicate === "bank").length;
@@ -176,6 +181,7 @@ export function ImportDialog({
       replaced,
       attempted: toImport.length + toReplace.length,
       skippedDuplicates: policy === "keep" ? 0 : duplicates - toReplace.length,
+      skippedSimilar: policy === "keep" || !skipSimilar ? 0 : similar.length,
       skippedInvalid: report.errors.length,
       failure,
     });
@@ -442,12 +448,31 @@ export function ImportDialog({
             <Tile value={report.total} label="found" />
             <Tile value={report.rows.length} label="valid" />
             <Tile value={duplicates} label="duplicates" tone="warning" />
+            <Tile value={similar.length} label="look similar" tone="warning" />
             <Tile value={report.errors.length} label="invalid" tone="danger" />
           </ul>
           {error && (
             <p role="alert" className="m-0 text-sm text-danger">
               {error}
             </p>
+          )}
+          {similar.length > 0 && policy !== "keep" && (
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={skipSimilar}
+                onChange={(e) => setSkipSimilar(e.target.checked)}
+                className="mt-0.5 size-4 accent-[var(--lv-accent)]"
+              />
+              <span>
+                <strong>
+                  Skip {similar.length} question{similar.length === 1 ? "" : "s"} that look like
+                  ones you already have.
+                </strong>{" "}
+                They are worded a little differently, so they are not exact copies. Each one is
+                marked in the preview with the question it resembles.
+              </span>
+            </label>
           )}
           {duplicates > 0 && (
             <fieldset className="m-0 flex flex-col gap-1.5 border-0 p-0 text-sm">
@@ -531,6 +556,13 @@ export function ImportDialog({
                 <div key={r.row} className="rounded-control border border-line p-3">
                   <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted">
                     <span>#{r.row}</span>
+                    {r.similar && r.duplicate === null && (
+                      <Badge tone="warning">
+                        {r.similar.from === "bank"
+                          ? "Looks like one you have"
+                          : "Looks like an earlier one in this file"}
+                      </Badge>
+                    )}
                     {r.duplicate && (
                       <Badge tone="warning">
                         {r.duplicate === "bank"
@@ -540,6 +572,11 @@ export function ImportDialog({
                     )}
                   </div>
                   <QuestionPreview question={r.input} />
+                  {r.similar && r.duplicate === null && (
+                    <p className="m-0 mt-2 rounded-control bg-surface-2 p-2 text-xs">
+                      {r.similar.why} Resembles: “{r.similar.stem.slice(0, 140)}”
+                    </p>
+                  )}
                 </div>
               ))}
               {shown < report.rows.length && (
@@ -585,6 +622,9 @@ export function ImportDialog({
             <Tile value={outcome.imported} label="imported" />
             {outcome.replaced > 0 && <Tile value={outcome.replaced} label="replaced" />}
             <Tile value={outcome.skippedDuplicates} label="duplicates skipped" />
+            {outcome.skippedSimilar > 0 && (
+              <Tile value={outcome.skippedSimilar} label="similar skipped" />
+            )}
             <Tile value={outcome.skippedInvalid} label="invalid skipped" />
             <Tile
               value={Math.max(0, outcome.attempted - outcome.imported)}

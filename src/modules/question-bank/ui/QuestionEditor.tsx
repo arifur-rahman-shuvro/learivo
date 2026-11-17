@@ -1,3 +1,4 @@
+import { findSimilarInBank } from "./similar.ts";
 import { useEffect, useMemo, useState } from "react";
 import { Badge, Button, Dialog, Field, Spinner, Picker } from "../../../design-system/index.ts";
 import { contentHash } from "../domain/hash.ts";
@@ -86,6 +87,7 @@ export function QuestionEditor({ id, onClose, onManage }: Props) {
   const [saving, setSaving] = useState(false);
   const [failure, setFailure] = useState<string>();
   const [duplicate, setDuplicate] = useState(false);
+  const [similarTo, setSimilarTo] = useState<{ stem: string; why: string } | null>(null);
   const [restoredDraft, setRestoredDraft] = useState(false);
   const [versions, setVersions] = useState<QuestionVersion[] | null>(null);
   const [newTag, setNewTag] = useState("");
@@ -121,6 +123,26 @@ export function QuestionEditor({ id, onClose, onManage }: Props) {
   useEffect(() => {
     if (id === null && draft) saveDraft(draft.stem.trim() === "" ? null : draft);
   }, [id, draft]);
+
+  // A reworded copy of an existing question, found while typing.
+  useEffect(() => {
+    if (!draft || draft.stem.trim().length < 15) {
+      setSimilarTo(null);
+      return;
+    }
+    let alive = true;
+    const t = setTimeout(() => {
+      findSimilarInBank(repo, draft, id).then(
+        (hit) => alive && setSimilarTo(hit),
+        () => alive && setSimilarTo(null),
+      );
+    }, 700);
+    return () => {
+      alive = false;
+      clearTimeout(t);
+    };
+    // Only the statement, type and options matter here.
+  }, [repo, id, draft?.stem, draft?.qtype, draft?.answer]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Duplicate warning under the statement.
   useEffect(() => {
@@ -388,6 +410,12 @@ export function QuestionEditor({ id, onClose, onManage }: Props) {
             {duplicate && (
               <p role="status" className="m-0 text-sm font-medium text-warning">
                 A question with the same text and type is already in your bank.
+              </p>
+            )}
+            {!duplicate && similarTo && (
+              <p role="status" className="m-0 text-sm font-medium text-warning">
+                This looks like a question you already have: “{similarTo.stem.slice(0, 120)}”.{" "}
+                <span className="font-normal text-muted">{similarTo.why}</span>
               </p>
             )}
           </div>

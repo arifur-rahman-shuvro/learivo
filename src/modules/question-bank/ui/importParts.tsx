@@ -51,6 +51,7 @@ export type Source = "paste" | "upload" | "prompt" | "ai";
 export interface Outcome {
   imported: number;
   skippedDuplicates: number;
+  skippedSimilar: number;
   replaced: number;
   skippedInvalid: number;
   /** Set when the import stopped part-way. */
