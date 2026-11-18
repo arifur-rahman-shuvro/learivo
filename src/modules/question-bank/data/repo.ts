@@ -108,12 +108,16 @@ export interface QuestionRepo {
   addTag(name: string): Promise<Tag>;
   renameTag(id: string, name: string): Promise<void>;
   deleteTag(id: string): Promise<void>;
+  /** Moves every question of one tag to another, then removes the first tag. */
+  mergeTags(fromId: string, intoId: string): Promise<void>;
 
   // Collections
   collections(): Promise<Collection[]>;
   addCollection(name: string): Promise<Collection>;
   renameCollection(id: string, name: string): Promise<void>;
   deleteCollection(id: string): Promise<void>;
+  /** Moves every question of one collection into another, then removes the first collection. */
+  mergeCollections(fromId: string, intoId: string): Promise<void>;
 }
 
 export const KIND_BY_DEPTH: TaxonomyKind[] = ["subject", "chapter", "topic", "subtopic"];

@@ -1,5 +1,12 @@
 import { useState, Fragment } from "react";
-import { Button, Dialog, Spinner } from "../../../design-system/index.ts";
+import {
+  Button,
+  Dialog,
+  Spinner,
+  Picker,
+  type PickerOption,
+} from "../../../design-system/index.ts";
+import { showToast } from "../../../app/toast.ts";
 import { KIND_BY_DEPTH, type TaxonomyNode } from "../data/repo.ts";
 import { errorText, useBank, useLoad } from "./bank.tsx";
 
@@ -49,6 +56,8 @@ function NameRow({
   deleteNote,
   onRename,
   onDelete,
+  mergeOptions,
+  onMerge,
   children,
 }: {
   name: string;
@@ -57,6 +66,9 @@ function NameRow({
   deleteNote: string;
   onRename: (name: string) => Promise<void>;
   onDelete: () => Promise<void>;
+  /** Other items this one can be merged into. Merging is hidden when there are none. */
+  mergeOptions?: PickerOption[];
+  onMerge?: (intoId: string) => Promise<void>;
   children?: React.ReactNode;
 }) {
   const [editing, setEditing] = useState(false);
@@ -117,6 +129,17 @@ function NameRow({
             ) : (
               <>
                 {children}
+                {mergeOptions && mergeOptions.length > 0 && onMerge && (
+                  <Picker
+                    hideLabel
+                    label={`Merge ${name} into`}
+                    placeholder="Merge into…"
+                    className="w-40"
+                    value=""
+                    options={mergeOptions}
+                    onChange={(v) => void run(() => onMerge(v))}
+                  />
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
@@ -278,6 +301,18 @@ function NamedListTab({ kind }: { kind: "tags" | "collections" }) {
               name={item.name}
               hint={`${item.count} question${item.count === 1 ? "" : "s"}`}
               deleteNote={`Questions are kept.`}
+              mergeOptions={(data ?? [])
+                .filter((x) => x.id !== item.id)
+                .map((x) => ({ value: x.id, label: x.name }))}
+              onMerge={(intoId) =>
+                attempt(async () => {
+                  await (kind === "tags"
+                    ? repo.mergeTags(item.id, intoId)
+                    : repo.mergeCollections(item.id, intoId));
+                  const into = (data ?? []).find((x) => x.id === intoId)?.name ?? "";
+                  showToast(`Merged “${item.name}” into “${into}”.`);
+                })
+              }
               onRename={(name) =>
                 attempt(() =>
                   kind === "tags"

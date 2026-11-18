@@ -4,6 +4,8 @@ import { useSyncExternalStore } from "react";
 export interface Toast {
   id: number;
   message: string;
+  /** A button on the toast, such as Undo. Pressing it also closes the toast. */
+  action?: { label: string; run: () => void };
 }
 
 let current: Toast | null = null;
@@ -11,9 +13,9 @@ let counter = 0;
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
-export function showToast(message: string) {
+export function showToast(message: string, action?: Toast["action"]) {
   counter += 1;
-  current = { id: counter, message };
+  current = { id: counter, message, action };
   emit();
 }
 export function dismissToast(id?: number) {

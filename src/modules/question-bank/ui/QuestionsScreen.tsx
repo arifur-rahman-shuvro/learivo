@@ -256,8 +256,26 @@ export default function QuestionsScreen() {
     setBulkBusy(true);
     setError(undefined);
     try {
-      await repo.bulk([...selected], action);
-      showToast(done);
+      const ids = [...selected];
+      await repo.bulk(ids, action);
+      // Archiving and restoring are reversible, so the toast offers to take it back.
+      const back: BulkAction | null =
+        action.kind === "archive"
+          ? { kind: "restore" }
+          : action.kind === "restore"
+            ? { kind: "archive" }
+            : null;
+      showToast(
+        done,
+        back
+          ? {
+              label: "Undo",
+              run: () => {
+                repo.bulk(ids, back).then(refresh, (e) => setError(errorText(e)));
+              },
+            }
+          : undefined,
+      );
       setSelected(new Set());
       setBulkPick(null);
       refresh();

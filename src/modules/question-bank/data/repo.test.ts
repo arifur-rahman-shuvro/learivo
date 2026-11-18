@@ -179,3 +179,32 @@ describe("MemoryRepo behaves like the database", () => {
     expect((await repo.exportAll()).map((e) => e.stem)).toEqual(["Same  Text"]);
   });
 });
+
+describe("merging", () => {
+  it("moves the questions of one tag to another and removes the first", async () => {
+    await repo.create([
+      tf("a", { tags: ["old"] }),
+      tf("b", { tags: ["old", "new"] }),
+      tf("c", { tags: ["new"] }),
+    ]);
+    const tags = await repo.tags();
+    const old = tags.find((t) => t.name === "old")!;
+    const keep = tags.find((t) => t.name === "new")!;
+    await repo.mergeTags(old.id, keep.id);
+    const after = await repo.tags();
+    expect(after.map((t) => t.name)).toEqual(["new"]);
+    expect(after[0]!.count).toBe(3);
+  });
+
+  it("moves the questions of one collection into another", async () => {
+    const ids = await repo.create([tf("a"), tf("b")]);
+    const from = await repo.addCollection("From");
+    const into = await repo.addCollection("Into");
+    await repo.bulk(ids, { kind: "collection", collectionId: from.id, add: true });
+    await repo.bulk([ids[0]!], { kind: "collection", collectionId: into.id, add: true });
+    await repo.mergeCollections(from.id, into.id);
+    const after = await repo.collections();
+    expect(after.map((c) => c.name)).toEqual(["Into"]);
+    expect(after[0]!.count).toBe(2);
+  });
+});

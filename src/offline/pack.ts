@@ -121,6 +121,8 @@ export class PackRepo implements QuestionRepo {
   addTag = async () => this.refuse();
   renameTag = async () => this.refuse();
   deleteTag = async () => this.refuse();
+  mergeTags = async () => this.refuse();
+  mergeCollections = async () => this.refuse();
   addCollection = async () => this.refuse();
   renameCollection = async () => this.refuse();
   deleteCollection = async () => this.refuse();
@@ -273,6 +275,8 @@ export class OfflineAwareRepo implements QuestionRepo {
   addTag = (n: string) => this.write(() => this.remote.addTag(n));
   renameTag = (id: string, n: string) => this.write(() => this.remote.renameTag(id, n));
   deleteTag = (id: string) => this.write(() => this.remote.deleteTag(id));
+  mergeTags = (a: string, b: string) => this.write(() => this.remote.mergeTags(a, b));
+  mergeCollections = (a: string, b: string) => this.write(() => this.remote.mergeCollections(a, b));
   addCollection = (n: string) => this.write(() => this.remote.addCollection(n));
   renameCollection = (id: string, n: string) =>
     this.write(() => this.remote.renameCollection(id, n));

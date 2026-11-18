@@ -494,6 +494,24 @@ export class SupabaseRepo implements QuestionRepo {
     this.tagCache = null;
   }
 
+  async mergeTags(fromId: string, intoId: string) {
+    if (fromId === intoId) return;
+    const rows = (ok(
+      await this.db.from("question_tags").select("question_id").eq("tag_id", fromId),
+    ) ?? []) as { question_id: string }[];
+    for (let i = 0; i < rows.length; i += 500) {
+      ok(
+        await this.db.from("question_tags").upsert(
+          rows
+            .slice(i, i + 500)
+            .map((r) => ({ question_id: r.question_id, tag_id: intoId, user_id: this.userId })),
+          { onConflict: "question_id,tag_id", ignoreDuplicates: true },
+        ),
+      );
+    }
+    await this.deleteTag(fromId);
+  }
+
   // ------------------------------------------------------------ collections
   async collections(): Promise<Collection[]> {
     const rows = (ok(
@@ -524,5 +542,25 @@ export class SupabaseRepo implements QuestionRepo {
   }
   async deleteCollection(id: string) {
     ok(await this.db.from("collections").delete().eq("id", id));
+  }
+
+  async mergeCollections(fromId: string, intoId: string) {
+    if (fromId === intoId) return;
+    const rows = (ok(
+      await this.db.from("collection_questions").select("question_id").eq("collection_id", fromId),
+    ) ?? []) as { question_id: string }[];
+    for (let i = 0; i < rows.length; i += 500) {
+      ok(
+        await this.db.from("collection_questions").upsert(
+          rows.slice(i, i + 500).map((r) => ({
+            question_id: r.question_id,
+            collection_id: intoId,
+            user_id: this.userId,
+          })),
+          { onConflict: "collection_id,question_id", ignoreDuplicates: true },
+        ),
+      );
+    }
+    await this.deleteCollection(fromId);
   }
 }

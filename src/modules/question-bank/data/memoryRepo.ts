@@ -291,6 +291,11 @@ export class MemoryRepo implements QuestionRepo {
     this.tagList = this.tagList.filter((t) => t.id !== id);
     for (const r of this.rows.values()) r.tagIds.delete(id);
   }
+  async mergeTags(fromId: string, intoId: string) {
+    if (fromId === intoId) return;
+    for (const r of this.rows.values()) if (r.tagIds.has(fromId)) r.tagIds.add(intoId);
+    await this.deleteTag(fromId);
+  }
   async collections(): Promise<Collection[]> {
     return this.collectionList.map((c) => ({
       ...c,
@@ -311,5 +316,11 @@ export class MemoryRepo implements QuestionRepo {
   async deleteCollection(id: string) {
     this.collectionList = this.collectionList.filter((c) => c.id !== id);
     for (const r of this.rows.values()) r.collectionIds.delete(id);
+  }
+  async mergeCollections(fromId: string, intoId: string) {
+    if (fromId === intoId) return;
+    for (const r of this.rows.values())
+      if (r.collectionIds.has(fromId)) r.collectionIds.add(intoId);
+    await this.deleteCollection(fromId);
   }
 }
