@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { canAnimate } from "../design-system/motion.ts";
 import { dismissToast, useToast } from "./toast.ts";
 
 const SHOW_MS = 4000;
@@ -7,15 +8,34 @@ const SHOW_WITH_ACTION_MS = 8000;
 
 /** Shows the current toast above the bottom bar, then removes it. Mounted once in the shell. */
 export default function ToastHost() {
-  const toast = useToast();
+  const current = useToast();
+  // Keep the last toast on screen while it plays its exit.
+  const [shown, setShown] = useState(current);
+  const [leaving, setLeaving] = useState(false);
+  if (current && current !== shown) {
+    setShown(current);
+    setLeaving(false);
+  } else if (!current && shown) {
+    if (!canAnimate()) setShown(null);
+    else if (!leaving) setLeaving(true);
+  }
+  const toast = leaving ? shown : current;
   useEffect(() => {
-    if (!toast) return;
+    if (!leaving) return;
+    const t = window.setTimeout(() => {
+      setShown(null);
+      setLeaving(false);
+    }, 180);
+    return () => window.clearTimeout(t);
+  }, [leaving]);
+  useEffect(() => {
+    if (!toast || leaving) return;
     const t = window.setTimeout(
       () => dismissToast(toast.id),
       toast.action ? SHOW_WITH_ACTION_MS : SHOW_MS,
     );
     return () => window.clearTimeout(t);
-  }, [toast]);
+  }, [toast, leaving]);
   return (
     <div
       role="status"
@@ -25,7 +45,7 @@ export default function ToastHost() {
       {toast && (
         <p
           key={toast.id}
-          className="lv-rise-in pointer-events-auto m-0 flex max-w-md items-center gap-3 rounded-control border border-line bg-surface px-4 py-2.5 text-sm font-semibold shadow-lg"
+          className={`${leaving ? "lv-toast-out pointer-events-none" : "lv-toast-in pointer-events-auto"} m-0 flex max-w-md items-center gap-3 rounded-control border border-line bg-surface px-4 py-2.5 text-sm font-semibold shadow-lg`}
         >
           <span>{toast.message}</span>
           {toast.action && (

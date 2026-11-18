@@ -242,6 +242,47 @@ h3 {
     transform: scaleY(0);
   }
 }
+@keyframes lv-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.22);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes lv-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.94);
+  }
+}
+@keyframes lv-toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+}
+@keyframes lv-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.lv-pop {
+  animation: lv-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.lv-toast-in {
+  animation: lv-toast-in 340ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.lv-toast-out {
+  animation: lv-toast-out 180ms cubic-bezier(0.5, 0, 0.75, 0) forwards;
+}
+.lv-item-in {
+  animation: lv-item-in 260ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
 /* A bar that grows up from its base when it first appears. Set animation-delay to stagger. */
 .lv-grow-y {
   transform-origin: bottom;

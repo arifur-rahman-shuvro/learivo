@@ -305,3 +305,5 @@ Design rules (so it feels like one system and not a pile of effects):
 Progress notes are added below as each step is pushed.
 
 Progress, 24.1 and 24.2 (2026-11-18): `design-system/motion.ts` remembers the last tapped control; every `Dialog` now grows out of it and shrinks back into it on close (300 ms in, 200 ms out, transform and opacity only). The avatar zooms with a spring while the account menu or any account panel is open; the menu drops out of the avatar and folds back; panels opened from the menu grow from the avatar. Reduced motion and Low effects skip all of it. Not yet seen on a real phone.
+
+Progress, 24.3 to 24.7 (2026-11-18): Picker chevron turns when open, options rise in one after another and the tick pops; bottom nav has a highlight that slides to the current tab and the icon bounces; toasts spring in and slide out; the command palette grows from the control tapped (or drops in when opened by keyboard) through Dialog. Not done: 24.6 filters smooth height (left for a later pass). Not yet seen on a real phone.

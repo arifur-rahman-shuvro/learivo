@@ -121,7 +121,9 @@ export function Picker({
         >
           {current?.label.trim() ?? placeholder}
         </span>
-        <span className="shrink-0 text-muted">
+        <span
+          className={`shrink-0 text-muted transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+        >
           <Chevron />
         </span>
       </button>
@@ -155,15 +157,18 @@ export function Picker({
             aria-label={label}
             className="m-0 flex list-none flex-col gap-1 p-0"
           >
-            {shown.map((o) => {
+            {shown.map((o, i) => {
               const selected = o.value === value;
               const depth = searching ? 0 : (o.depth ?? 0);
               return (
                 <li
                   key={o.value}
                   role="presentation"
-                  className="relative"
-                  style={{ paddingLeft: depth * 20 }}
+                  className={`relative ${searching ? "" : "lv-item-in"}`}
+                  style={{
+                    paddingLeft: depth * 20,
+                    ...(searching ? {} : { animationDelay: `${Math.min(i, 8) * 25}ms` }),
+                  }}
                 >
                   {depth > 0 && (
                     <span
@@ -194,7 +199,7 @@ export function Picker({
                     <span className="flex shrink-0 items-center gap-2 text-sm text-muted">
                       {o.hint}
                       {selected && (
-                        <span className="text-accent">
+                        <span className="lv-pop text-accent">
                           <CheckIcon size={20} title="Selected" />
                         </span>
                       )}
