@@ -380,63 +380,72 @@ export default function QuestionsScreen() {
               ))}
             </ul>
           )}
+          {/* On a phone the filters open and close by height, not by popping in. */}
           <div
-            id="question-filters"
-            className={`${filtersOpen ? "grid" : "hidden"} grid-cols-2 gap-2 md:grid md:grid-cols-3 xl:grid-cols-6`}
+            className={`grid transition-[grid-template-rows,opacity,visibility] duration-300 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)] md:grid-rows-[1fr] ${
+              filtersOpen
+                ? "grid-rows-[1fr] opacity-100"
+                : "invisible grid-rows-[0fr] opacity-0 md:visible md:opacity-100"
+            }`}
           >
-            <Picker
-              hideLabel
-              label="Type"
-              emptyLabel="All types"
-              value={query.qtypes[0] ?? ""}
-              options={QUESTION_TYPES.map((t) => ({ value: t, label: TYPE_LABELS[t] }))}
-              onChange={(v) => patch({ qtypes: v ? [v as QuestionType] : [] })}
-            />
-            <Picker
-              hideLabel
-              label="Subject"
-              emptyLabel="All subjects"
-              value={query.unclassified ? "__none" : (query.nodeId ?? "")}
-              options={[{ value: "__none", label: "Unclassified" }, ...options]}
-              onChange={(v) =>
-                patch({ nodeId: v && v !== "__none" ? v : null, unclassified: v === "__none" })
-              }
-            />
-            <Picker
-              hideLabel
-              label="Difficulty"
-              emptyLabel="Any difficulty"
-              value={query.difficulties[0] ? String(query.difficulties[0]) : ""}
-              options={[1, 2, 3, 4, 5].map((d) => ({ value: String(d), label: `Level ${d}` }))}
-              onChange={(v) => patch({ difficulties: v ? [Number(v)] : [] })}
-            />
-            <Picker
-              hideLabel
-              label="Tag"
-              emptyLabel="All tags"
-              value={query.tagId ?? ""}
-              options={(tags.data ?? []).map((t) => ({ value: t.id, label: t.name }))}
-              onChange={(v) => patch({ tagId: v || null })}
-            />
-            <Picker
-              hideLabel
-              label="Collection"
-              emptyLabel="All collections"
-              value={query.collectionId ?? ""}
-              options={(collections.data ?? []).map((c) => ({ value: c.id, label: c.name }))}
-              onChange={(v) => patch({ collectionId: v || null })}
-            />
-            <Picker
-              hideLabel
-              label="Sort"
-              value={query.sort}
-              options={[
-                { value: "updated", label: "Last edited" },
-                { value: "created", label: "Newest" },
-                { value: "stem", label: "Alphabetical" },
-              ]}
-              onChange={(v) => patch({ sort: v as QuestionQuery["sort"] })}
-            />
+            <div
+              id="question-filters"
+              className="grid min-h-0 grid-cols-2 gap-2 max-md:overflow-hidden md:grid-cols-3 xl:grid-cols-6"
+            >
+              <Picker
+                hideLabel
+                label="Type"
+                emptyLabel="All types"
+                value={query.qtypes[0] ?? ""}
+                options={QUESTION_TYPES.map((t) => ({ value: t, label: TYPE_LABELS[t] }))}
+                onChange={(v) => patch({ qtypes: v ? [v as QuestionType] : [] })}
+              />
+              <Picker
+                hideLabel
+                label="Subject"
+                emptyLabel="All subjects"
+                value={query.unclassified ? "__none" : (query.nodeId ?? "")}
+                options={[{ value: "__none", label: "Unclassified" }, ...options]}
+                onChange={(v) =>
+                  patch({ nodeId: v && v !== "__none" ? v : null, unclassified: v === "__none" })
+                }
+              />
+              <Picker
+                hideLabel
+                label="Difficulty"
+                emptyLabel="Any difficulty"
+                value={query.difficulties[0] ? String(query.difficulties[0]) : ""}
+                options={[1, 2, 3, 4, 5].map((d) => ({ value: String(d), label: `Level ${d}` }))}
+                onChange={(v) => patch({ difficulties: v ? [Number(v)] : [] })}
+              />
+              <Picker
+                hideLabel
+                label="Tag"
+                emptyLabel="All tags"
+                value={query.tagId ?? ""}
+                options={(tags.data ?? []).map((t) => ({ value: t.id, label: t.name }))}
+                onChange={(v) => patch({ tagId: v || null })}
+              />
+              <Picker
+                hideLabel
+                label="Collection"
+                emptyLabel="All collections"
+                value={query.collectionId ?? ""}
+                options={(collections.data ?? []).map((c) => ({ value: c.id, label: c.name }))}
+                onChange={(v) => patch({ collectionId: v || null })}
+              />
+              <Picker
+                hideLabel
+                label="Sort"
+                value={query.sort}
+                options={[
+                  { value: "updated", label: "Last edited" },
+                  { value: "created", label: "Newest" },
+                  { value: "stem", label: "Alphabetical" },
+                ]}
+                onChange={(v) => patch({ sort: v as QuestionQuery["sort"] })}
+              />
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {filtered && (
