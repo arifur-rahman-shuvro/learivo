@@ -66,7 +66,9 @@ describe("askAi", () => {
     [503, "other"],
   ] as const)("explains HTTP %i as a %s problem", async (status, kind) => {
     const f = fake({ error: { message: "nope" } }, status);
-    const err = await askAi(cfg("openai"), "Hi", { fetchImpl: f }).catch((e: unknown) => e);
+    const err = await askAi(cfg("openai"), "Hi", { fetchImpl: f, retryWaits: [] }).catch(
+      (e: unknown) => e,
+    );
     expect(err).toBeInstanceOf(AiError);
     expect((err as AiError).kind).toBe(kind);
   });
@@ -92,7 +94,7 @@ describe("askAi", () => {
     const down = vi.fn(() =>
       Promise.reject(new TypeError("Failed to fetch")),
     ) as unknown as typeof fetch;
-    const e1 = (await askAi(cfg("openai"), "Hi", { fetchImpl: down }).catch(
+    const e1 = (await askAi(cfg("openai"), "Hi", { fetchImpl: down, retryWaits: [] }).catch(
       (e: unknown) => e,
     )) as AiError;
     expect(e1.kind).toBe("network");
@@ -109,5 +111,63 @@ describe("askAi", () => {
       (e: unknown) => e,
     )) as AiError;
     expect(err.kind).toBe("blocked");
+  });
+
+  describe("retries", () => {
+    const ok = () => reply({ choices: [{ message: { content: "done" } }] });
+
+    it("retries a busy provider and returns the later answer", async () => {
+      const f = vi
+        .fn()
+        .mockReturnValueOnce(reply({ error: { message: "busy" } }, 503))
+        .mockReturnValueOnce(ok()) as unknown as typeof fetch;
+      const waits: string[] = [];
+      const text = await askAi(cfg("openai"), "Hi", {
+        fetchImpl: f,
+        retryWaits: [1],
+        onWait: (_s, why) => waits.push(why),
+      });
+      expect(text).toBe("done");
+      expect(waits).toEqual(["busy"]);
+    });
+
+    it("retries a rate limit, then gives up with a limit error", async () => {
+      const f = vi.fn(() =>
+        reply({ error: { message: "slow down" } }, 429),
+      ) as unknown as typeof fetch;
+      const err = (await askAi(cfg("openai"), "Hi", { fetchImpl: f, retryWaits: [1, 1] }).catch(
+        (e: unknown) => e,
+      )) as AiError;
+      expect(err.kind).toBe("limit");
+      expect((f as unknown as { mock: { calls: unknown[] } }).mock.calls).toHaveLength(3);
+    });
+
+    it("retries a dropped connection", async () => {
+      const f = vi
+        .fn()
+        .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+        .mockReturnValueOnce(ok()) as unknown as typeof fetch;
+      const text = await askAi(cfg("openai"), "Hi", { fetchImpl: f, retryWaits: [1] });
+      expect(text).toBe("done");
+    });
+
+    it("does not retry a wrong key", async () => {
+      const f = vi.fn(() => reply({ error: { message: "bad" } }, 401)) as unknown as typeof fetch;
+      await askAi(cfg("openai"), "Hi", { fetchImpl: f, retryWaits: [1, 1] }).catch(() => undefined);
+      expect((f as unknown as { mock: { calls: unknown[] } }).mock.calls).toHaveLength(1);
+    });
+
+    it("stops waiting when the student presses Stop", async () => {
+      const ctl = new AbortController();
+      const f = vi.fn(() => reply({ error: { message: "busy" } }, 503)) as unknown as typeof fetch;
+      const run = askAi(cfg("openai"), "Hi", {
+        fetchImpl: f,
+        retryWaits: [60000],
+        signal: ctl.signal,
+        onWait: () => ctl.abort(),
+      }).catch((e: unknown) => e);
+      const err = (await run) as AiError;
+      expect(err.message).toBe("Stopped.");
+    });
   });
 });

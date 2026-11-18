@@ -72,6 +72,28 @@ export interface AskOptions {
   /** Replaces fetch in tests. */
   fetchImpl?: typeof fetch;
   maxTokens?: number;
+  /** Waits, in milliseconds, before each retry of a busy, rate-limited or unreachable provider. */
+  retryWaits?: number[];
+  /** Called while waiting to retry, so the screen can say so. */
+  onWait?: (seconds: number, why: "busy" | "limit" | "network") => void;
+}
+
+const DEFAULT_WAITS = [3000, 9000];
+
+/** Sleeps, but wakes at once when the student presses Stop. */
+function pause(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(new AiError("other", "Stopped."));
+    const t = setTimeout(() => {
+      signal?.removeEventListener("abort", stop);
+      resolve();
+    }, ms);
+    const stop = () => {
+      clearTimeout(t);
+      reject(new AiError("other", "Stopped."));
+    };
+    signal?.addEventListener("abort", stop, { once: true });
+  });
 }
 
 const OPENAI_BASE: Partial<Record<ProviderId, string>> = {
@@ -202,29 +224,55 @@ function textOf(cfg: AiConfig, body: unknown): string {
   return typeof msg.content === "string" ? msg.content : "";
 }
 
-/** Sends one prompt to the student's AI and returns its text. The key is only ever sent to that provider. */
+/**
+ * Sends one prompt to the student's AI and returns its text. The key is only ever sent to that
+ * provider. A busy provider (5xx), a rate limit (429) or a dropped connection is retried a couple
+ * of times with a pause, because free plans hit short limits when several batches follow each other.
+ */
 export async function askAi(cfg: AiConfig, prompt: string, opts: AskOptions = {}): Promise<string> {
   const doFetch = opts.fetchImpl ?? fetch;
   const { url, init } = request(cfg, prompt, opts.maxTokens ?? 16000);
-  let res: Response;
-  try {
-    res = await doFetch(url, { ...init, signal: opts.signal });
-  } catch (e) {
-    if (e instanceof DOMException && e.name === "AbortError") {
-      throw new AiError("other", "Stopped.");
+  const waits = opts.retryWaits ?? DEFAULT_WAITS;
+  const label = providerOf(cfg.provider).label;
+
+  for (let attempt = 0; ; attempt++) {
+    let res: Response;
+    try {
+      res = await doFetch(url, { ...init, signal: opts.signal });
+    } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") {
+        throw new AiError("other", "Stopped.");
+      }
+      if (e instanceof DOMException && e.name === "TimeoutError") {
+        throw new AiError(
+          "other",
+          `${label} took too long to answer. Ask for fewer questions, or try again.`,
+        );
+      }
+      if (attempt < waits.length) {
+        opts.onWait?.(Math.round(waits[attempt]! / 1000), "network");
+        await pause(waits[attempt]!, opts.signal);
+        continue;
+      }
+      throw new AiError("network", `Could not reach ${label}. Check your internet and try again.`);
     }
-    throw new AiError(
-      "network",
-      `Could not reach ${providerOf(cfg.provider).label}. Check your internet and try again.`,
-    );
+    const body: unknown = await res.json().catch(() => null);
+    if (!res.ok) {
+      const retryable = res.status === 429 || res.status >= 500;
+      if (retryable && attempt < waits.length) {
+        const header = Number(res.headers.get("retry-after"));
+        const wait =
+          res.status === 429 && Number.isFinite(header) && header > 0
+            ? Math.min(header * 1000, 30000)
+            : waits[attempt]!;
+        opts.onWait?.(Math.round(wait / 1000), res.status === 429 ? "limit" : "busy");
+        await pause(wait, opts.signal);
+        continue;
+      }
+      throw failure(res.status, body, cfg);
+    }
+    const text = textOf(cfg, body).trim();
+    if (!text) throw new AiError("other", `${label} sent back an empty answer. Try again.`);
+    return text;
   }
-  const body: unknown = await res.json().catch(() => null);
-  if (!res.ok) throw failure(res.status, body, cfg);
-  const text = textOf(cfg, body).trim();
-  if (!text)
-    throw new AiError(
-      "other",
-      `${providerOf(cfg.provider).label} sent back an empty answer. Try again.`,
-    );
-  return text;
 }
