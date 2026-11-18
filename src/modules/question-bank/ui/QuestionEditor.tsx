@@ -1,3 +1,4 @@
+import { qualityHints } from "../domain/quality.ts";
 import { findSimilarInBank } from "./similar.ts";
 import { useEffect, useMemo, useState } from "react";
 import { Badge, Button, Dialog, Field, Spinner, Picker } from "../../../design-system/index.ts";
@@ -168,6 +169,7 @@ export function QuestionEditor({ id, onClose, onManage }: Props) {
     };
   }, [draft?.stem, draft?.qtype, original, repo]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const hints = useMemo(() => (draft ? qualityHints(draft) : []), [draft]);
   const chain = useMemo(() => (draft ? nodeChain(draft.path, nodes) : []), [draft, nodes]);
 
   if (failure && !draft) {
@@ -429,6 +431,19 @@ export function QuestionEditor({ id, onClose, onManage }: Props) {
             <p role="alert" className="m-0 text-sm font-medium text-danger">
               {issueFor("answer")}
             </p>
+          )}
+          {hints.length > 0 && (
+            <aside
+              aria-label="Ideas to improve this question"
+              className="lv-rise-in flex flex-col gap-1.5 rounded-control border border-line bg-surface-2 p-3 text-sm"
+            >
+              <p className="m-0 font-semibold">Ideas to improve this question</p>
+              <ul className="m-0 flex list-disc flex-col gap-1 pl-5 text-muted">
+                {hints.map((h) => (
+                  <li key={h.id}>{h.message}</li>
+                ))}
+              </ul>
+            </aside>
           )}
 
           <div className="flex flex-col gap-1.5">
