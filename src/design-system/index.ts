@@ -8,3 +8,4 @@ export { RichText, type TermSplitter } from "./RichText.tsx";
 export { Avatar } from "./Avatar.tsx";
 export { Picker, type PickerOption } from "./Picker.tsx";
 export { Segmented, type SegmentOption } from "./Segmented.tsx";
+export { useGrown } from "./useGrown.ts";

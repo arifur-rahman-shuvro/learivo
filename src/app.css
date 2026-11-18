@@ -237,6 +237,16 @@ h3 {
     transform: translateY(12px);
   }
 }
+@keyframes lv-grow-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+/* A bar that grows up from its base when it first appears. Set animation-delay to stagger. */
+.lv-grow-y {
+  transform-origin: bottom;
+  animation: lv-grow-y 600ms var(--lv-ease, ease-out) backwards;
+}
 .lv-fade-in {
   animation: lv-fade-in 160ms var(--lv-ease, ease-out);
 }
@@ -263,6 +273,7 @@ html[data-effects="low"] .lv-bg-art {
 }
 html[data-effects="low"] * {
   animation: none !important;
+  transition: none !important;
 }
 html[data-effects="low"] {
   --lv-ring-glow: none;

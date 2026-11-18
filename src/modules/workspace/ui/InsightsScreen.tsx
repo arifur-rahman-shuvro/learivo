@@ -10,7 +10,7 @@ import {
   InsightsIcon,
   ProgressBar,
   ProgressRing,
-  Spinner,
+  PanelSkeleton,
 } from "../../../design-system/index.ts";
 import { clock } from "../../practice/ui/practice.tsx";
 import { useInsightsData } from "./useInsightsData.ts";
@@ -188,11 +188,7 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
           {error}
         </p>
       )}
-      {!data && !error && (
-        <div className="grid place-items-center py-16">
-          <Spinner />
-        </div>
-      )}
+      {!data && !error && <PanelSkeleton />}
 
       {data && view && data.facts.length === 0 && data.sessions.length === 0 && (
         <div className="lv-card">
@@ -390,14 +386,15 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
               >
                 {(() => {
                   const max = Math.max(60, ...view.time.map((t) => t.seconds));
-                  return view.time.map((t) => (
+                  return view.time.map((t, i) => (
                     <div
                       key={t.day}
                       className="flex flex-1 flex-col items-center justify-end gap-1"
                     >
                       <div
-                        className="w-full rounded-t bg-accent"
+                        className="lv-grow-y w-full rounded-t bg-accent"
                         style={{
+                          animationDelay: `${i * 35}ms`,
                           height: `${(t.seconds / max) * 100}%`,
                           minHeight: t.seconds > 0 ? 3 : 0,
                         }}

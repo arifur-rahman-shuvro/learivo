@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, Dialog, EmptyState, Spinner } from "../../../design-system/index.ts";
+import { Button, Dialog, EmptyState, ListSkeleton } from "../../../design-system/index.ts";
 import { errorText } from "../../question-bank/ui/bank.tsx";
 import { searchTerms, type GlossaryTerm } from "../domain/cards.ts";
 import { useWorkspace } from "./workspace.tsx";
@@ -51,11 +51,7 @@ export default function GlossaryPanel() {
           {error}
         </p>
       )}
-      {terms === null && !error && (
-        <div className="grid place-items-center py-12">
-          <Spinner />
-        </div>
-      )}
+      {terms === null && !error && <ListSkeleton />}
       {terms !== null && terms.length === 0 && (
         <div className="lv-card">
           <EmptyState

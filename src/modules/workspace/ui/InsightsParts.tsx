@@ -1,3 +1,4 @@
+import { useGrown } from "../../../design-system/useGrown.ts";
 import type { ActivityDay, ReasonRow } from "../domain/insights.ts";
 import { REASONS, reasonLabel } from "../../practice/domain/reasons.ts";
 
@@ -159,6 +160,7 @@ const WEEKDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 /** Seven bars, one per day, ending today. A dashed line marks the daily goal. */
 export function WeekBars({ days, goal }: { days: ActivityDay[]; goal: number }) {
+  const grown = useGrown();
   const max = Math.max(goal, ...days.map((d) => d.count), 1);
   const total = days.reduce((n, d) => n + d.count, 0);
   const label = `Answers in the last ${days.length} days: ${days
@@ -179,9 +181,11 @@ export function WeekBars({ days, goal }: { days: ActivityDay[]; goal: number }) 
                 aria-hidden="true"
                 className="w-full rounded-t-[6px]"
                 style={{
-                  height: d.count === 0 ? 3 : `${(d.count / max) * 100}%`,
+                  height: d.count === 0 ? 3 : `${grown ? (d.count / max) * 100 : 0}%`,
                   background: d.count === 0 ? "var(--lv-surface-3)" : "var(--lv-accent)",
                   opacity: i === days.length - 1 ? 1 : 0.7,
+                  transition: "height 600ms var(--lv-ease)",
+                  transitionDelay: `${i * 45}ms`,
                 }}
               />
             </div>

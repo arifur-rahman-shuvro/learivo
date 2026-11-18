@@ -1,7 +1,7 @@
 import { paceNote, paceOf, shortTime } from "../domain/pace.ts";
 import GlossaryText from "../../workspace/ui/GlossaryText.tsx";
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Button, ProgressRing, Spinner } from "../../../design-system/index.ts";
+import { Badge, Button, ProgressRing, PanelSkeleton } from "../../../design-system/index.ts";
 import { errorText } from "../../question-bank/ui/bank.tsx";
 import { TYPE_LABELS } from "../../question-bank/domain/model.ts";
 import type { AttemptWithItems } from "../data/repo.ts";
@@ -62,12 +62,7 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
   }, [a]);
 
   if (error) return <p role="alert">{error}</p>;
-  if (!a)
-    return (
-      <div className="grid place-items-center py-16">
-        <Spinner />
-      </div>
-    );
+  if (!a) return <PanelSkeleton />;
 
   const items = a.items.filter(
     (i) =>

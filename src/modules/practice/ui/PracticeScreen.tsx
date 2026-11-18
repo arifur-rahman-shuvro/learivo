@@ -7,7 +7,7 @@ import {
   Picker,
   PlusIcon,
   PracticeIcon,
-  Spinner,
+  ListSkeleton,
 } from "../../../design-system/index.ts";
 import { errorText, useBank, useLoad } from "../../question-bank/ui/bank.tsx";
 import type { Attempt, Exam } from "../data/repo.ts";
@@ -422,7 +422,7 @@ function Home({ onOpen }: { onOpen: (v: View) => void }) {
           </Button>
         </div>
         {exams === null ? (
-          <Spinner />
+          <ListSkeleton rows={2} />
         ) : exams.length === 0 ? (
           <div className="lv-card">
             <EmptyState
@@ -478,7 +478,7 @@ function Home({ onOpen }: { onOpen: (v: View) => void }) {
       <section aria-label="Recent sessions" className="flex flex-col gap-3">
         <h2 className="m-0 text-lg font-semibold">Recent results</h2>
         {recent === null ? (
-          <Spinner />
+          <ListSkeleton rows={3} />
         ) : recent.filter((a) => a.status === "submitted").length === 0 ? (
           <p className="m-0 text-sm text-muted">Finished sessions appear here.</p>
         ) : (

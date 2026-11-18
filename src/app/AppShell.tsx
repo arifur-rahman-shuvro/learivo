@@ -4,6 +4,7 @@ import {
   Button,
   EmptyState,
   LogoWordmark,
+  PanelSkeleton,
   PlusIcon,
   SearchIcon,
   ThemeBackground,
@@ -100,20 +101,22 @@ function ModuleHost({
     <BankProvider repo={repo}>
       <PracticeProvider attempts={attempts}>
         <WorkspaceProvider repo={workspace}>
-          <Suspense fallback={<div role="status" aria-label="Loading" />}>
+          <Suspense fallback={<PanelSkeleton />}>
             <GuideGate onNavigate={onNavigate} />
             <BackupGate />
-            {module === "home" ? (
-              <HomeDashboard onNavigate={onNavigate} />
-            ) : module === "questions" ? (
-              <QuestionsScreen />
-            ) : module === "practice" ? (
-              <PracticeScreen />
-            ) : module === "review" ? (
-              <ReviewScreen onNavigate={onNavigate} />
-            ) : (
-              <InsightsScreen onNavigate={onNavigate} />
-            )}
+            <div key={module} className="lv-fade-in">
+              {module === "home" ? (
+                <HomeDashboard onNavigate={onNavigate} />
+              ) : module === "questions" ? (
+                <QuestionsScreen />
+              ) : module === "practice" ? (
+                <PracticeScreen />
+              ) : module === "review" ? (
+                <ReviewScreen onNavigate={onNavigate} />
+              ) : (
+                <InsightsScreen onNavigate={onNavigate} />
+              )}
+            </div>
           </Suspense>
         </WorkspaceProvider>
       </PracticeProvider>

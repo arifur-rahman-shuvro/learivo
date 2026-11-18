@@ -9,7 +9,7 @@ import {
   EmptyState,
   QuestionsIcon,
   ReviewIcon,
-  Spinner,
+  PanelSkeleton,
 } from "../../../design-system/index.ts";
 import type { QuestionRecord } from "../../question-bank/data/repo.ts";
 import { TYPE_LABELS } from "../../question-bank/domain/model.ts";
@@ -213,11 +213,7 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
         </p>
       )}
 
-      {!data && !error && (
-        <div className="grid place-items-center py-16">
-          <Spinner />
-        </div>
-      )}
+      {!data && !error && <PanelSkeleton />}
 
       {tab === "flashcards" && <FlashcardsPanel />}
       {tab === "glossary" && <GlossaryPanel />}

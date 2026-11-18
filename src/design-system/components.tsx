@@ -5,6 +5,7 @@ import {
   type InputHTMLAttributes,
   type ReactNode,
 } from "react";
+import { useGrown } from "./useGrown.ts";
 import { useTheme } from "../themes/ThemeProvider.tsx";
 import { slots } from "../themes/slots.tsx";
 
@@ -142,6 +143,7 @@ export function ProgressRing({
   label: string;
 }) {
   const clamped = Math.max(0, Math.min(100, value));
+  const grown = useGrown();
   const r = 40;
   const c = 2 * Math.PI * r;
   return (
@@ -169,11 +171,16 @@ export function ProgressRing({
           stroke="var(--lv-accent)"
           strokeWidth="9"
           strokeDasharray={c}
-          strokeDashoffset={c * (1 - clamped / 100)}
+          strokeDashoffset={c * (1 - (grown ? clamped : 0) / 100)}
           transform="rotate(-90 50 50)"
         />
       </svg>
-      <span className="absolute font-mono text-lg font-semibold">{Math.round(clamped)}%</span>
+      <span
+        className="absolute font-mono text-lg font-semibold"
+        style={{ opacity: grown ? 1 : 0, transition: "opacity 600ms var(--lv-ease)" }}
+      >
+        {Math.round(clamped)}%
+      </span>
     </div>
   );
 }
@@ -181,6 +188,7 @@ export function ProgressRing({
 /* ---------- Progress bar ---------- */
 export function ProgressBar({ value, label }: { value: number; label: string }) {
   const clamped = Math.max(0, Math.min(100, value));
+  const grown = useGrown();
   return (
     <div
       role="progressbar"
@@ -192,7 +200,10 @@ export function ProgressBar({ value, label }: { value: number; label: string }) 
     >
       <div
         className="h-full rounded-pill bg-accent"
-        style={{ width: `${clamped}%`, transition: "width var(--lv-motion-base) var(--lv-ease)" }}
+        style={{
+          width: `${grown ? clamped : 0}%`,
+          transition: "width 600ms var(--lv-ease)",
+        }}
       />
     </div>
   );
@@ -258,6 +269,31 @@ export function ListSkeleton({ rows = 5 }: { rows?: number }) {
           <div className="h-3 w-1/3 animate-pulse rounded bg-surface-3 motion-reduce:animate-none" />
         </div>
       ))}
+    </div>
+  );
+}
+
+/** Placeholder for a dashboard-style screen: one wide card, then two half cards. */
+export function PanelSkeleton() {
+  const bar = "animate-pulse rounded bg-surface-3 motion-reduce:animate-none";
+  return (
+    <div role="status" aria-label="Loading" className="flex flex-col gap-4">
+      <div className="lv-card flex items-center gap-5 p-5" aria-hidden="true">
+        <div className={`size-24 shrink-0 rounded-full ${bar}`} />
+        <div className="flex flex-1 flex-col gap-2.5">
+          <div className={`h-4 w-2/3 ${bar}`} />
+          <div className={`h-3 w-1/2 ${bar}`} />
+          <div className={`h-3 w-3/5 ${bar}`} />
+        </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2" aria-hidden="true">
+        {[0, 1].map((i) => (
+          <div key={i} className="lv-card flex flex-col gap-3 p-5">
+            <div className={`h-4 w-1/3 ${bar}`} />
+            <div className={`h-20 w-full ${bar}`} />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
