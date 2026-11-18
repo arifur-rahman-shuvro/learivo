@@ -5,6 +5,7 @@ import {
   Button,
   EmptyState,
   Picker,
+  SparkIcon,
   PlusIcon,
   PracticeIcon,
   ListSkeleton,
@@ -19,7 +20,13 @@ import { useWorkspace } from "../../workspace/ui/workspace.tsx";
 import Results from "./Results.tsx";
 import { subjectOptions } from "../../question-bank/ui/subjectOptions.ts";
 import { ExamPaperDialog } from "./ExamPaperDialog.tsx";
-import { countAvailable, startExam, startPractice, type PracticeSetup } from "./start.ts";
+import {
+  countAvailable,
+  startExam,
+  startPractice,
+  startSmart,
+  type PracticeSetup,
+} from "./start.ts";
 
 type View = { name: "home" } | { name: "play"; id: string } | { name: "results"; id: string };
 
@@ -248,6 +255,25 @@ function Home({ onOpen }: { onOpen: (v: View) => void }) {
 
       <section aria-label="Quick start" className="flex flex-col gap-2">
         <h2 className="m-0 text-lg font-semibold">Quick start</h2>
+        <button
+          type="button"
+          disabled={busy !== null}
+          onClick={() => void begin("smart", () => startSmart(repo, attempts, workspace))}
+          className="lv-card flex items-center gap-3 border-accent p-4 text-left disabled:opacity-50"
+        >
+          <span
+            aria-hidden="true"
+            className="grid size-11 shrink-0 place-items-center rounded-full bg-accent text-on-accent"
+          >
+            <SparkIcon size={22} />
+          </span>
+          <span className="flex min-w-0 flex-col">
+            <span className="font-semibold">{busy === "smart" ? "Starting…" : "Smart mix"}</span>
+            <span className="text-xs text-muted">
+              20 questions: revision that is due, your weak areas and new questions
+            </span>
+          </span>
+        </button>
         <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
           {PRESETS.map((p) => {
             const n = counts?.[p.id];

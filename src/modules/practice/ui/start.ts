@@ -5,11 +5,14 @@ import type { QuestionInput } from "../../question-bank/domain/model.ts";
 import type { AttemptRepo, AttemptWithItems, Exam } from "../data/repo.ts";
 import {
   applyFilter,
+  composeSmart,
   drawByRules,
   shuffled,
   snapshotOf,
   type PracticeFilter,
 } from "../domain/session.ts";
+import { isDue } from "../../workspace/domain/scheduler.ts";
+import { weakAreas } from "../../workspace/domain/insights.ts";
 import type { WorkspaceRepo } from "../../workspace/data/repo.ts";
 import { fetchPool, makeInside } from "./practice.tsx";
 
@@ -189,4 +192,32 @@ export async function startFromQuestions(
       .slice(0, 200)
       .map((q) => ({ questionId: q.id, snapshot: snapshotOf(q, pathOf(q.nodeId, nodes), true) })),
   });
+}
+
+export const SMART_SIZE = 20;
+
+/** A session mixing due revision, weak areas and new questions. */
+export async function startSmart(
+  questions: QuestionRepo,
+  attempts: AttemptRepo,
+  workspace: WorkspaceRepo,
+  now: Date = new Date(),
+): Promise<string> {
+  const [pool, nodes, past, cards, facts] = await Promise.all([
+    fetchPool(questions, { nodeId: null, tagId: null, collectionId: null }),
+    questions.taxonomy(),
+    attempts.past(),
+    workspace.cards(),
+    attempts.facts(2000),
+  ]);
+  const byId = new Map(pool.map((q) => [q.id, q]));
+  const due = cards.filter((c) => isDue(c, now) && byId.has(c.questionId)).map((c) => c.questionId);
+  const weakNames = new Set(weakAreas(facts).map((a) => a.name));
+  const weak = pool
+    .filter((q) => weakNames.has(pathOf(q.nodeId, nodes).slice(0, 2).join(" › ")))
+    .map((q) => q.id);
+  const fresh = pool.filter((q) => !past.has(q.id)).map((q) => q.id);
+  const ids = composeSmart({ due, weak, fresh, rest: pool.map((q) => q.id) }, SMART_SIZE);
+  if (ids.length === 0) throw new Error(NO_QUESTIONS);
+  return startFromQuestions(questions, attempts, ids, "Smart mix");
 }

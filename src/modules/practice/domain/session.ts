@@ -109,3 +109,50 @@ export function drawByRules(
   }
   return picked;
 }
+
+/** The kinds of question a smart session mixes. A question appears under the first group it fits. */
+export interface SmartPools {
+  /** Revision cards that are due. */
+  due: readonly string[];
+  /** Questions from the student's weak areas. */
+  weak: readonly string[];
+  /** Not attempted yet. */
+  fresh: readonly string[];
+  /** Everything else, used to fill up. */
+  rest: readonly string[];
+}
+
+/**
+ * A study session that fits the day: about 40% revision that is due, 35% weak areas and 25% new
+ * questions. A group that has too few hands its share to the others, so the session is as full as
+ * the bank allows. `pick` chooses within a group (random in the app, fixed in tests).
+ */
+export function composeSmart(
+  pools: SmartPools,
+  count: number,
+  pick: <T>(items: readonly T[]) => T[] = shuffled,
+): string[] {
+  const used = new Set<string>();
+  const take = (ids: readonly string[], n: number) => {
+    const out: string[] = [];
+    for (const id of pick(ids)) {
+      if (out.length >= n) break;
+      if (used.has(id)) continue;
+      used.add(id);
+      out.push(id);
+    }
+    return out;
+  };
+  const dueN = Math.round(count * 0.4);
+  const weakN = Math.round(count * 0.35);
+  const out = [
+    ...take(pools.due, dueN),
+    ...take(pools.weak, weakN),
+    ...take(pools.fresh, count - dueN - weakN),
+  ];
+  for (const group of [pools.due, pools.weak, pools.fresh, pools.rest]) {
+    if (out.length >= count) break;
+    out.push(...take(group, count - out.length));
+  }
+  return pick(out);
+}

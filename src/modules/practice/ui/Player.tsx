@@ -296,9 +296,14 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
 
       <div className="grid gap-4 lg:grid-cols-[1fr_240px]">
         <section aria-label="Question" className="lv-card flex flex-col gap-4 p-5">
-          <p className="m-0 text-xs font-semibold text-muted">
-            {TYPE_LABELS[snap.qtype]}
-            {snap.path.length > 0 ? ` · ${snap.path.join(" › ")}` : ""}
+          <p className="m-0 flex items-baseline justify-between gap-3 text-xs font-semibold text-muted">
+            <span className="min-w-0">
+              {TYPE_LABELS[snap.qtype]}
+              {snap.path.length > 0 ? ` · ${snap.path.join(" › ")}` : ""}
+            </span>
+            <span className="shrink-0 font-mono" title="Time on this question">
+              {clock(secs.current[index] ?? 0)}
+            </span>
           </p>
           <p className="m-0 whitespace-pre-wrap break-words text-lg font-semibold leading-relaxed">
             {parts

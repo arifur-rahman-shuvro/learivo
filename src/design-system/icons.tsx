@@ -76,3 +76,9 @@ export const SearchIcon = (p: IconProps) => (
     <path d="M16 16l4.5 4.5" />
   </Icon>
 );
+export const SparkIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" />
+    <path d="M19 16l.7 1.8L21.5 18.5l-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7L19 16z" />
+  </Icon>
+);

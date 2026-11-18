@@ -1,3 +1,4 @@
+import { compareSentence, previousAttempt } from "../domain/compare.ts";
 import { paceNote, paceOf, shortTime } from "../domain/pace.ts";
 import GlossaryText from "../../workspace/ui/GlossaryText.tsx";
 import { useEffect, useMemo, useState } from "react";
@@ -25,6 +26,7 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
   const [show, setShow] = useState<Show>("all");
   const [open, setOpen] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const [versus, setVersus] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -36,6 +38,24 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
       alive = false;
     };
   }, [attempts, attemptId]);
+
+  // An exam taken before is compared with its latest earlier attempt.
+  useEffect(() => {
+    if (!a || a.kind !== "exam" || !a.examId) return;
+    let alive = true;
+    attempts.list(200).then(
+      (all) => {
+        const same = all.filter((x) => x.examId === a.examId && x.status === "submitted");
+        const cur = same.find((x) => x.id === a.id);
+        const prev = cur ? previousAttempt(cur, same) : null;
+        if (alive && cur && prev) setVersus(compareSentence(cur, prev));
+      },
+      () => undefined,
+    );
+    return () => {
+      alive = false;
+    };
+  }, [a, attempts]);
 
   const pace = useMemo(
     () =>
@@ -133,6 +153,11 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
 
       <section aria-label="Summary" className="lv-card flex flex-wrap items-center gap-6 p-5">
         <ProgressRing value={percent} label="Correct answers" size={112} />
+        {versus && (
+          <p role="status" className="m-0 w-full text-sm font-semibold sm:order-last">
+            {versus}
+          </p>
+        )}
         <dl className="m-0 grid grid-cols-2 gap-x-8 gap-y-2 sm:grid-cols-4">
           {[
             ["Score", `${a.score ?? 0} / ${a.questionCount * a.marksCorrect}`],

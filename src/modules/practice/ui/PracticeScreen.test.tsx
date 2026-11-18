@@ -272,6 +272,13 @@ describe("Practice", () => {
       await screen.findByText(/Question 1 of 3/); // the sample bank holds three questions
     });
 
+    it("starts a smart mix from the bank, with new questions filling the session", async () => {
+      const { ready } = setup();
+      await ready;
+      fireEvent.click(await screen.findByRole("button", { name: /^Smart mix/ }));
+      await screen.findByText(/Question 1 of 3/);
+    });
+
     it("disables a preset when nothing matches and says so", async () => {
       const { ready } = setup();
       await ready;

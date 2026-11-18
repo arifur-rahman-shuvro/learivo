@@ -201,3 +201,41 @@ describe("session building", () => {
     expect(got).toHaveLength(3);
   });
 });
+
+describe("composeSmart", () => {
+  const keep = <T>(xs: readonly T[]) => [...xs];
+  const ids = (p: string, n: number) => Array.from({ length: n }, (_, i) => `${p}${i}`);
+
+  it("mixes about 40% due, 35% weak and 25% new", async () => {
+    const { composeSmart } = await import("./session.ts");
+    const out = composeSmart(
+      { due: ids("d", 30), weak: ids("w", 30), fresh: ids("f", 30), rest: ids("r", 30) },
+      20,
+      keep,
+    );
+    expect(out).toHaveLength(20);
+    expect(out.filter((x) => x.startsWith("d"))).toHaveLength(8);
+    expect(out.filter((x) => x.startsWith("w"))).toHaveLength(7);
+    expect(out.filter((x) => x.startsWith("f"))).toHaveLength(5);
+  });
+
+  it("hands a short group's share to the others and never repeats a question", async () => {
+    const { composeSmart } = await import("./session.ts");
+    const out = composeSmart(
+      { due: ["a"], weak: ["a", "b"], fresh: ids("f", 3), rest: ids("r", 30) },
+      10,
+      keep,
+    );
+    expect(out).toHaveLength(10);
+    expect(new Set(out).size).toBe(10);
+    expect(out).toContain("a");
+    expect(out).toContain("b");
+  });
+
+  it("returns what exists when the bank is small", async () => {
+    const { composeSmart } = await import("./session.ts");
+    expect(
+      composeSmart({ due: [], weak: [], fresh: ["x", "y"], rest: ["x", "y"] }, 20, keep),
+    ).toEqual(["x", "y"]);
+  });
+});
