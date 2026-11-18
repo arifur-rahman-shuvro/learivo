@@ -1,6 +1,7 @@
 import { forgetAllKeys } from "../modules/ai/keys.ts";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Avatar } from "../design-system/index.ts";
+import { canAnimate, EASE_IN, EASE_OUT, usePresence } from "../design-system/motion.ts";
 import { useAuth } from "../auth/AuthProvider.tsx";
 import { useOfflineControls } from "../offline/OfflineProvider.tsx";
 import { avatarColor, initials } from "../modules/profile/domain/profile.ts";
@@ -52,6 +53,10 @@ export default function AccountMenu({ repo }: { repo: ProfileRepo }) {
   const [leaving, setLeaving] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
+  const avatarId = useId();
+  const presence = usePresence(open);
+  const zoomed = open || panel !== null;
   const email = user?.email ?? "";
   const label = initials(profile.displayName);
   const color = avatarColor(profile.avatar);
@@ -87,6 +92,21 @@ export default function AccountMenu({ repo }: { repo: ProfileRepo }) {
     };
   }, [open]);
 
+  // The menu drops out of the avatar and folds back into it.
+  useLayoutEffect(() => {
+    const el = menu.current;
+    if (!el || !canAnimate()) return;
+    const hidden = { transform: "translateY(-6px) scale(0.86)", opacity: 0 };
+    const shown = { transform: "none", opacity: 1 };
+    if (open) el.animate([hidden, shown], { duration: 260, easing: EASE_OUT });
+    else if (presence.exiting) {
+      const a = el.animate([shown, hidden], { duration: 160, easing: EASE_IN, fill: "forwards" });
+      a.onfinish = presence.finish;
+      a.oncancel = presence.finish;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, presence.exiting]);
+
   const show = (p: Panel) => {
     setOpen(false);
     setPanel(p);
@@ -104,20 +124,25 @@ export default function AccountMenu({ repo }: { repo: ProfileRepo }) {
     <div ref={box} className="relative">
       <button
         ref={trigger}
+        id={avatarId}
         type="button"
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Account menu"
         onClick={() => setOpen((v) => !v)}
-        className="rounded-full p-0.5 outline-offset-2 hover:opacity-90"
+        className={`rounded-full p-0.5 outline-offset-2 transition-[transform,box-shadow] duration-300 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)] hover:opacity-90 ${
+          zoomed ? "scale-110 shadow-[0_0_0_2px_var(--lv-accent,currentColor)]" : ""
+        }`}
       >
         <Avatar initials={label} color={color} size={36} />
       </button>
-      {open && (
+      {presence.render && (
         <div
+          ref={menu}
+          data-origin-from={avatarId}
           role="menu"
           aria-label="Account"
-          className="lv-card lv-card-raised absolute right-0 top-full z-30 mt-2 w-[min(18rem,calc(100vw-2rem))] p-2"
+          className={`lv-card lv-card-raised absolute right-0 top-full z-30 mt-2 w-[min(18rem,calc(100vw-2rem))] origin-top-right p-2 ${open ? "" : "pointer-events-none"}`}
         >
           <div className="flex items-center gap-3 px-3 py-2.5">
             <Avatar initials={label} color={color} size={44} />

@@ -303,3 +303,5 @@ Design rules (so it feels like one system and not a pile of effects):
 | 24.8 | Tests and checks                                                                    | Unit tests for the origin maths and the keep-until-closed behaviour; 390 px screenshots of frames part-way through; check that reduce motion and Low effects give instant open and close.                            |
 
 Progress notes are added below as each step is pushed.
+
+Progress, 24.1 and 24.2 (2026-11-18): `design-system/motion.ts` remembers the last tapped control; every `Dialog` now grows out of it and shrinks back into it on close (300 ms in, 200 ms out, transform and opacity only). The avatar zooms with a spring while the account menu or any account panel is open; the menu drops out of the avatar and folds back; panels opened from the menu grow from the avatar. Reduced motion and Low effects skip all of it. Not yet seen on a real phone.

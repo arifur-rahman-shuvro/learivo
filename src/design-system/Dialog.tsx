@@ -1,4 +1,12 @@
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, type ReactNode } from "react";
+import {
+  playEnter,
+  playExit,
+  recentOrigin,
+  usePresence,
+  type EnterKind,
+  type Origin,
+} from "./motion.ts";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -23,7 +31,32 @@ export function Dialog({
   variant = "drawer",
 }: DialogProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  const origin = useRef<Origin | null>(null);
+  const { render, exiting, finish } = usePresence(open);
+  const kind: EnterKind = origin.current ? "origin" : variant === "modal" ? "drop" : "sheet";
+
+  // Opening: remember what was tapped, then grow the panel out of it.
+  useLayoutEffect(() => {
+    if (!open) return;
+    origin.current = recentOrigin();
+    const k: EnterKind = origin.current ? "origin" : variant === "modal" ? "drop" : "sheet";
+    if (ref.current) playEnter(ref.current, backdropRef.current, k, origin.current);
+  }, [open, variant]);
+
+  // Closing: shrink back into the same control, then let go of the panel.
+  useLayoutEffect(() => {
+    if (!exiting || !ref.current) return;
+    let live = true;
+    void playExit(ref.current, backdropRef.current, kind, origin.current).then(() => {
+      if (live) finish();
+    });
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exiting]);
 
   useEffect(() => {
     if (!open) return;
@@ -56,16 +89,17 @@ export function Dialog({
     };
   }, [open, onClose]);
 
-  if (!open) return null;
+  if (!render) return null;
   const panel =
     variant === "modal"
       ? "bottom-0 max-h-[92dvh] w-full rounded-t-card lg:bottom-auto lg:left-1/2 lg:top-1/2 lg:max-h-[86dvh] lg:w-[min(44rem,92vw)] lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-card"
       : "bottom-0 max-h-[92dvh] w-full rounded-t-card lg:bottom-0 lg:left-auto lg:right-0 lg:top-0 lg:max-h-none lg:h-dvh lg:w-[34rem] lg:rounded-none lg:rounded-l-card";
   return (
-    <div className="fixed inset-0 z-40">
+    <div className={`fixed inset-0 z-40 ${exiting ? "pointer-events-none" : ""}`}>
       <div
+        ref={backdropRef}
         aria-hidden="true"
-        className="lv-fade-in absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/50"
         onClick={onClose}
       />
       <div
@@ -74,7 +108,7 @@ export function Dialog({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`lv-rise-in absolute flex flex-col border border-line bg-surface-1 shadow-[var(--lv-shadow-raised)] outline-none ${panel}`}
+        className={`absolute flex flex-col border border-line bg-surface-1 shadow-[var(--lv-shadow-raised)] outline-none ${panel}`}
       >
         <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5">
           <h2 id={titleId} className="m-0 text-lg font-bold">
