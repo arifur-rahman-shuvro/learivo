@@ -214,6 +214,55 @@ describe("Smart import", () => {
       removeKey("openai");
     });
 
+    it("runs the whole AI flow: connect, write in two batches, flag a reworded copy, import the rest", async () => {
+      localStorage.clear();
+      saveAi("openai", "sk-test", "");
+      const repo = new MemoryRepo();
+      await repo.create([
+        {
+          ...blankQuestion("true_false"),
+          stem: "Which nerve supplies the deltoid muscle?",
+          answer: TF_ANSWER,
+        },
+      ]);
+      const fresh = (n: number) => q(`Fresh question number ${n} about the brachial plexus`);
+      let call = 0;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(() => {
+          call += 1;
+          const items =
+            call === 1
+              ? Array.from({ length: 25 }, (_, i) => fresh(i))
+              : [
+                  q("Which nerve supplies the deltoid muscle"),
+                  fresh(100),
+                  fresh(101),
+                  fresh(102),
+                  fresh(103),
+                ];
+          return Promise.resolve(
+            new Response(
+              JSON.stringify({ choices: [{ message: { content: JSON.stringify(items) } }] }),
+            ),
+          );
+        }),
+      );
+      open(repo);
+      fireEvent.click(screen.getByRole("tab", { name: "Generate with AI" }));
+      fireEvent.change(screen.getByLabelText("How many questions"), { target: { value: "30" } });
+      fireEvent.click(screen.getByRole("button", { name: /Generate questions/ }));
+      await screen.findByRole("region", { name: "Preview" }, { timeout: 4000 });
+      expect(call).toBe(2);
+      expect(screen.getByText("look similar")).toBeTruthy();
+      fireEvent.click(screen.getByRole("button", { name: /^Import 29 questions/ }));
+      await screen.findByText("Imported 29 questions.");
+      const total = (await repo.list({ ...(await import("../data/repo.ts")).DEFAULT_QUERY })).total;
+      expect(total).toBe(30);
+      vi.unstubAllGlobals();
+      removeKey("openai");
+    });
+
     it("offers to connect an AI when none is connected", () => {
       localStorage.clear();
       reloadAi();

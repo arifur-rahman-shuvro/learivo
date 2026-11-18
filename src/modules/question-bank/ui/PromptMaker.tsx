@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { Button, Picker, Segmented } from "../../../design-system/index.ts";
-import { generateQuestions } from "../../ai/generate.ts";
+import { generateMany, type Progress } from "../../ai/generate.ts";
 import { activeConfig, openAiConnection, useAiState } from "../../ai/keys.ts";
 import { AiError, providerOf } from "../../ai/providers.ts";
 import {
@@ -70,6 +70,8 @@ export function PromptMaker({
   const cfg = activeConfig(ai);
   const [working, setWorking] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
+  const [genNote, setGenNote] = useState<string | null>(null);
+  const [progress, setProgress] = useState<Progress | null>(null);
   const abort = useRef<AbortController | null>(null);
   const [spec, setSpec] = useState<PromptSpec>(load);
   const [copied, setCopied] = useState<"ok" | "fail" | null>(null);
@@ -90,14 +92,29 @@ export function PromptMaker({
   async function generate() {
     if (!cfg || !onGenerated) return;
     setGenError(null);
+    setGenNote(null);
+    setProgress(null);
     setWorking(true);
     const ctl = new AbortController();
     abort.current = ctl;
     try {
-      const out = await generateQuestions(cfg, spec, {
-        signal: AbortSignal.any([ctl.signal, AbortSignal.timeout(180000)]),
+      const out = await generateMany(cfg, spec, {
+        signal: AbortSignal.any([ctl.signal, AbortSignal.timeout(180000 * 8)]),
+        onProgress: setProgress,
+        onWait: (seconds, why) =>
+          setGenNote(
+            why === "limit"
+              ? `The AI is rate limited. Trying again in ${seconds} seconds.`
+              : why === "busy"
+                ? `The AI is busy. Trying again in ${seconds} seconds.`
+                : `Connection dropped. Trying again in ${seconds} seconds.`,
+          ),
       });
       onGenerated(out.text);
+      if (out.stoppedBecause)
+        setGenNote(
+          `Got ${out.asked} of ${out.wanted} questions. The next batch failed: ${out.stoppedBecause}`,
+        );
     } catch (e) {
       setGenError(
         e instanceof AiError
@@ -106,6 +123,7 @@ export function PromptMaker({
       );
     } finally {
       abort.current = null;
+      setProgress(null);
       setWorking(false);
     }
   }
@@ -349,13 +367,17 @@ export function PromptMaker({
           {cfg ? (
             <>
               <p className="m-0 text-sm text-muted">
-                Uses your {providerOf(cfg.provider).label} account ({cfg.model}). Up to {BATCH_SIZE}{" "}
-                questions at a time. This may use your credit or daily limit. You will see the
-                questions before anything is saved.
+                Uses your {providerOf(cfg.provider).label} account ({cfg.model}). Questions are
+                written in batches of {BATCH_SIZE}, up to 200 in one go. This may use your credit or
+                daily limit. You will see the questions before anything is saved.
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 <Button loading={working} onClick={() => void generate()}>
-                  {working ? "Writing questions" : "Generate questions"}
+                  {working
+                    ? progress && progress.batches > 1
+                      ? `Writing batch ${progress.batch} of ${progress.batches}`
+                      : "Writing questions"
+                    : "Generate questions"}
                 </Button>
                 {working && (
                   <Button variant="ghost" onClick={() => abort.current?.abort()}>
@@ -382,6 +404,11 @@ export function PromptMaker({
                 </Button>
               </div>
             </>
+          )}
+          {genNote && (
+            <p role="status" className="m-0 text-sm text-muted">
+              {genNote}
+            </p>
           )}
           {genError && (
             <p role="alert" className="m-0 text-sm text-danger">
