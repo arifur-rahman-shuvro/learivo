@@ -1,4 +1,4 @@
-import { useIntent } from "../../../app/intents.ts";
+import { useIntent } from "../../../core/intents.ts";
 import { useEffect, useMemo, useState } from "react";
 import {
   Badge,

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Dialog, Button } from "../../../ui-kit/index.ts";
-import { FeatureIcon } from "../../../app/FeatureIcon.tsx";
-import type { FeatureIcon as IconName } from "../../../app/features.ts";
+import { FeatureIcon } from "../../../help/FeatureIcon.tsx";
+import type { FeatureIcon as IconName } from "../../../help/features.ts";
 
 export type AddChoice = "write" | "ai" | "prompt" | "paste" | "upload" | "subject";
 

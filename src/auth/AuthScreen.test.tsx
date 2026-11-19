@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ThemeProvider } from "../ui-kit/themes/ThemeProvider.tsx";
-import AppShell from "../app/AppShell.tsx";
+import AppShell from "../shell/AppShell.tsx";
 import { AuthProvider } from "./AuthProvider.tsx";
-import { fakeAuth } from "../core/testing/fakeAuth.ts";
+import { fakeAuth } from "../testing/fakeAuth.ts";
 import type { AuthClient } from "./types.ts";
 import { MemoryProfile } from "../modules/profile/data/memoryProfile.ts";
 

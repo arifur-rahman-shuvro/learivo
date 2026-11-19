@@ -248,7 +248,7 @@ describe("Practice", () => {
     it("asks the shell to hide the tab bar while a session is open", async () => {
       const { ready } = setup();
       await ready;
-      const { useFocusMode } = await import("../../../app/focus.ts");
+      const { useFocusMode } = await import("../../../core/focus.ts");
       let seen = false;
       function Probe() {
         seen = useFocusMode();

@@ -1,6 +1,6 @@
 # Learivo design system and theme architecture
 
-Status: Phase 2. Code lives in `src/themes/` and `src/design-system/`. Run `pnpm dev` and open the Design Lab to see every component in the active theme.
+Status: Phase 2. Code lives in `src/ui-kit/themes/` and `src/ui-kit/`. Run `pnpm dev` and open the Design Lab to see every component in the active theme.
 
 ## Principles
 
@@ -16,18 +16,18 @@ Status: Phase 2. Code lives in `src/themes/` and `src/design-system/`. Run `pnpm
 | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
 | Colour tokens     | `bg`, `surface1-3`, `text`, `textMuted`, `accent`, `accentContrast`, `border`, `borderStrong`, `focus`, `success`, `warning`, `danger`, `chart1-4` | `ThemeTokenSet.colors`              |
 | Style tokens      | fonts, radii, shadows, button shadows, surface texture, page background, progress-ring cap and glow, motion durations and easing                   | `ThemeTokenSet.style`               |
-| Component classes | `.lv-card`, `.lv-btn-*`, `.lv-input` in `src/app.css`                                                                                              | combine tokens into component looks |
+| Component classes | `.lv-card`, `.lv-btn-*`, `.lv-input` in `src/styles/`                                                                                              | combine tokens into component looks |
 
-Tokens compile to CSS custom properties named `--lv-<kebab-name>` under `[data-theme="<id>"][data-mode="<mode>"]` (see `src/themes/css.ts`). Tailwind utilities such as `bg-surface-1`, `text-muted` and `rounded-card` map to those variables in `src/app.css`.
+Tokens compile to CSS custom properties named `--lv-<kebab-name>` under `[data-theme="<id>"][data-mode="<mode>"]` (see `src/ui-kit/themes/css.ts`). Tailwind utilities such as `bg-surface-1`, `text-muted` and `rounded-card` map to those variables in `src/styles/`.
 
 ## Theme registry
 
-`src/themes/registry.ts` lists every theme. Adding a theme:
+`src/ui-kit/themes/registry.ts` lists every theme. Adding a theme:
 
-1. Create `src/themes/<id>/tokens.ts` exporting a `ThemeDefinition` (at least one mode).
-2. Add the id to `ThemeId` in `src/themes/types.ts`.
+1. Create `src/ui-kit/themes/<id>/tokens.ts` exporting a `ThemeDefinition` (at least one mode).
+2. Add the id to `ThemeId` in `src/ui-kit/themes/types.ts`.
 3. Register it in `registry.ts`.
-4. Add its slots (background, loader, empty-state art) in `src/themes/slots.tsx`.
+4. Add its slots (background, loader, empty-state art) in `src/ui-kit/themes/slots.tsx`.
 5. Run `pnpm test`. The contrast and key-consistency tests cover the new theme automatically.
 
 A mode a theme does not support falls back to its default mode (Space is dark only).
@@ -54,7 +54,7 @@ A mode a theme does not support falls back to its default mode (Space is dark on
 
 Fonts are self-hosted through `@fontsource-variable/*` packages, so they work offline and do not call third-party servers.
 
-## Accessibility rules (enforced in `src/themes/themes.test.ts`)
+## Accessibility rules (enforced in `src/ui-kit/themes/themes.test.ts`)
 
 For every theme and mode:
 
@@ -70,8 +70,8 @@ Not yet verified: screen-reader behaviour, full keyboard flows, and contrast of 
 
 ## Brand
 
-- Mark: an L whose upright stroke is a notched bookmark ribbon, with a node dot suggesting a learning path. Code-generated SVG in `src/design-system/Logo.tsx` and `public/favicon.svg`.
-- Icons: a small custom stroke icon set in `src/design-system/icons.tsx` (stroke width adjustable per theme with `--lv-icon-stroke`).
+- Mark: an L whose upright stroke is a notched bookmark ribbon, with a node dot suggesting a learning path. Code-generated SVG in `src/ui-kit/brand/Logo.tsx` and `public/favicon.svg`.
+- Icons: a small custom stroke icon set in `src/ui-kit/icons/icons.tsx` (stroke width adjustable per theme with `--lv-icon-stroke`).
 - Known gap: the mark reads well as a favicon but the node-and-foot arrangement can look face-like on the app-icon tile. A refinement pass is scheduled for Phase 7.
 
 ## Persistence

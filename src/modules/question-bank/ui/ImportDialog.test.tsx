@@ -6,7 +6,7 @@ import { MemoryRepo } from "../data/memoryRepo.ts";
 import { BankProvider } from "./bank.tsx";
 import { ImportDialog } from "./ImportExportDialogs.tsx";
 import { blankQuestion } from "../domain/model.ts";
-import { TF_ANSWER } from "../../../core/testing/fixtures.ts";
+import { TF_ANSWER } from "../../../testing/fixtures.ts";
 
 const q = (stem: string) => ({
   type: "true_false",

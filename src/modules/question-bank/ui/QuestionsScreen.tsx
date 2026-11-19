@@ -1,10 +1,10 @@
-import { showToast } from "../../../app/toast.ts";
+import { showToast } from "../../../core/toast.ts";
 import { QuestionRow } from "./QuestionRow.tsx";
 import { DuplicatesDialog } from "./DuplicatesDialog.tsx";
 import { SavedViews } from "./SavedViews.tsx";
 import AddHub, { type AddChoice } from "./AddHub.tsx";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useIntent } from "../../../app/intents.ts";
+import { useIntent } from "../../../core/intents.ts";
 import {
   Button,
   Dialog,

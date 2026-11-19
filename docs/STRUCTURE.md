@@ -1,50 +1,59 @@
 # Where things live
 
-Use this as a map. "I want to change X" points to the one place to edit.
+A map of `src/`. Find what you want to change, then edit that one place.
 
-## The app skeleton (layout)
+## Layers (enforced by lint)
 
-| Change                                                              | Edit                                          |
-| ------------------------------------------------------------------- | --------------------------------------------- |
-| Sidebar, top bar, bottom bar, content width and spacing             | `src/app/AppFrame.tsx` (layout only, no data) |
-| What the five tabs are, their order and routes                      | `src/app/registry.ts`                         |
-| Tab bar look and its sliding highlight                              | `src/design-system/BottomNav.tsx`             |
-| Which screen shows for a tab, and the data providers around screens | `src/app/ModuleHost.tsx`                      |
-| Loading, sign-in or app, and wiring the services                    | `src/app/AppShell.tsx`                        |
-| Dialogs that download only when opened (guide, backup, AI)          | `src/app/Gates.tsx`                           |
+```
+core, motion   <   ui-kit, auth, help   <   modules   <   platform, account   <   shell
+```
 
-## Animation and motion
+A folder may only import from layers to its left. `pnpm lint` fails if a lower layer reaches up
+(for example `ui-kit` importing `shell`). Tests are exempt. The rule is in `eslint.config.js`.
 
-All of it is in `src/motion/`.
+| Folder      | What it is                                                                                                                                                                        |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `core/`     | No UI. Config, Supabase client, monitoring, `createStore`, toast, intents, focus mode, dialog open/close stores, backup reminder rule                                             |
+| `motion/`   | All animation: tokens, CSS, origin morph, grow-in                                                                                                                                 |
+| `ui-kit/`   | Presentational building blocks. `primitives/`, `feedback/`, `overlays/`, `icons/`, `brand/`, `themes/`                                                                            |
+| `auth/`     | Sign-in screen and auth provider                                                                                                                                                  |
+| `help/`     | The "All features" list, its icons and data                                                                                                                                       |
+| `modules/`  | The features: `question-bank`, `practice`, `workspace` (home, review, insights), `ai`, `profile`, `data`. Each has `domain/` (rules, no React), `data/` (stores), `ui/` (screens) |
+| `platform/` | Offline cache, background sync, installable-app code. Wraps the feature stores                                                                                                    |
+| `account/`  | Account menu, profile, settings, data and backup dialogs                                                                                                                          |
+| `shell/`    | The app skeleton: `AppShell`, `AppFrame`, `ModuleHost`, `Gates`, `navigation/`, `chrome/`                                                                                         |
+| `styles/`   | `index.css` loads `theme`, motion, `base`, `components`                                                                                                                           |
+| `testing/`  | Test fakes and fixtures                                                                                                                                                           |
 
-| Change                                                             | Edit                     |
-| ------------------------------------------------------------------ | ------------------------ |
-| How fast or bouncy anything is (every duration and curve)          | `src/motion/tokens.ts`   |
-| Keyframes, loader animations, reduced-motion and Low-effects rules | `src/motion/motion.css`  |
-| Panels growing out of the tapped control, closing back into it     | `src/motion/origin.ts`   |
-| Charts and bars that grow in                                       | `src/motion/useGrown.ts` |
+## "I want to change..."
 
-`tokens.ts` is the single source: the build turns it into `--lv-m-*` CSS variables, and the
-script-driven animations read the same values. A test fails if the CSS uses a variable that
-does not exist. Do not write a raw `cubic-bezier(...)` or millisecond value in a component;
-use a `lv-t-*` helper class or `MOTION`.
+| Change                                                    | Edit                                        |
+| --------------------------------------------------------- | ------------------------------------------- |
+| Sidebar, top bar, bottom bar, content width and spacing   | `shell/AppFrame.tsx` (layout only, no data) |
+| Which screen shows for a tab, and the providers around it | `shell/ModuleHost.tsx`                      |
+| The five tabs, their order and routes                     | `shell/navigation/registry.ts`              |
+| Tab bar look and sliding highlight                        | `shell/navigation/BottomNav.tsx`            |
+| Loading, sign-in or app, and wiring the services          | `shell/AppShell.tsx`                        |
+| Toast look                                                | `shell/chrome/ToastHost.tsx`                |
+| How fast or bouncy anything is                            | `motion/tokens.ts` (single source)          |
+| Keyframes, loaders, reduced-motion rules                  | `motion/motion.css`                         |
+| Panels growing out of the tapped control                  | `motion/origin.ts`                          |
+| Colours, fonts, radius, shadows per theme                 | `ui-kit/themes/<theme>/tokens.ts`           |
+| Buttons, cards, inputs, focus ring                        | `styles/components.css`, `styles/base.css`  |
+| Dialog, Picker, Segmented, Button, Field and so on        | `ui-kit/` (import from `ui-kit/index.ts`)   |
+| Backup file format and restore                            | `account/backup/backupData.ts`              |
 
-## Look and feel
+## Rules of thumb
 
-| Change                                                       | Edit                           |
-| ------------------------------------------------------------ | ------------------------------ |
-| Colours, fonts, corner radius, shadows per theme             | `src/themes/<theme>/tokens.ts` |
-| Buttons, cards, inputs, focus ring                           | `src/app.css`                  |
-| Shared components (Dialog, Picker, Segmented, Avatar, icons) | `src/design-system/`           |
-
-## Features
-
-Each feature is a folder in `src/modules/<name>/` with the same shape:
-`domain/` (rules, no React), `data/` (database and in-memory stores), `ui/` (screens).
-Domain code never imports React or Supabase, which keeps it easy to test.
+- `tokens.ts` is the single source for motion. The build turns it into `--lv-m-*` CSS variables
+  and a test fails if the CSS uses one that does not exist. Do not write a raw `cubic-bezier(...)`
+  or millisecond value in a component; use a `lv-t-*` helper class or `MOTION`.
+- Domain code never imports React or Supabase.
+- Global "is it open" or "which one" values use `core/store.ts` (`createStore`), not hand-rolled
+  listeners.
+- A screen composes parts. If a screen grows past about 250 lines, move its pieces to the
+  feature's `ui/parts/`.
 
 ## Other
 
-- `src/offline/`, `src/sync/`, `src/pwa/`: offline cache, background sync, installable app.
-- `src/auth/`: sign-in. `src/lib/`: small shared helpers.
-- `supabase/migrations/`: database changes. `scripts/`: smoke test and checks.
+- `supabase/migrations/`: database changes. `scripts/`: smoke test and checks. `docs/`: plans and specs.

@@ -1,7 +1,7 @@
-import FeaturesDialog from "../../../app/FeaturesDialog.tsx";
+import FeaturesDialog from "../../../help/FeaturesDialog.tsx";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button, ProgressBar, ProgressRing, Spinner } from "../../../ui-kit/index.ts";
-import Home from "../../../app/screens/Home.tsx";
+import Home from "./HomeWelcome.tsx";
 import { SAMPLE_QUESTIONS } from "../../question-bank/domain/sample.ts";
 import { DEFAULT_QUERY } from "../../question-bank/data/repo.ts";
 import { usePractice } from "../../practice/ui/practice.tsx";
@@ -30,8 +30,8 @@ import {
   type HomeLayout,
   type HomeSectionId,
 } from "../domain/homeLayout.ts";
-import { openBackup } from "../../../app/backupStore.ts";
-import { shouldRemindBackup, snoozeBackupReminder } from "../../../app/backupReminder.ts";
+import { openBackup } from "../../../core/dialogs/backup.ts";
+import { shouldRemindBackup, snoozeBackupReminder } from "../../../core/backupReminder.ts";
 import ForecastBars from "./ForecastBars.tsx";
 import { dueForecast, type ActivityDay } from "../domain/insights.ts";
 import PractiseArea from "./PractiseArea.tsx";

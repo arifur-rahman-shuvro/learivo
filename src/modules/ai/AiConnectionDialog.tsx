@@ -1,14 +1,8 @@
 import { useState } from "react";
 import { Button, Dialog, Picker } from "../../ui-kit/index.ts";
 import { keyGuidePrompt } from "./guidePrompt.ts";
-import {
-  aiState,
-  closeAiConnection,
-  removeKey,
-  saveAi,
-  useAiDialogOpen,
-  useAiState,
-} from "./keys.ts";
+import { aiState, removeKey, saveAi, useAiState } from "./keys.ts";
+import { closeAiConnection, useAiDialogOpen } from "../../core/dialogs/ai.ts";
 import { AiError, PROVIDERS, askAi, providerOf, type ProviderId } from "./providers.ts";
 
 type Test =

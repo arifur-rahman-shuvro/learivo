@@ -1,5 +1,4 @@
 import { useSyncExternalStore } from "react";
-import { createStore } from "../../core/store.ts";
 import { providerOf, PROVIDERS, type AiConfig, type ProviderId } from "./providers.ts";
 
 /**
@@ -98,8 +97,3 @@ export function reloadAi() {
   state = read();
   listeners.forEach((l) => l());
 }
-
-const dialog = createStore(false);
-export const openAiConnection = () => dialog.set(true);
-export const closeAiConnection = () => dialog.set(false);
-export const useAiDialogOpen = dialog.use;

@@ -1,4 +1,4 @@
-import { useRequestFocus } from "../../../app/focus.ts";
+import { useRequestFocus } from "../../../core/focus.ts";
 import GlossaryText from "../../workspace/ui/GlossaryText.tsx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Dialog, ProgressBar, Spinner } from "../../../ui-kit/index.ts";

@@ -1,6 +1,6 @@
 import { shortTime } from "../../practice/domain/pace.ts";
 import PractiseArea from "./PractiseArea.tsx";
-import { useIntent } from "../../../app/intents.ts";
+import { useIntent } from "../../../core/intents.ts";
 import { useMemo, useState } from "react";
 import { achievements } from "../domain/achievements.ts";
 import {

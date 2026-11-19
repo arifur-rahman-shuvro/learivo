@@ -1,6 +1,6 @@
 import { useState, Fragment } from "react";
 import { Button, Dialog, Spinner, Picker, type PickerOption } from "../../../ui-kit/index.ts";
-import { showToast } from "../../../app/toast.ts";
+import { showToast } from "../../../core/toast.ts";
 import { KIND_BY_DEPTH, type TaxonomyNode } from "../data/repo.ts";
 import { errorText, useBank, useLoad } from "./bank.tsx";
 

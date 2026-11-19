@@ -12,7 +12,7 @@ import { WorkspaceProvider } from "./workspace.tsx";
 import ReviewScreen from "./ReviewScreen.tsx";
 import InsightsScreen from "./InsightsScreen.tsx";
 import HomeDashboard from "./HomeDashboard.tsx";
-import { TF_ANSWER } from "../../../core/testing/fixtures.ts";
+import { TF_ANSWER } from "../../../testing/fixtures.ts";
 
 const tf = (stem: string, path: string[] = []) => ({
   ...blankQuestion("true_false"),

@@ -1,0 +1,64 @@
+import { afterEach, describe, expect, it } from "vitest";
+import { act, cleanup, render, screen } from "@testing-library/react";
+import { ThemeProvider } from "../ui-kit/themes/ThemeProvider.tsx";
+import AppShell from "./AppShell.tsx";
+import { AuthProvider } from "../auth/AuthProvider.tsx";
+import { fakeAuth } from "../testing/fakeAuth.ts";
+import { MemoryRepo } from "../modules/question-bank/data/memoryRepo.ts";
+import { MemoryAttempts } from "../modules/practice/data/memoryAttempts.ts";
+import { MemoryWorkspace } from "../modules/workspace/data/memoryWorkspace.ts";
+
+// Tests never reach the real database: every screen gets in-memory data.
+const makeRepo = () => new MemoryRepo();
+const makeAttempts = () => new MemoryAttempts();
+const makeWorkspace = () => new MemoryWorkspace();
+
+const renderShell = () =>
+  render(
+    <ThemeProvider>
+      <AuthProvider client={fakeAuth({ id: "u1", email: "sara@example.test" })}>
+        <AppShell makeRepo={makeRepo} makeAttempts={makeAttempts} makeWorkspace={makeWorkspace} />
+      </AuthProvider>
+    </ThemeProvider>,
+  );
+
+afterEach(() => {
+  cleanup();
+  window.location.hash = "";
+});
+
+describe("AppShell", () => {
+  it("shows Home with the five navigation items by default", async () => {
+    renderShell();
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Your question bank starts here" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Home" }).getAttribute("aria-current")).toBe("page");
+    const nav = screen.getByRole("navigation", { name: "Primary" });
+    expect(nav.querySelectorAll("button").length).toBe(5);
+  });
+
+  it("follows the URL hash", async () => {
+    window.location.hash = "#/practice";
+    renderShell();
+    expect(await screen.findByRole("heading", { level: 1, name: "Practice" })).toBeTruthy();
+  });
+
+  it("navigates when a destination is tapped", async () => {
+    renderShell();
+    await screen.findByRole("navigation", { name: "Primary" });
+    act(() => {
+      screen.getByRole("button", { name: "Insights" }).click();
+    });
+    expect(window.location.hash).toBe("#/insights");
+  });
+
+  it("has a skip link that moves focus to the page content", async () => {
+    renderShell();
+    await screen.findByRole("navigation", { name: "Primary" });
+    act(() => {
+      screen.getByRole("link", { name: "Skip to content" }).click();
+    });
+    expect(document.activeElement?.id).toBe("main");
+  });
+});

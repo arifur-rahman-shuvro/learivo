@@ -1,5 +1,5 @@
-import { showToast } from "../../../app/toast.ts";
-import { useIntent } from "../../../app/intents.ts";
+import { showToast } from "../../../core/toast.ts";
+import { useIntent } from "../../../core/intents.ts";
 import GlossaryText from "./GlossaryText.tsx";
 import { useEffect, useMemo, useState } from "react";
 import {

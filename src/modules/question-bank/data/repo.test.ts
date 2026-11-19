@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { contentHash } from "../domain/hash.ts";
 import { blankQuestion, type QuestionInput } from "../domain/model.ts";
-import { TF_ANSWER } from "../../../core/testing/fixtures.ts";
+import { TF_ANSWER } from "../../../testing/fixtures.ts";
 import { toTsQuery } from "./supabaseRepo.ts";
 import { MemoryRepo } from "./memoryRepo.ts";
 import { DEFAULT_QUERY, pathOf, subtreeIds, type QuestionQuery } from "./repo.ts";

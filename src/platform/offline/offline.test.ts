@@ -7,7 +7,7 @@ import type { NewAttempt } from "../../modules/practice/data/repo.ts";
 import { OFFLINE_MESSAGE, OfflineAwareRepo, PackRepo, buildPack } from "./pack.ts";
 import { MemoryStore } from "./store.ts";
 import { SyncedAttempts } from "./syncedAttempts.ts";
-import { TF_ANSWER } from "../../core/testing/fixtures.ts";
+import { TF_ANSWER } from "../../testing/fixtures.ts";
 
 const tf = (stem: string, path: string[] = [], tags: string[] = []): QuestionInput => ({
   ...blankQuestion("true_false"),

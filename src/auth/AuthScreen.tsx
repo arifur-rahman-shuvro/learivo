@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Button, Field, LogoWordmark, ThemeBackground } from "../ui-kit/index.ts";
-import AppearanceMenu from "../app/AppearanceMenu.tsx";
+import AppearanceMenu from "../ui-kit/themes/AppearanceMenu.tsx";
 import { useAuth } from "./AuthProvider.tsx";
 
 type Mode = "sign-in" | "sign-up";

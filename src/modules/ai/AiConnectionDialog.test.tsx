@@ -2,7 +2,8 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ThemeProvider } from "../../ui-kit/themes/ThemeProvider.tsx";
 import { AiConnectionDialog } from "./AiConnectionDialog.tsx";
-import { activeConfig, closeAiConnection, openAiConnection, reloadAi } from "./keys.ts";
+import { activeConfig, reloadAi } from "./keys.ts";
+import { closeAiConnection, openAiConnection } from "../../core/dialogs/ai.ts";
 
 function show() {
   render(

@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
 import { Button, Picker, Segmented } from "../../../ui-kit/index.ts";
 import { generateMany, type Progress } from "../../ai/generate.ts";
-import { activeConfig, openAiConnection, useAiState } from "../../ai/keys.ts";
+import { activeConfig, useAiState } from "../../ai/keys.ts";
+import { openAiConnection } from "../../../core/dialogs/ai.ts";
 import { AiError, providerOf } from "../../ai/providers.ts";
 import {
   DEFAULT_SPEC,
