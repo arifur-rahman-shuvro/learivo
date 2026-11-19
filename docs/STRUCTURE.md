@@ -51,6 +51,7 @@ A folder may only import from layers to its left. `pnpm lint` fails if a lower l
 - Domain code never imports React or Supabase.
 - Global "is it open" or "which one" values use `core/store.ts` (`createStore`), not hand-rolled
   listeners.
+- Big screens are split into a thin screen plus parts: Questions uses `ui/parts/` (FilterBar, BulkBar, useQuestionPages); Practice is a router plus `PracticeHome` and `practiceSetup`; Review, Home and Insights keep side pieces in `ReviewParts`, `HomeParts` and `InsightsCharts`.
 - A screen composes parts. If a screen grows past about 250 lines, move its pieces to the
   feature's `ui/parts/`.
 

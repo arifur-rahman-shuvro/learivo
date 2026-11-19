@@ -3,7 +3,7 @@ export type Mode = "light" | "dark";
 export type ModePreference = Mode | "system";
 
 /** Colour tokens. Components may only use these semantic names. */
-export interface ColorTokens {
+interface ColorTokens {
   bg: string;
   surface1: string;
   surface2: string;

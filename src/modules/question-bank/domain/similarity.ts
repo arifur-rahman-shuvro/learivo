@@ -15,7 +15,7 @@ export interface Comparable {
   options: string[];
 }
 
-export type MatchKind = "exact" | "near";
+type MatchKind = "exact" | "near";
 
 export interface Match {
   kind: MatchKind;

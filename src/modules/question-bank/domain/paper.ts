@@ -1,7 +1,7 @@
 import { TYPE_LABELS, type QuestionInput, type QuestionType } from "./model.ts";
 
 /** What is printed above the questions when the paper is an exam. */
-export interface ExamMeta {
+interface ExamMeta {
   instructions: string;
   /** Null when the exam is untimed. */
   minutes: number | null;
@@ -26,7 +26,7 @@ const letter = (i: number) => String.fromCharCode(65 + i);
 const BLANK = /\{\{\s*\d+\s*\}\}/g;
 
 /** The order sections appear in an exam paper. */
-export const SECTION_ORDER: QuestionType[] = [
+const SECTION_ORDER: QuestionType[] = [
   "sba",
   "single_choice",
   "multi_select",
@@ -87,7 +87,7 @@ export function answerText(q: QuestionInput): string {
 }
 
 /** Questions grouped into sections by type, in the fixed order. Order inside a section is kept. */
-export function sectionsOf(questions: readonly QuestionInput[]) {
+function sectionsOf(questions: readonly QuestionInput[]) {
   return SECTION_ORDER.map((type) => ({
     type,
     questions: questions.filter((q) => q.qtype === type),

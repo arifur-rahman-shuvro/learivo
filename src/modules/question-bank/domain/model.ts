@@ -20,7 +20,7 @@ export const TYPE_LABELS: Record<QuestionType, string> = {
 export const TAXONOMY_KINDS = ["subject", "chapter", "topic", "subtopic"] as const;
 export type TaxonomyKind = (typeof TAXONOMY_KINDS)[number];
 
-export interface Option {
+interface Option {
   text: string;
   correct: boolean;
 }
@@ -37,9 +37,9 @@ export type AnswerSpec =
 export const OPTION_MIN = 2;
 export const OPTION_MAX = 5;
 /** How many empty options a new question starts with. */
-export const OPTION_DEFAULT = 5;
+const OPTION_DEFAULT = 5;
 /** Types whose answer is a list of options. */
-export const OPTION_TYPES = ["sba", "single_choice", "multi_select", "true_false"] as const;
+const OPTION_TYPES = ["sba", "single_choice", "multi_select", "true_false"] as const;
 export const isOptionType = (t: QuestionType) => (OPTION_TYPES as readonly string[]).includes(t);
 
 export const MAX_OPTIONS = OPTION_MAX;
@@ -84,7 +84,7 @@ const shape = z.object({
 const nonEmpty = (s: string) => s.trim().length > 0;
 
 /** Checks the answer against the question type. Returns plain-language problems. */
-export function answerIssues(qtype: QuestionType, stem: string, answer: unknown): Issue[] {
+function answerIssues(qtype: QuestionType, stem: string, answer: unknown): Issue[] {
   const a = (answer ?? {}) as Record<string, unknown>;
   const issues: Issue[] = [];
   const bad = (message: string) => issues.push({ field: "answer", message });

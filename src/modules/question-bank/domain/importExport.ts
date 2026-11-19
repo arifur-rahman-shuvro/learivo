@@ -21,16 +21,16 @@ export interface ImportIssue extends Issue {
   row: number;
 }
 
-export type Duplicate = "bank" | "file" | null;
+type Duplicate = "bank" | "file" | null;
 
 /** A question that is not an exact copy but says nearly the same thing as another one. */
-export interface SimilarTo {
+interface SimilarTo {
   from: "bank" | "file";
   stem: string;
   why: string;
 }
 
-export interface ImportRow {
+interface ImportRow {
   row: number;
   input: QuestionInput;
   duplicate: Duplicate;
@@ -227,7 +227,7 @@ function errorPlace(text: string, error: unknown): string {
  * Parses JSON that was copied from a chat: tries the text as it is first, then without a
  * ```json code fence, then without sentences before or after the list.
  */
-export function parseLooseJson(
+function parseLooseJson(
   text: string,
 ): { ok: true; data: unknown; notice?: string } | { ok: false; message: string } {
   try {
@@ -415,7 +415,7 @@ export function exportJson(questions: readonly QuestionInput[]): string {
   );
 }
 
-export const CSV_COLUMNS = [
+const CSV_COLUMNS = [
   "type",
   "stem",
   "explanation",

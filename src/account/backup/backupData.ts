@@ -16,10 +16,10 @@ import { nodeIdForName } from "../../modules/practice/ui/start.ts";
 import { REASONS, type Reason } from "../../modules/practice/domain/reasons.ts";
 import type { Card } from "../../modules/workspace/domain/scheduler.ts";
 
-export const BACKUP_FORMAT = "learivo-backup";
-export const DEFAULT_GOAL = 20;
+const BACKUP_FORMAT = "learivo-backup";
+const DEFAULT_GOAL = 20;
 
-export interface BackupAttemptItem {
+interface BackupAttemptItem {
   /** Content hash of the bank question this came from; null when it is gone. */
   questionHash: string | null;
   snapshot: Snapshot;
@@ -32,7 +32,7 @@ export interface BackupAttemptItem {
   marks: number;
 }
 
-export interface BackupAttempt {
+interface BackupAttempt {
   kind: "practice" | "exam";
   title: string;
   /** Title of the saved exam it was taken from, when that exam still exists. */
@@ -47,7 +47,7 @@ export interface BackupAttempt {
   items: BackupAttemptItem[];
 }
 
-export interface BackupExam {
+interface BackupExam {
   title: string;
   instructions: string;
   timeLimitSec: number | null;
@@ -58,13 +58,13 @@ export interface BackupExam {
   rules: { path: string[]; count: number }[];
 }
 
-export interface BackupCard {
+interface BackupCard {
   questionHash: string;
   card: Card;
 }
 
 /** The most recent finished sessions that go into a backup. */
-export const ATTEMPT_LIMIT = 500;
+const ATTEMPT_LIMIT = 500;
 
 export interface Backup {
   format: typeof BACKUP_FORMAT;

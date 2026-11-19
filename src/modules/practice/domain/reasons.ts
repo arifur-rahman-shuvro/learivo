@@ -8,5 +8,4 @@ export const REASONS = [
 
 export type Reason = (typeof REASONS)[number]["id"];
 
-export const isReason = (v: unknown): v is Reason => REASONS.some((r) => r.id === v);
 export const reasonLabel = (r: Reason) => REASONS.find((x) => x.id === r)!.label;

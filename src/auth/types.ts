@@ -6,7 +6,7 @@ export interface AuthUser {
 export type SignUpResult =
   { ok: true; needsConfirmation: boolean } | { ok: false; message: string };
 export type SignInResult = { ok: true } | { ok: false; message: string };
-export type ChangePasswordResult = { ok: true } | { ok: false; message: string };
+type ChangePasswordResult = { ok: true } | { ok: false; message: string };
 
 /** The small surface of authentication the app needs. Tests use a fake; production uses Supabase. */
 export interface AuthClient {

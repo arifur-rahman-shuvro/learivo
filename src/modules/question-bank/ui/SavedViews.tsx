@@ -22,7 +22,7 @@ export interface SavedView {
 const KEY = "learivo.savedViews";
 const MAX_VIEWS = 20;
 
-export function loadViews(): SavedView[] {
+function loadViews(): SavedView[] {
   try {
     const raw: unknown = JSON.parse(localStorage.getItem(KEY) ?? "[]");
     if (!Array.isArray(raw)) return [];
@@ -46,7 +46,7 @@ function storeViews(views: SavedView[]) {
 }
 
 /** Adds or replaces a view with the same name (ignoring case). */
-export function withView(views: SavedView[], view: SavedView): SavedView[] {
+function withView(views: SavedView[], view: SavedView): SavedView[] {
   const name = view.name.trim().slice(0, 40);
   if (name === "") return views;
   const rest = views.filter((v) => v.name.toLowerCase() !== name.toLowerCase());

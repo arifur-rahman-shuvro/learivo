@@ -7,7 +7,7 @@ import type { Mode, ThemeDefinition, ThemeId, ThemeTokenSet } from "./types.ts";
  * Theme registry. To add a theme: create a folder with a `tokens.ts` that exports
  * a ThemeDefinition, add its id to `ThemeId`, and register it here.
  */
-export const themes: Record<ThemeId, ThemeDefinition> = {
+const themes: Record<ThemeId, ThemeDefinition> = {
   default: defaultTheme,
   forest: forestTheme,
   space: spaceTheme,

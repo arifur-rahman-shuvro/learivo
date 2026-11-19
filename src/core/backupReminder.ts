@@ -1,7 +1,7 @@
 const LAST = "learivo.lastBackup";
 const LATER = "learivo.backupLater";
-export const REMIND_AFTER_DAYS = 14;
-export const SNOOZE_DAYS = 7;
+const REMIND_AFTER_DAYS = 14;
+const SNOOZE_DAYS = 7;
 const DAY = 86_400_000;
 
 const read = (key: string): number | null => {

@@ -28,7 +28,7 @@ const W = [
 ] as const;
 const DECAY = -0.5;
 const FACTOR = 19 / 81;
-export const DEFAULT_RETENTION = 0.9;
+const DEFAULT_RETENTION = 0.9;
 const MAX_DAYS = 36500;
 const DAY_MS = 86_400_000;
 /** After "Again" the card comes back in this many minutes. */

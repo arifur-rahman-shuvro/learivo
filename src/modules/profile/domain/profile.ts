@@ -20,7 +20,7 @@ export interface Profile {
 export const DEFAULT_PROFILE: Profile = { displayName: "", avatar: "sky" };
 export const NAME_MAX = 40;
 
-export const isAvatarId = (v: unknown): v is AvatarId => AVATARS.some((a) => a.id === v);
+const isAvatarId = (v: unknown): v is AvatarId => AVATARS.some((a) => a.id === v);
 
 export const avatarColor = (id: AvatarId): string =>
   (AVATARS.find((a) => a.id === id) ?? AVATARS[0]).color;

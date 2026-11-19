@@ -80,7 +80,7 @@ function currentRect(o: Origin) {
 }
 
 /** True when the student asked for less motion (phone setting or the Low effects switch). */
-export function motionOff(): boolean {
+function motionOff(): boolean {
   if (typeof document === "undefined") return true;
   if (document.documentElement.dataset.effects === "low") return true;
   return (

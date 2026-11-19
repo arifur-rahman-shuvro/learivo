@@ -28,7 +28,7 @@ export interface PracticeSetup {
   shuffleOptions: boolean;
 }
 
-export const NO_QUESTIONS = "No questions match these choices. Change the subject or filter.";
+const NO_QUESTIONS = "No questions match these choices. Change the subject or filter.";
 
 /** Counts what a practice setup could draw, for the live hint in the form. */
 export async function countAvailable(
@@ -194,7 +194,7 @@ export async function startFromQuestions(
   });
 }
 
-export const SMART_SIZE = 20;
+const SMART_SIZE = 20;
 
 /** A session mixing due revision, weak areas and new questions. */
 export async function startSmart(

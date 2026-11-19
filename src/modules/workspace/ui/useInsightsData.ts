@@ -4,7 +4,7 @@ import type { Attempt } from "../../practice/data/repo.ts";
 import { usePractice } from "../../practice/ui/practice.tsx";
 import type { Fact, SessionSummary } from "../domain/insights.ts";
 
-export function toSession(a: Attempt): SessionSummary {
+function toSession(a: Attempt): SessionSummary {
   return {
     kind: a.kind,
     title: a.title,

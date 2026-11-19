@@ -68,9 +68,6 @@ export const PROMPT_TYPES: { id: QuestionType; label: string }[] = [
   { id: "fill_blank", label: "Fill in the blank" },
 ];
 
-/** Marker tags the AI adds when it is unsure, so the student can find and check those questions. */
-export const CHECK_TAGS = ["check-answer", "check-options", "had-image"] as const;
-
 /** Most questions per reply; long answers get cut off by chat tools. */
 export const BATCH_SIZE = 25;
 

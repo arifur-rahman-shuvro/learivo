@@ -31,8 +31,7 @@ export function useBank(): BankValue {
   return v;
 }
 
-export const FRIENDLY_ERROR =
-  "Could not reach your question bank. Check your connection and try again.";
+const FRIENDLY_ERROR = "Could not reach your question bank. Check your connection and try again.";
 
 /** The repository already words its errors for students; anything else gets a generic line. */
 export function errorText(e: unknown): string {
