@@ -122,7 +122,7 @@ export function Picker({
           {current?.label.trim() ?? placeholder}
         </span>
         <span
-          className={`shrink-0 text-muted transition-transform duration-300 ${open ? "rotate-180" : ""}`}
+          className={`shrink-0 text-muted lv-t-smooth transition-transform ${open ? "rotate-180" : ""}`}
         >
           <Chevron />
         </span>

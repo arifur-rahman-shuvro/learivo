@@ -1,0 +1,167 @@
+/*
+ * All animation CSS lives here. Timings and curves come from src/motion/tokens.ts (as the
+ * --lv-m-* variables), so to change how the app feels, edit tokens.ts, not this file.
+ *
+ * Parts:  1. transition helpers   2. loaders and ambient motion   3. entrances   4. reduced motion
+ */
+
+/* 1. Transition helpers: add one to an element that already has a transition-* utility. */
+.lv-t-smooth {
+  transition-duration: var(--lv-m-ms-open);
+  transition-timing-function: var(--lv-m-ease-out);
+}
+.lv-t-spring {
+  transition-duration: var(--lv-m-ms-open);
+  transition-timing-function: var(--lv-m-ease-spring);
+}
+.lv-t-slide {
+  transition-duration: var(--lv-m-ms-slide);
+  transition-timing-function: var(--lv-m-ease-spring-soft);
+}
+
+/* 2 and 3. */
+/* Loader and ambient animations */
+@keyframes lv-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes lv-sway {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(6deg);
+  }
+}
+@keyframes lv-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes lv-drift {
+  0% {
+    transform: translate(0, 0) rotate(0);
+  }
+  100% {
+    transform: translate(24px, 180px) rotate(40deg);
+  }
+}
+.lv-spin {
+  animation: lv-spin 0.9s linear infinite;
+}
+.lv-sway {
+  animation: lv-sway 1.6s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+.lv-orbit {
+  animation: lv-orbit 1.4s linear infinite;
+  transform-origin: 12px 12px;
+}
+.lv-drift {
+  animation: lv-drift 22s linear infinite;
+}
+.lv-drift-b {
+  animation-duration: 30s;
+  animation-delay: -8s;
+}
+.lv-drift-c {
+  animation-duration: 26s;
+  animation-delay: -15s;
+}
+
+/* Short entrance animations for dialogs and toasts. Switched off by the rule below. */
+@keyframes lv-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes lv-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+@keyframes lv-grow-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+@keyframes lv-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.22);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+@keyframes lv-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.94);
+  }
+}
+@keyframes lv-toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+}
+@keyframes lv-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.lv-pop {
+  animation: lv-pop var(--lv-m-ms-pop) var(--lv-m-ease-spring);
+}
+.lv-toast-in {
+  animation: lv-toast-in var(--lv-m-ms-toast-in) var(--lv-m-ease-spring);
+}
+.lv-toast-out {
+  animation: lv-toast-out var(--lv-m-ms-toast-out) var(--lv-m-ease-in) forwards;
+}
+.lv-item-in {
+  animation: lv-item-in var(--lv-m-ms-item) var(--lv-m-ease-out) backwards;
+}
+/* A bar that grows up from its base when it first appears. Set animation-delay to stagger. */
+.lv-grow-y {
+  transform-origin: bottom;
+  animation: lv-grow-y var(--lv-m-ms-grow) var(--lv-m-ease-out) backwards;
+}
+.lv-fade-in {
+  animation: lv-fade-in var(--lv-m-ms-fade) var(--lv-m-ease-out);
+}
+.lv-rise-in {
+  animation: lv-rise-in var(--lv-m-ms-rise) var(--lv-m-ease-out);
+}
+
+/* Respect reduced motion and the Low effects switch */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+html[data-effects="low"] .lv-fade-in,
+html[data-effects="low"] .lv-rise-in {
+  animation: none;
+}
+html[data-effects="low"] .lv-bg-art {
+  display: none;
+}
+html[data-effects="low"] * {
+  animation: none !important;
+  transition: none !important;
+}
+html[data-effects="low"] {
+  --lv-ring-glow: none;
+}

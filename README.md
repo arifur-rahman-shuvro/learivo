@@ -27,4 +27,4 @@ pnpm typecheck
 pnpm build
 ```
 
-Docs: `docs/DESIGN_SYSTEM.md` (themes and tokens), `docs/SCREENS.md` (MVP screen specs), `docs/ROADMAP.md`.
+Docs: `docs/STRUCTURE.md` (where to edit what), `docs/DESIGN_SYSTEM.md` (themes and tokens), `docs/SCREENS.md` (MVP screen specs), `docs/ROADMAP.md`.

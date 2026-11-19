@@ -5,6 +5,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { createHash } from "node:crypto";
 import { fileURLToPath, URL } from "node:url";
 import { themeToCss } from "./src/themes/css.ts";
+import { motionToCss } from "./src/motion/tokens.ts";
 
 /** Serves the compiled theme tokens as a virtual CSS module. */
 function themeCss(): Plugin {
@@ -12,7 +13,7 @@ function themeCss(): Plugin {
   return {
     name: "learivo-theme-css",
     resolveId: (source) => (source === id ? "\0" + id : null),
-    load: (loaded) => (loaded === "\0" + id ? themeToCss() : null),
+    load: (loaded) => (loaded === "\0" + id ? themeToCss() + "\n" + motionToCss() : null),
   };
 }
 

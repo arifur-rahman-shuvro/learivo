@@ -1,4 +1,4 @@
-import { useGrown } from "../../../design-system/useGrown.ts";
+import { useGrown } from "../../../motion/index.ts";
 import type { ActivityDay } from "../domain/insights.ts";
 
 const WEEKDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];

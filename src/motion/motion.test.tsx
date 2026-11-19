@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
-import { Dialog } from "./Dialog.tsx";
-import { originPose, recentOrigin, trackOrigins } from "./motion.ts";
+import { Dialog } from "../design-system/Dialog.tsx";
+import { originPose, recentOrigin, trackOrigins } from "./origin.ts";
 
 beforeEach(() => {
   // jsdom has no layout, so give every element a size.

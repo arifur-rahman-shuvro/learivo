@@ -1,7 +1,7 @@
 import { forgetAllKeys } from "../modules/ai/keys.ts";
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Avatar } from "../design-system/index.ts";
-import { canAnimate, EASE_IN, EASE_OUT, usePresence } from "../design-system/motion.ts";
+import { canAnimate, MOTION, usePresence } from "../motion/index.ts";
 import { useAuth } from "../auth/AuthProvider.tsx";
 import { useOfflineControls } from "../offline/OfflineProvider.tsx";
 import { avatarColor, initials } from "../modules/profile/domain/profile.ts";
@@ -98,9 +98,13 @@ export default function AccountMenu({ repo }: { repo: ProfileRepo }) {
     if (!el || !canAnimate()) return;
     const hidden = { transform: "translateY(-6px) scale(0.86)", opacity: 0 };
     const shown = { transform: "none", opacity: 1 };
-    if (open) el.animate([hidden, shown], { duration: 260, easing: EASE_OUT });
+    if (open) el.animate([hidden, shown], { duration: MOTION.ms.menuIn, easing: MOTION.ease.out });
     else if (presence.exiting) {
-      const a = el.animate([shown, hidden], { duration: 160, easing: EASE_IN, fill: "forwards" });
+      const a = el.animate([shown, hidden], {
+        duration: MOTION.ms.menuOut,
+        easing: MOTION.ease.in,
+        fill: "forwards",
+      });
       a.onfinish = presence.finish;
       a.oncancel = presence.finish;
     }
@@ -130,7 +134,7 @@ export default function AccountMenu({ repo }: { repo: ProfileRepo }) {
         aria-expanded={open}
         aria-label="Account menu"
         onClick={() => setOpen((v) => !v)}
-        className={`rounded-full p-0.5 outline-offset-2 transition-[transform,box-shadow] duration-300 [transition-timing-function:cubic-bezier(0.34,1.56,0.64,1)] hover:opacity-90 ${
+        className={`rounded-full p-0.5 outline-offset-2 lv-t-spring transition-[transform,box-shadow] hover:opacity-90 ${
           zoomed ? "scale-110 shadow-[0_0_0_2px_var(--lv-accent,currentColor)]" : ""
         }`}
       >

@@ -54,7 +54,7 @@ export function BottomNav({
       {slot && (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute left-0 top-0 rounded-control bg-accent transition-transform duration-[380ms] [transition-timing-function:cubic-bezier(0.34,1.3,0.64,1)]"
+          className="pointer-events-none absolute left-0 top-0 rounded-control bg-accent lv-t-slide transition-transform"
           style={{
             width: slot.w,
             height: slot.h,

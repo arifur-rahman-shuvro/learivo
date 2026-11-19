@@ -382,7 +382,7 @@ export default function QuestionsScreen() {
           )}
           {/* On a phone the filters open and close by height, not by popping in. */}
           <div
-            className={`grid transition-[grid-template-rows,opacity,visibility] duration-300 [transition-timing-function:cubic-bezier(0.22,1,0.36,1)] md:grid-rows-[1fr] ${
+            className={`grid lv-t-smooth transition-[grid-template-rows,opacity,visibility] md:grid-rows-[1fr] ${
               filtersOpen
                 ? "grid-rows-[1fr] opacity-100"
                 : "invisible grid-rows-[0fr] opacity-0 md:visible md:opacity-100"

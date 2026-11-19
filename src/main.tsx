@@ -13,7 +13,7 @@ import { createSupabaseAuth } from "./auth/supabaseClient.ts";
 import { ThemeProvider } from "./themes/ThemeProvider.tsx";
 import { registerServiceWorker } from "./pwa/pwa.ts";
 import { startMonitoring } from "./lib/monitoring.ts";
-import { trackOrigins } from "./design-system/motion.ts";
+import { trackOrigins } from "./motion/index.ts";
 
 trackOrigins();
 registerServiceWorker();

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { canAnimate } from "../design-system/motion.ts";
+import { canAnimate } from "../motion/index.ts";
 import { dismissToast, useToast } from "./toast.ts";
 
 const SHOW_MS = 4000;

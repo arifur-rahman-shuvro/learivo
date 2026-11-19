@@ -5,7 +5,7 @@ import {
   type InputHTMLAttributes,
   type ReactNode,
 } from "react";
-import { useGrown } from "./useGrown.ts";
+import { useGrown } from "../motion/index.ts";
 import { useTheme } from "../themes/ThemeProvider.tsx";
 import { slots } from "../themes/slots.tsx";
 

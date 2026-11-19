@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { MOTION } from "./tokens.ts";
 
 /**
  * Origin motion: a panel that opens grows out of the thing the student touched and shrinks back
@@ -6,10 +7,10 @@ import { useState } from "react";
  * from. Only transform and opacity are animated, which keeps it smooth on a phone.
  */
 
-export const EASE_OUT = "cubic-bezier(0.22, 1, 0.36, 1)";
-export const EASE_IN = "cubic-bezier(0.5, 0, 0.75, 0)";
-export const OPEN_MS = 300;
-export const CLOSE_MS = 200;
+const EASE_OUT = MOTION.ease.out;
+const EASE_IN = MOTION.ease.in;
+const OPEN_MS = MOTION.ms.open;
+const CLOSE_MS = MOTION.ms.close;
 
 export interface Origin {
   /** Centre of the touched control, in screen pixels. */

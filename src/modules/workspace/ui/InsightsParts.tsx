@@ -1,4 +1,4 @@
-import { useGrown } from "../../../design-system/useGrown.ts";
+import { useGrown } from "../../../motion/index.ts";
 import type { ActivityDay, ReasonRow } from "../domain/insights.ts";
 import { REASONS, reasonLabel } from "../../practice/domain/reasons.ts";
 

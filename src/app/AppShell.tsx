@@ -1,127 +1,32 @@
-import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
-import {
-  BottomNav,
-  Button,
-  EmptyState,
-  LogoWordmark,
-  PanelSkeleton,
-  PlusIcon,
-  SearchIcon,
-  ThemeBackground,
-} from "../design-system/index.ts";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { BottomNav, EmptyState, ThemeBackground } from "../design-system/index.ts";
 import App from "../App.tsx";
 import { useAuth } from "../auth/AuthProvider.tsx";
 import AuthScreen from "../auth/AuthScreen.tsx";
 import AccountMenu from "./AccountMenu.tsx";
+import AppFrame from "./AppFrame.tsx";
+import ModuleHost from "./ModuleHost.tsx";
+import { AiGate } from "./Gates.tsx";
 import ToastHost from "./ToastHost.tsx";
-import { useAiDialogOpen } from "../modules/ai/keys.ts";
-import { useGuideOpen } from "./guide.ts";
-import { useBackupOpen } from "./backupStore.ts";
 import { SupabaseProfile } from "../modules/profile/data/supabaseProfile.ts";
 import type { ProfileRepo } from "../modules/profile/data/repo.ts";
 import { useFocusMode } from "./focus.ts";
-import StatusBanner from "./StatusBanner.tsx";
-import SyncIndicator from "./SyncIndicator.tsx";
 import CommandPalette from "./CommandPalette.tsx";
-import { OfflineProvider, useServices } from "../offline/OfflineProvider.tsx";
-import { moduleForHash, visibleModules, type ModuleId } from "./registry.ts";
+import { OfflineProvider } from "../offline/OfflineProvider.tsx";
+import { moduleForHash, visibleModules } from "./registry.ts";
 import { supabase } from "../lib/supabase.ts";
 import { SupabaseRepo } from "../modules/question-bank/data/supabaseRepo.ts";
 import type { QuestionRepo } from "../modules/question-bank/data/repo.ts";
-import { BankProvider } from "../modules/question-bank/ui/bank.tsx";
 import { SupabaseData } from "../modules/data/data/supabaseData.ts";
 import { SupabaseAttempts } from "../modules/practice/data/supabaseAttempts.ts";
 import type { AttemptRepo } from "../modules/practice/data/repo.ts";
-import { PracticeProvider } from "../modules/practice/ui/practice.tsx";
-import { SupabaseWorkspace } from "../modules/workspace/data/supabaseWorkspace.ts";
 import type { WorkspaceRepo } from "../modules/workspace/data/repo.ts";
-import { WorkspaceProvider } from "../modules/workspace/ui/workspace.tsx";
-import HomeDashboard from "../modules/workspace/ui/HomeDashboard.tsx";
-
-const GuideDialog = lazy(() => import("./GuideDialog.tsx"));
-const BackupDialog = lazy(() => import("./BackupDialog.tsx"));
-const AiConnectionDialog = lazy(() =>
-  import("../modules/ai/AiConnectionDialog.tsx").then((m) => ({ default: m.AiConnectionDialog })),
-);
-const PracticeScreen = lazy(() => import("../modules/practice/ui/PracticeScreen.tsx"));
-const QuestionsScreen = lazy(() => import("../modules/question-bank/ui/QuestionsScreen.tsx"));
-const ReviewScreen = lazy(() => import("../modules/workspace/ui/ReviewScreen.tsx"));
-const InsightsScreen = lazy(() => import("../modules/workspace/ui/InsightsScreen.tsx"));
-
-/** Downloads each dialog's code only the first time it is opened. */
-function GuideGate({ onNavigate }: { onNavigate: (route: string) => void }) {
-  return useGuideOpen() ? (
-    <Suspense fallback={null}>
-      <GuideDialog onNavigate={onNavigate} />
-    </Suspense>
-  ) : null;
-}
-function BackupGate() {
-  return useBackupOpen() ? (
-    <Suspense fallback={null}>
-      <BackupDialog />
-    </Suspense>
-  ) : null;
-}
-function AiGate() {
-  return useAiDialogOpen() ? (
-    <Suspense fallback={null}>
-      <AiConnectionDialog />
-    </Suspense>
-  ) : null;
-}
 
 export interface Repos {
   makeRepo?: (userId: string) => QuestionRepo;
   makeAttempts?: (userId: string) => AttemptRepo;
   makeWorkspace?: (userId: string) => WorkspaceRepo;
   makeProfile?: (userId: string) => ProfileRepo;
-}
-
-/**
- * Gives every signed-in screen its data: the question bank, practice history and the personal
- * workspace. One host for all of them, so switching screens keeps what is already loaded.
- */
-function ModuleHost({
-  userId,
-  module,
-  onNavigate,
-  makeWorkspace,
-}: Pick<Repos, "makeWorkspace"> & {
-  userId: string;
-  module: ModuleId;
-  onNavigate: (route: string) => void;
-}) {
-  const { bank: repo, attempts } = useServices();
-  const workspace = useMemo(
-    () => (makeWorkspace ? makeWorkspace(userId) : new SupabaseWorkspace(supabase, userId)),
-    [userId, makeWorkspace],
-  );
-  return (
-    <BankProvider repo={repo}>
-      <PracticeProvider attempts={attempts}>
-        <WorkspaceProvider repo={workspace}>
-          <Suspense fallback={<PanelSkeleton />}>
-            <GuideGate onNavigate={onNavigate} />
-            <BackupGate />
-            <div key={module} className="lv-fade-in">
-              {module === "home" ? (
-                <HomeDashboard onNavigate={onNavigate} />
-              ) : module === "questions" ? (
-                <QuestionsScreen />
-              ) : module === "practice" ? (
-                <PracticeScreen />
-              ) : module === "review" ? (
-                <ReviewScreen onNavigate={onNavigate} />
-              ) : (
-                <InsightsScreen onNavigate={onNavigate} />
-              )}
-            </div>
-          </Suspense>
-        </WorkspaceProvider>
-      </PracticeProvider>
-    </BankProvider>
-  );
 }
 
 /** Builds the profile store once per student, so the menu does not reload it on every render. */
@@ -146,8 +51,8 @@ function useHash(): [string, (hash: string) => void] {
 }
 
 /**
- * App shell. Phones: top bar, content, bottom tab bar. Desktop: left sidebar plus content.
- * Navigation is built from the module registry; modules without a screen show a status panel.
+ * App shell: decides what to show (loading, sign in, the app) and connects the services. The
+ * layout itself is AppFrame, and the screens are in ModuleHost.
  */
 export default function AppShell({
   makeRepo,
@@ -200,74 +105,37 @@ export default function AppShell({
       <CommandPalette onNavigate={go} />
       <AiGate />
       <ToastHost />
-      <div className="relative z-10 mx-auto min-h-dvh max-w-[1280px] lg:grid lg:grid-cols-[260px_1fr]">
-        <aside className="lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-6 lg:border-r lg:border-line lg:px-4 lg:py-6">
-          <div className="hidden px-3 lg:block">
-            <LogoWordmark />
-          </div>
-          <div className="hidden lg:block">
-            <Button icon={<PlusIcon />} className="w-full" onClick={() => go("#/questions")}>
-              Add question
-            </Button>
-          </div>
-          <div
-            className={`fixed inset-x-0 bottom-0 z-20 p-3 lg:static lg:p-0 ${focus ? "max-lg:hidden" : ""}`}
-          >
-            <BottomNav
-              ids={modules.map((m) => m.id)}
-              activeId={current.id}
-              onSelect={(id) => go(modules.find((m) => m.id === id)?.route ?? "#/home")}
+      <AppFrame
+        focus={focus}
+        onAdd={() => go("#/questions")}
+        nav={
+          <BottomNav
+            ids={modules.map((m) => m.id)}
+            activeId={current.id}
+            onSelect={(id) => go(modules.find((m) => m.id === id)?.route ?? "#/home")}
+          />
+        }
+        account={user && <AccountHost userId={user.id} makeProfile={makeProfile} />}
+      >
+        {user ? (
+          <ModuleHost
+            userId={user.id}
+            module={current.id}
+            onNavigate={go}
+            makeWorkspace={makeWorkspace}
+          />
+        ) : (
+          <div className="lv-card p-5 sm:p-7">
+            <h1 id="module-title" className="m-0 text-3xl font-bold">
+              {current.label}
+            </h1>
+            <EmptyState
+              title={`${current.label} is being built`}
+              description={`This screen arrives in Phase ${current.builtInPhase} of the roadmap.`}
             />
           </div>
-        </aside>
-
-        <div
-          className={`flex min-w-0 flex-col gap-5 px-4 pt-4 sm:px-6 lg:px-8 lg:pb-10 lg:pt-5 pb-28`}
-        >
-          <header className={`flex items-center justify-between ${focus ? "max-lg:hidden" : ""}`}>
-            <div className="lg:hidden">
-              <LogoWordmark />
-            </div>
-            <div className="ml-auto flex items-center gap-2">
-              <button
-                type="button"
-                className="lv-btn lv-btn-secondary lv-btn-sm"
-                aria-label="Search and commands"
-                onClick={() => window.dispatchEvent(new Event("learivo:palette"))}
-              >
-                <SearchIcon />
-                <span className="hidden sm:inline">Search</span>
-                <kbd className="hidden rounded border border-line px-1 text-xs text-muted lg:inline">
-                  Ctrl K
-                </kbd>
-              </button>
-              <SyncIndicator />
-              {user && <AccountHost userId={user.id} makeProfile={makeProfile} />}
-            </div>
-          </header>
-          <StatusBanner />
-          <main id="main" tabIndex={-1} aria-labelledby="module-title" className="outline-none">
-            {user ? (
-              <ModuleHost
-                userId={user.id}
-                module={current.id}
-                onNavigate={go}
-                makeWorkspace={makeWorkspace}
-              />
-            ) : (
-              <div className="lv-card p-5 sm:p-7">
-                <h1 id="module-title" className="m-0 text-3xl font-bold">
-                  {current.label}
-                </h1>
-                <EmptyState
-                  title={`${current.label} is being built`}
-                  description={`This screen arrives in Phase ${current.builtInPhase} of the roadmap.`}
-                />
-              </div>
-            )}
-          </main>
-        </div>
-      </div>
+        )}
+      </AppFrame>
     </>,
   );
 }
