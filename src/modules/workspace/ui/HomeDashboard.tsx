@@ -1,4 +1,5 @@
 import FeaturesDialog from "../../../help/FeaturesDialog.tsx";
+import FeatureShelf from "../../../help/FeatureShelf.tsx";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button, ProgressRing, Spinner } from "../../../ui-kit/index.ts";
 import Home from "./HomeWelcome.tsx";
@@ -150,6 +151,7 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
 
   const done = view?.today ?? 0;
   const blocks: Record<HomeSectionId, ReactNode> = {
+    features: <FeatureShelf onNavigate={onNavigate} onBrowse={() => setFeatures(true)} />,
     focus: (
       <section
         aria-label="Today's focus"
@@ -352,6 +354,7 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
   const wide: Record<HomeSectionId, boolean> = {
     focus: true,
     numbers: true,
+    features: true,
     goal: false,
     week: false,
     weak: false,
@@ -367,9 +370,6 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
           Today
         </h1>
         <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={() => setFeatures(true)}>
-            All features
-          </Button>
           <Button variant="secondary" size="sm" onClick={() => setCustomizing(true)}>
             Customize
           </Button>

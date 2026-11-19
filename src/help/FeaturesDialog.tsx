@@ -2,10 +2,7 @@ import { useMemo, useState } from "react";
 import { Button, Dialog } from "../ui-kit/index.ts";
 import { FeatureIcon } from "./FeatureIcon.tsx";
 import { FEATURE_GROUPS, type Feature } from "./features.ts";
-import { openAiConnection } from "../core/dialogs/ai.ts";
-import { openBackup } from "../core/dialogs/backup.ts";
-import { openGuide } from "../core/dialogs/guide.ts";
-import { sendIntent } from "../core/intents.ts";
+import { openFeature } from "./openFeature.ts";
 
 /** Every feature in one place, grouped, each with an icon and a one-line description. */
 export default function FeaturesDialog({
@@ -29,21 +26,7 @@ export default function FeaturesDialog({
 
   function go(f: Feature) {
     onClose();
-    if (f.action === "guide") {
-      openGuide();
-      return;
-    }
-    if (f.action === "ai") {
-      openAiConnection();
-      return;
-    }
-    if (f.action === "backup") {
-      openBackup();
-      return;
-    }
-    if (f.action) sendIntent({ kind: f.action });
-    else if (f.target) sendIntent({ kind: "open", target: f.target });
-    onNavigate(f.route);
+    openFeature(f, onNavigate);
   }
 
   return (

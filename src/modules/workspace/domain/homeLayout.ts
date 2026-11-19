@@ -2,6 +2,7 @@
 export const HOME_SECTIONS = [
   { id: "focus", label: "Today's focus" },
   { id: "numbers", label: "Your numbers" },
+  { id: "features", label: "All features" },
   { id: "goal", label: "Daily goal" },
   { id: "week", label: "This week" },
   { id: "weak", label: "Weak areas" },

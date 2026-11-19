@@ -346,7 +346,7 @@ describe("Home dashboard", () => {
     await waitFor(() => expect(screen.queryByRole("heading", { name: "Weak areas" })).toBeNull());
     const saved = await workspace.homeLayout();
     expect(saved.hidden).toEqual(["weak"]);
-    expect(saved.order.slice(0, 3)).toEqual(["focus", "goal", "numbers"]);
+    expect(saved.order.slice(0, 4)).toEqual(["focus", "numbers", "goal", "features"]);
   });
 
   it("can reset the layout and does not save when cancelled", async () => {

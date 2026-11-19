@@ -221,3 +221,11 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
 ];
 
 export const ALL_FEATURES: Feature[] = FEATURE_GROUPS.flatMap((g) => g.features);
+
+/** The tiles shown first on Home, most used first; the rest follow in the order above. */
+const FEATURED = ["add", "import", "practice", "exam", "due", "mistakes", "flashcards", "insights"];
+
+export const SHELF_FEATURES: Feature[] = [
+  ...FEATURED.map((id) => ALL_FEATURES.find((f) => f.id === id)).filter((f): f is Feature => !!f),
+  ...ALL_FEATURES.filter((f) => !FEATURED.includes(f.id)),
+];

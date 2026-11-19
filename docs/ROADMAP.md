@@ -323,3 +323,5 @@ Progress, confidence and mistake groups (2026-11-19): while answering (practice 
 Progress, row actions (2026-11-19): every question row has a "more" button (three dots) with Edit, Practise this question, Add to revision and Archive (Restore in the archive). It is a reusable `ActionMenu` in the UI kit: opens at the button with fixed positioning so nothing clips it, arrow keys, Escape, outside tap and scroll close it. Archive offers Undo. Tested with 4 new app tests; not seen on a phone.
 
 - Practice: number keys 1–9 pick an option while answering (disabled once the answer is checked). Insights: each weak area has a Practise button that starts ten questions on it.
+
+- Home: new "All features" section (a movable Home section, can be hidden in Customize). It shows 8 feature buttons with icons, "More" loads 8 more each tap, "Fewer" folds back, "Browse all features" opens the searchable list. Existing users get the section at the end of their layout until they move it (Customize).

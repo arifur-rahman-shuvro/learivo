@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { ThemeProvider } from "../ui-kit/themes/ThemeProvider.tsx";
 import AppShell from "../shell/AppShell.tsx";
@@ -118,5 +118,26 @@ describe("User guide", () => {
     fireEvent.click(within(dlg).getByRole("button", { name: "Add questions" }));
     expect(window.location.hash).toBe("#/questions");
     expect(await screen.findByRole("dialog", { name: "Add questions" })).toBeTruthy();
+  });
+});
+
+describe("Feature shelf", () => {
+  afterEach(cleanup);
+
+  it("shows a first batch, loads more on request and folds back", async () => {
+    const { default: FeatureShelf } = await import("./FeatureShelf.tsx");
+    const { SHELF_FEATURES } = await import("./features.ts");
+    const nav = vi.fn();
+    render(<FeatureShelf onNavigate={nav} onBrowse={() => {}} />);
+    const tiles = () => screen.getAllByRole("listitem").length;
+    expect(tiles()).toBe(8);
+    fireEvent.click(screen.getByRole("button", { name: /^More/ }));
+    expect(tiles()).toBe(16);
+    fireEvent.click(screen.getByRole("button", { name: /^More/ }));
+    expect(tiles()).toBe(SHELF_FEATURES.length);
+    fireEvent.click(screen.getByRole("button", { name: "Fewer" }));
+    expect(tiles()).toBe(8);
+    fireEvent.click(screen.getByRole("button", { name: "Practice session" }));
+    expect(nav).toHaveBeenCalled();
   });
 });
