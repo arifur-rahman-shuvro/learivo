@@ -39,6 +39,7 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
   const opened = useRef(Date.now());
   const sent = useRef(false);
   const flagRef = useRef<(() => void) | null>(null);
+  const answerRef = useRef<HTMLDivElement>(null);
   // Seconds on each question, counted only while the page is visible.
   const secs = useRef<number[]>([]);
   const indexRef = useRef(0);
@@ -156,7 +157,7 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
     if (attempt && remaining !== null && remaining <= 0) void submit(attempt);
   }, [attempt, remaining, submit]);
 
-  // Desktop shortcuts: N or right arrow for next, P or left arrow for previous, F to flag.
+  // Desktop shortcuts: N or right arrow for next, P or left arrow for previous, F to flag, 1 to 9 to pick an option.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const t = e.target as HTMLElement | null;
@@ -176,6 +177,14 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
       if (k === "n" || k === "arrowright") setIndex((i) => Math.min(last, i + 1));
       else if (k === "p" || k === "arrowleft") setIndex((i) => Math.max(0, i - 1));
       else if (k === "f") flagRef.current?.();
+      else if (/^[1-9]$/.test(k)) {
+        // 1 to 9 picks that option on choice questions; statement questions use the screen.
+        const boxes = answerRef.current?.querySelectorAll<HTMLInputElement>(
+          'input[type="radio"][data-choice], input[type="checkbox"][data-choice]',
+        );
+        const box = boxes?.[Number(k) - 1];
+        if (box && !box.disabled) box.click();
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
@@ -332,14 +341,16 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
                 ))
               : snap.stem}
           </p>
-          <ResponseInput
-            key={`${attemptId}-${index}`}
-            snapshot={snap}
-            response={item.response}
-            onChange={(r) => change(index, r)}
-            locked={locked}
-            reveal={locked}
-          />
+          <div ref={answerRef}>
+            <ResponseInput
+              key={`${attemptId}-${index}`}
+              snapshot={snap}
+              response={item.response}
+              onChange={(r) => change(index, r)}
+              locked={locked}
+              reveal={locked}
+            />
+          </div>
           {isAnswered(item.response) && (
             <ConfidenceRow
               key={`conf-${attemptId}-${index}`}

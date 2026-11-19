@@ -243,8 +243,11 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
                     <li key={a.name} className="flex flex-col gap-1">
                       <div className="flex items-baseline justify-between gap-3 text-sm">
                         <span className="min-w-0 truncate font-semibold">{a.name}</span>
-                        <span className="font-mono text-muted">
-                          {a.correct}/{a.total} · {Math.round(a.accuracy * 100)}%
+                        <span className="flex shrink-0 items-center gap-3">
+                          <span className="font-mono text-muted">
+                            {a.correct}/{a.total} · {Math.round(a.accuracy * 100)}%
+                          </span>
+                          <PractiseArea area={a.name} onNavigate={onNavigate} />
                         </span>
                       </div>
                       <div

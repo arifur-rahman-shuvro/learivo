@@ -231,6 +231,26 @@ describe("Insights", () => {
     expect(await screen.findByText("Nothing to show yet")).toBeTruthy();
   });
 
+  it("starts a practice session from a weak area", async () => {
+    const { nav } = await setup(
+      (n) => <InsightsScreen onNavigate={n} />,
+      async ({ bank, attempts }) => {
+        const [a, b] = await bank.create([
+          { ...tf("A1"), path: ["Anatomy"] },
+          { ...tf("A2"), path: ["Anatomy"] },
+        ]);
+        await finished(attempts, [
+          { id: a!, stem: "A1", path: ["Anatomy"], right: false },
+          { id: b!, stem: "A2", path: ["Anatomy"], right: false },
+        ]);
+      },
+    );
+    fireEvent.click(await screen.findByRole("tab", { name: "Subjects" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Practise Anatomy" }));
+    await waitFor(() => expect(nav).toHaveBeenCalledWith("#/practice"));
+    expect(handoff.attemptId).not.toBeNull();
+  });
+
   it("shows totals, weakest subject first, and exam scores", async () => {
     await setup(
       (n) => <InsightsScreen onNavigate={n} />,

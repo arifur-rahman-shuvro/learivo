@@ -202,6 +202,23 @@ describe("Practice", () => {
     });
   });
 
+  it("picks an option with the number keys, but not once the answer is checked", async () => {
+    const { ready } = setup([tf("Keys")]);
+    await ready;
+    await startPractice(1);
+    await screen.findByText(/Question 1 of 1/);
+    const radios = () => screen.getAllByRole("radio").filter((r) => r.hasAttribute("data-choice"));
+    const checked = () => radios().map((r) => (r as HTMLInputElement).checked);
+    fireEvent.keyDown(window, { key: "2" });
+    await waitFor(() => expect(checked()).toEqual([false, true, false, false, false]));
+    fireEvent.keyDown(window, { key: "1" });
+    await waitFor(() => expect(checked()).toEqual([true, false, false, false, false]));
+    fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
+    await screen.findByText("Explanation");
+    fireEvent.keyDown(window, { key: "3" });
+    expect(checked()).toEqual([true, false, false, false, false]);
+  });
+
   it("marks a true/false question statement by statement: 3 of 5 right earns 0.6", async () => {
     const stmt = (text: string, correct: boolean) => ({ text, correct });
     const heart: QuestionInput = {

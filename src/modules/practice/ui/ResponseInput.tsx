@@ -108,6 +108,7 @@ export default function ResponseInput({ snapshot, response, onChange, locked, re
               <input
                 type={multi ? "checkbox" : "radio"}
                 name="choice"
+                data-choice=""
                 checked={picked}
                 disabled={locked}
                 onChange={() => toggle(i)}
