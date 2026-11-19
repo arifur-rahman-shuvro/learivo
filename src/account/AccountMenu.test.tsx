@@ -49,7 +49,7 @@ describe("account menu", () => {
       within(menu)
         .getAllByRole("menuitem")
         .map((i) => i.textContent),
-    ).toEqual(["Your profile", "Appearance", "User guide", "Settings", "Sign out"]);
+    ).toEqual(["Account", "Appearance", "User guide", "Settings", "Sign out"]);
   });
 
   it("moves focus into the menu, supports arrow keys and closes on Escape", async () => {
@@ -71,16 +71,16 @@ describe("account menu", () => {
   it("saves a name and avatar, and the avatar then shows initials", async () => {
     const { profile } = shell();
     await openMenu();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Your profile" }));
-    const dialog = await screen.findByRole("dialog", { name: "Your profile" });
+    fireEvent.click(screen.getByRole("menuitem", { name: "Account" }));
+    const dialog = await screen.findByRole("dialog", { name: "Account" });
     expect(
-      (within(dialog).getByRole("button", { name: "Save profile" }) as HTMLButtonElement).disabled,
+      (within(dialog).getByRole("button", { name: "Save details" }) as HTMLButtonElement).disabled,
     ).toBe(true);
     fireEvent.change(within(dialog).getByLabelText("Your name"), {
       target: { value: "  sara   jahan rahman " },
     });
     fireEvent.click(within(dialog).getByRole("radio", { name: "Rose" }));
-    fireEvent.click(within(dialog).getByRole("button", { name: "Save profile" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save details" }));
     expect(await within(dialog).findByText("Profile saved.")).toBeTruthy();
     expect(await profile.get()).toEqual({ displayName: "sara jahan rahman", avatar: "rose" });
     fireEvent.click(within(dialog).getAllByRole("button", { name: "Close" })[0]!);
@@ -98,10 +98,10 @@ describe("account menu", () => {
     };
     shell(failing);
     await openMenu();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Your profile" }));
-    const dialog = await screen.findByRole("dialog", { name: "Your profile" });
+    fireEvent.click(screen.getByRole("menuitem", { name: "Account" }));
+    const dialog = await screen.findByRole("dialog", { name: "Account" });
     fireEvent.change(within(dialog).getByLabelText("Your name"), { target: { value: "Sara" } });
-    fireEvent.click(within(dialog).getByRole("button", { name: "Save profile" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Save details" }));
     expect((await within(dialog).findByRole("alert")).textContent).toContain("session has ended");
     expect((within(dialog).getByLabelText("Your name") as HTMLInputElement).value).toBe("Sara");
   });
@@ -124,8 +124,8 @@ describe("account menu", () => {
   it("changes the password only when the form is valid, and shows the reason when it fails", async () => {
     const { client } = shell();
     await openMenu();
-    fireEvent.click(screen.getByRole("menuitem", { name: "Settings" }));
-    const dialog = await screen.findByRole("dialog", { name: "Settings" });
+    fireEvent.click(screen.getByRole("menuitem", { name: "Account" }));
+    const dialog = await screen.findByRole("dialog", { name: "Account" });
     const form = within(dialog).getByRole("form", { name: "Change password" });
     const submit = within(form).getByRole("button", {
       name: "Change password",
@@ -151,6 +151,52 @@ describe("account menu", () => {
     expect(await within(form).findByText("Password changed.")).toBeTruthy();
     expect(client.calls).toContain("changePassword:old-password-1");
     expect((within(form).getByLabelText("New password") as HTMLInputElement).value).toBe("");
+  });
+
+  it("Settings has one Account section that opens the Account dialog, with no password form of its own", async () => {
+    shell();
+    await openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Settings" }));
+    const settings = await screen.findByRole("dialog", { name: "Settings" });
+    expect(within(settings).queryByRole("form", { name: "Change password" })).toBeNull();
+    fireEvent.click(within(settings).getByRole("button", { name: "Account" }));
+    const account = await screen.findByRole("dialog", { name: "Account" });
+    expect(within(account).getByRole("form", { name: "Change password" })).toBeTruthy();
+    expect(within(account).getByRole("region", { name: "Account details" })).toBeTruthy();
+    expect(within(account).getByRole("region", { name: "Delete account" })).toBeTruthy();
+  });
+
+  it("deletes the account only after the password and the word DELETE, and signs out", async () => {
+    const { client } = shell();
+    await openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Account" }));
+    const account = await screen.findByRole("dialog", { name: "Account" });
+    fireEvent.click(within(account).getByRole("button", { name: "Delete account" }));
+    const confirm = await screen.findByRole("dialog", { name: "Delete your account?" });
+    const go = within(confirm).getByRole("button", {
+      name: "Delete my account",
+    }) as HTMLButtonElement;
+    expect(go.disabled).toBe(true);
+    fireEvent.change(within(confirm).getByLabelText("Your password"), {
+      target: { value: "wrong-password" },
+    });
+    fireEvent.change(within(confirm).getByLabelText("Type DELETE to confirm"), {
+      target: { value: "delete" },
+    });
+    expect(go.disabled).toBe(true); // must be capital letters
+    fireEvent.change(within(confirm).getByLabelText("Type DELETE to confirm"), {
+      target: { value: "DELETE" },
+    });
+    fireEvent.click(go);
+    expect((await within(confirm).findByRole("alert")).textContent).toBe(
+      "That password is not correct.",
+    );
+    fireEvent.change(within(confirm).getByLabelText("Your password"), {
+      target: { value: "right-password" },
+    });
+    fireEvent.click(go);
+    expect(await screen.findByRole("heading", { name: "Sign in to Learivo" })).toBeTruthy();
+    expect(client.calls).toContain("deleteAccount:right-password");
   });
 
   it("signs out from the menu", async () => {

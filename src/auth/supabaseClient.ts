@@ -61,6 +61,25 @@ export function createSupabaseAuth(): AuthClient {
         return { ok: false, message: "Choose a password you have not used on this account." };
       return { ok: false, message: friendly(error.message) };
     },
+    async deleteAccount(password) {
+      const { data } = await supabase.auth.getSession();
+      const email = data.session?.user.email;
+      if (!email) return { ok: false, message: "Your session has ended. Sign in again." };
+      // Ask for the password again, so someone holding an open phone cannot delete the account.
+      const check = await supabase.auth.signInWithPassword({ email, password });
+      if (check.error) {
+        return {
+          ok: false,
+          message: check.error.message.toLowerCase().includes("invalid login")
+            ? "That password is not correct."
+            : friendly(check.error.message),
+        };
+      }
+      const { error } = await supabase.rpc("delete_my_account");
+      if (error) return { ok: false, message: friendly(error.message) };
+      await supabase.auth.signOut({ scope: "local" }); // the account is gone; end this session
+      return { ok: true };
+    },
     async signOut() {
       await supabase.auth.signOut();
     },

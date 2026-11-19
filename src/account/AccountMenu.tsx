@@ -1,17 +1,17 @@
-import { forgetAllKeys } from "../modules/ai/keys.ts";
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Avatar } from "../ui-kit/index.ts";
 import { canAnimate, MOTION, usePresence } from "../motion/index.ts";
 import { useAuth } from "../auth/AuthProvider.tsx";
-import { useOfflineControls } from "../platform/offline/OfflineProvider.tsx";
 import { avatarColor, initials } from "../modules/profile/domain/profile.ts";
 import type { ProfileRepo } from "../modules/profile/data/repo.ts";
 import { openGuide } from "../core/dialogs/guide.ts";
 import { useProfile } from "../modules/profile/ui/useProfile.ts";
-import { AppearanceDialog, ProfileDialog, SettingsDialog } from "./AccountDialogs.tsx";
+import { AppearanceDialog, SettingsDialog } from "./AccountDialogs.tsx";
+import { AccountDialog } from "./AccountDialog.tsx";
+import { useClearDeviceData } from "./clearDeviceData.ts";
 import DataDialog from "./DataDialog.tsx";
 
-type Panel = "profile" | "appearance" | "settings" | "data" | null;
+type Panel = "account" | "appearance" | "settings" | "data" | null;
 
 function Item({
   onClick,
@@ -46,7 +46,7 @@ function Item({
  */
 export default function AccountMenu({ repo }: { repo: ProfileRepo }) {
   const { user, client } = useAuth();
-  const offline = useOfflineControls();
+  const clearDevice = useClearDeviceData();
   const { profile, save } = useProfile(repo);
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
@@ -118,9 +118,7 @@ export default function AccountMenu({ repo }: { repo: ProfileRepo }) {
 
   async function signOut() {
     setLeaving(true);
-    await offline?.pack.clear().catch(() => undefined);
-    await offline?.sync.clearCaches().catch(() => undefined);
-    forgetAllKeys(); // AI keys belong to this device only
+    await clearDevice();
     await client.signOut();
   }
 
@@ -156,7 +154,7 @@ export default function AccountMenu({ repo }: { repo: ProfileRepo }) {
             </div>
           </div>
           <div role="separator" className="my-1 border-t border-line" />
-          <Item onClick={() => show("profile")}>Your profile</Item>
+          <Item onClick={() => show("account")}>Account</Item>
           <Item onClick={() => show("appearance")}>Appearance</Item>
           <Item
             onClick={() => {
@@ -173,8 +171,8 @@ export default function AccountMenu({ repo }: { repo: ProfileRepo }) {
           </Item>
         </div>
       )}
-      <ProfileDialog
-        open={panel === "profile"}
+      <AccountDialog
+        open={panel === "account"}
         email={email}
         profile={profile}
         onSave={save}
@@ -185,6 +183,7 @@ export default function AccountMenu({ repo }: { repo: ProfileRepo }) {
         open={panel === "settings"}
         onClose={() => setPanel(null)}
         onOpenData={() => setPanel("data")}
+        onOpenAccount={() => setPanel("account")}
       />
       <DataDialog open={panel === "data"} onClose={() => setPanel(null)} />
     </div>
