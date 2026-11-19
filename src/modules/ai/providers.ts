@@ -69,6 +69,8 @@ export interface AiConfig {
 
 export interface AskOptions {
   signal?: AbortSignal;
+  /** Longest wait for one answer, in milliseconds. */
+  timeoutMs?: number;
   /** Replaces fetch in tests. */
   fetchImpl?: typeof fetch;
   maxTokens?: number;
@@ -224,6 +226,22 @@ function textOf(cfg: AiConfig, body: unknown): string {
   return typeof msg.content === "string" ? msg.content : "";
 }
 
+/** Longest wait for one answer from a provider. */
+export const AI_TIMEOUT_MS = 90_000;
+
+const errName = (e: unknown) => (e as { name?: string } | null)?.name;
+
+function withTimeout(ms: number, signal?: AbortSignal): AbortSignal {
+  const timer = new AbortController();
+  const stop = (why: unknown) => timer.abort(why);
+  const t = setTimeout(() => stop(new DOMException("Timed out", "TimeoutError")), ms);
+  const done = () => clearTimeout(t);
+  timer.signal.addEventListener("abort", done, { once: true });
+  signal?.addEventListener("abort", () => stop(signal.reason), { once: true });
+  if (signal?.aborted) stop(signal.reason);
+  return timer.signal;
+}
+
 /**
  * Sends one prompt to the student's AI and returns its text. The key is only ever sent to that
  * provider. A busy provider (5xx), a rate limit (429) or a dropped connection is retried a couple
@@ -238,12 +256,15 @@ export async function askAi(cfg: AiConfig, prompt: string, opts: AskOptions = {}
   for (let attempt = 0; ; attempt++) {
     let res: Response;
     try {
-      res = await doFetch(url, { ...init, signal: opts.signal });
+      res = await doFetch(url, {
+        ...init,
+        signal: withTimeout(opts.timeoutMs ?? AI_TIMEOUT_MS, opts.signal),
+      });
     } catch (e) {
-      if (e instanceof DOMException && e.name === "AbortError") {
+      if (errName(e) === "AbortError") {
         throw new AiError("other", "Stopped.");
       }
-      if (e instanceof DOMException && e.name === "TimeoutError") {
+      if (errName(e) === "TimeoutError") {
         throw new AiError(
           "other",
           `${label} took too long to answer. Ask for fewer questions, or try again.`,

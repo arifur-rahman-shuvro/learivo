@@ -11,6 +11,7 @@ import {
   type Backup,
   type RestoreResult,
 } from "./backupData.ts";
+import { MIN_PASSPHRASE, isSealed, seal, unseal } from "./seal.ts";
 import { markBackedUp } from "../../core/backupReminder.ts";
 import { closeBackup, useBackupOpen } from "../../core/dialogs/backup.ts";
 
@@ -57,12 +58,18 @@ export default function BackupDialog() {
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<Preview | null>(null);
   const [result, setResult] = useState<RestoreResult | null>(null);
+  const [pass, setPass] = useState("");
+  const [locked, setLocked] = useState<string | null>(null); // a protected file waiting for its passphrase
+  const [unlockPass, setUnlockPass] = useState("");
 
   const close = () => {
     setPreview(null);
     setResult(null);
     setMessage(null);
     setError(null);
+    setPass("");
+    setLocked(null);
+    setUnlockPass("");
     closeBackup();
   };
 
@@ -71,10 +78,14 @@ export default function BackupDialog() {
     setError(null);
     setMessage(null);
     try {
+      if (pass !== "" && pass.length < MIN_PASSPHRASE) {
+        throw new Error(`Use at least ${MIN_PASSPHRASE} characters for the passphrase.`);
+      }
       const b = await buildBackup(bank, ws, attempts);
+      const text = JSON.stringify(b, null, 2);
       save(
         `learivo-backup-${new Date().toISOString().slice(0, 10)}.json`,
-        JSON.stringify(b, null, 2),
+        pass ? await seal(text, pass) : text,
       );
       markBackedUp();
       setMessage(
@@ -96,19 +107,45 @@ export default function BackupDialog() {
     setMessage(null);
     setResult(null);
     setPreview(null);
+    setLocked(null);
     try {
-      const parsed = parseBackup(await readText(file));
-      if (!parsed.ok) {
-        setError(parsed.error);
-      } else {
-        setPreview({ backup: parsed.backup, ...(await previewRestore(parsed.backup, bank)) });
+      const text = await readText(file);
+      if (isSealed(text)) {
+        setLocked(text);
+        setUnlockPass("");
+        return;
       }
+      await openText(text);
     } catch (e) {
       setError(errorText(e));
     } finally {
       setBusy(false);
       if (fileRef.current) fileRef.current.value = "";
     }
+  };
+
+  const unlock = async () => {
+    if (!locked) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await openText(await unseal(locked, unlockPass));
+      setLocked(null);
+      setUnlockPass("");
+    } catch (e) {
+      setError(errorText(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const openText = async (text: string) => {
+    const parsed = parseBackup(text);
+    if (!parsed.ok) {
+      setError(parsed.error);
+      return;
+    }
+    setPreview({ backup: parsed.backup, ...(await previewRestore(parsed.backup, bank)) });
   };
 
   const restore = async () => {
@@ -140,6 +177,23 @@ export default function BackupDialog() {
             exams, finished practice and exam sessions (the latest 500) and your revision schedule.
             Keep the file somewhere safe.
           </p>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="backup-pass" className="text-sm font-semibold">
+              Passphrase (optional)
+            </label>
+            <input
+              id="backup-pass"
+              type="password"
+              autoComplete="new-password"
+              className="lv-input"
+              value={pass}
+              onChange={(e) => setPass(e.target.value)}
+            />
+            <p className="m-0 text-sm text-muted">
+              Locks the file so only your passphrase opens it. There is no way to recover a
+              forgotten passphrase.
+            </p>
+          </div>
           <div>
             <Button variant="secondary" size="sm" disabled={busy} onClick={download}>
               Download backup
@@ -165,6 +219,30 @@ export default function BackupDialog() {
             />
           </div>
         </section>
+
+        {locked && (
+          <section
+            aria-label="Unlock backup"
+            className="flex flex-col gap-2 rounded-control border border-line p-3"
+          >
+            <label htmlFor="unlock-pass" className="text-sm font-semibold">
+              This backup is locked. Enter its passphrase.
+            </label>
+            <input
+              id="unlock-pass"
+              type="password"
+              autoComplete="off"
+              className="lv-input"
+              value={unlockPass}
+              onChange={(e) => setUnlockPass(e.target.value)}
+            />
+            <div>
+              <Button size="sm" disabled={busy || unlockPass === ""} onClick={() => void unlock()}>
+                Unlock backup
+              </Button>
+            </div>
+          </section>
+        )}
 
         {preview && (
           <section

@@ -61,4 +61,46 @@ describe("BackupDialog", () => {
     await waitFor(async () => expect(await bank.exportAll()).toHaveLength(1));
     act(() => closeBackup());
   });
+
+  it("asks for the passphrase of a locked backup and rejects a wrong one", async () => {
+    const src = new MemoryRepo();
+    await src.create([
+      {
+        ...blankQuestion("sba"),
+        stem: "Locked question?",
+        answer: {
+          options: [
+            { text: "A", correct: true },
+            { text: "B", correct: false },
+          ],
+        },
+      },
+    ]);
+    const { buildBackup } = await import("./backupData.ts");
+    const { seal } = await import("./seal.ts");
+    const locked = await seal(
+      JSON.stringify(await buildBackup(src, new MemoryWorkspace())),
+      "open sesame",
+    );
+    setup();
+    fireEvent.change(screen.getByLabelText("Choose backup file"), {
+      target: { files: [new File([locked], "b.json", { type: "application/json" })] },
+    });
+    const input = await screen.findByLabelText(/This backup is locked/);
+    fireEvent.change(input, { target: { value: "nope nope" } });
+    fireEvent.click(screen.getByRole("button", { name: "Unlock backup" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("does not open");
+    fireEvent.change(input, { target: { value: "open sesame" } });
+    fireEvent.click(screen.getByRole("button", { name: "Unlock backup" }));
+    await screen.findByText("1 new question");
+    act(() => closeBackup());
+  });
+
+  it("refuses a passphrase that is too short", async () => {
+    setup();
+    fireEvent.change(screen.getByLabelText("Passphrase (optional)"), { target: { value: "abc" } });
+    fireEvent.click(screen.getByRole("button", { name: "Download backup" }));
+    expect((await screen.findByRole("alert")).textContent).toContain("at least 8");
+    act(() => closeBackup());
+  });
 });

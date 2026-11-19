@@ -17,6 +17,31 @@ const cfg = (provider: AiConfig["provider"], model = "m1"): AiConfig => ({
 });
 
 describe("askAi", () => {
+  it("gives up with a clear message when the provider never answers", async () => {
+    const hang = ((_u: unknown, init?: RequestInit) =>
+      new Promise((_res, rej) => {
+        init?.signal?.addEventListener("abort", () => rej(init.signal!.reason));
+      })) as unknown as typeof fetch;
+    const err = await askAi(cfg("openai"), "Hi", {
+      fetchImpl: hang,
+      retryWaits: [],
+      timeoutMs: 20,
+    }).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(AiError);
+    expect((err as AiError).message).toMatch(/took too long/);
+  });
+
+  it("still stops at once when the student presses Stop", async () => {
+    const stop = new AbortController();
+    const hang = ((_u: unknown, init?: RequestInit) =>
+      new Promise((_res, rej) => {
+        init?.signal?.addEventListener("abort", () => rej(init.signal!.reason));
+      })) as unknown as typeof fetch;
+    const p = askAi(cfg("openai"), "Hi", { fetchImpl: hang, retryWaits: [], signal: stop.signal });
+    stop.abort();
+    expect(((await p.catch((e: unknown) => e)) as AiError).message).toBe("Stopped.");
+  });
+
   it("talks to Gemini with the key in a header, not in the address", async () => {
     const f = fake({
       candidates: [{ content: { parts: [{ text: "Hello " }, { text: "there" }] } }],
