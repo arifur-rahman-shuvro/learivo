@@ -117,6 +117,15 @@
     transform: translateY(6px);
   }
 }
+@keyframes lv-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.92);
+  }
+}
+.lv-menu-in {
+  animation: lv-menu-in var(--lv-m-ms-menu-in) var(--lv-m-ease-out);
+}
 .lv-pop {
   animation: lv-pop var(--lv-m-ms-pop) var(--lv-m-ease-spring);
 }

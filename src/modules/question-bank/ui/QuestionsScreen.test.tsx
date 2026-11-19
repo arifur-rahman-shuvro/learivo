@@ -6,6 +6,8 @@ import { DEFAULT_QUERY } from "../data/repo.ts";
 import { BankProvider } from "./bank.tsx";
 import QuestionsScreen from "./QuestionsScreen.tsx";
 import { MemoryWorkspace } from "../../workspace/data/memoryWorkspace.ts";
+import { MemoryAttempts } from "../../practice/data/memoryAttempts.ts";
+import { PracticeProvider } from "../../practice/ui/practice.tsx";
 import { WorkspaceProvider } from "../../workspace/ui/workspace.tsx";
 import { sendIntent } from "../../../core/intents.ts";
 import { blankQuestion, type QuestionInput } from "../domain/model.ts";
@@ -15,13 +17,20 @@ function tf(stem: string): QuestionInput {
   return { ...blankQuestion("true_false"), stem, answer: TF_ANSWER };
 }
 
-function renderScreen(repo: MemoryRepo) {
+function renderScreen(
+  repo: MemoryRepo,
+  onNavigate: (route: string) => void = () => undefined,
+  attempts = new MemoryAttempts(),
+  workspace = new MemoryWorkspace(),
+) {
   return render(
     <ThemeProvider>
       <BankProvider repo={repo}>
-        <WorkspaceProvider repo={new MemoryWorkspace()}>
-          <QuestionsScreen />
-        </WorkspaceProvider>
+        <PracticeProvider attempts={attempts}>
+          <WorkspaceProvider repo={workspace}>
+            <QuestionsScreen onNavigate={onNavigate} />
+          </WorkspaceProvider>
+        </PracticeProvider>
       </BankProvider>
     </ThemeProvider>,
   );
@@ -294,5 +303,57 @@ describe("Add questions hub", () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+
+  it("opens a row menu with Edit, Practise, Add to revision and Archive, and closes it on Escape", async () => {
+    const repo = new MemoryRepo();
+    await repo.create([tf("Menu question")]);
+    renderScreen(repo);
+    const more = await screen.findByRole("button", { name: /^Actions: Menu question/ });
+    fireEvent.click(more);
+    const menu = await screen.findByRole("menu");
+    expect(
+      within(menu)
+        .getAllByRole("menuitem")
+        .map((i) => i.textContent),
+    ).toEqual(["Edit", "Practise this question", "Add to revision", "Archive"]);
+    expect(document.activeElement).toBe(within(menu).getAllByRole("menuitem")[0]);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("menu")).toBeNull();
+  });
+
+  it("archives one question from its menu and Undo brings it back", async () => {
+    const repo = new MemoryRepo();
+    await repo.create([tf("Archive me"), tf("Stay")]);
+    renderScreen(repo);
+    fireEvent.click(await screen.findByRole("button", { name: /^Actions: Archive me/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Archive" }));
+    await waitFor(() => expect(screen.queryByText("Archive me")).toBeNull());
+    expect(screen.getByText("Stay")).toBeTruthy();
+    expect((await repo.list({ ...DEFAULT_QUERY, status: "archived" })).total).toBe(1);
+  });
+
+  it("adds a question to revision from its menu", async () => {
+    const repo = new MemoryRepo();
+    const [id] = await repo.create([tf("Revise me")]);
+    const workspace = new MemoryWorkspace();
+    renderScreen(repo, undefined, undefined, workspace);
+    fireEvent.click(await screen.findByRole("button", { name: /^Actions: Revise me/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Add to revision" }));
+    await waitFor(async () =>
+      expect((await workspace.cards()).some((c) => c.questionId === id)).toBe(true),
+    );
+  });
+
+  it("starts a one-question practice session from the menu and goes to Practice", async () => {
+    const repo = new MemoryRepo();
+    await repo.create([tf("Practise me")]);
+    const attempts = new MemoryAttempts();
+    const go = vi.fn();
+    renderScreen(repo, go, attempts);
+    fireEvent.click(await screen.findByRole("button", { name: /^Actions: Practise me/ }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Practise this question" }));
+    await waitFor(() => expect(go).toHaveBeenCalledWith("#/practice"));
+    expect((await attempts.list(5)).map((a) => a.title)).toContain("Practice: one question");
   });
 });

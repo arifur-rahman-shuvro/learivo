@@ -47,7 +47,7 @@ export default function ModuleHost({
               {module === "home" ? (
                 <HomeDashboard onNavigate={onNavigate} />
               ) : module === "questions" ? (
-                <QuestionsScreen />
+                <QuestionsScreen onNavigate={onNavigate} />
               ) : module === "practice" ? (
                 <PracticeScreen />
               ) : module === "review" ? (

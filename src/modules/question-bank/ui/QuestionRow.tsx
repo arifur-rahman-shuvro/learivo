@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Badge } from "../../../ui-kit/index.ts";
+import { ActionMenu, Badge } from "../../../ui-kit/index.ts";
 import { TYPE_LABELS } from "../domain/model.ts";
 import type { QuestionRecord } from "../data/repo.ts";
 import { DifficultyDots } from "./DifficultyDots.tsx";
@@ -13,9 +13,13 @@ interface Props {
   onToggle: (id: string) => void;
   onOpen: (id: string) => void;
   onBookmark: (id: string) => void;
+  onPractise: (id: string) => void;
+  onRevise: (id: string) => void;
+  /** Archives the question, or restores it when the archive is showing. */
+  onArchive: (id: string) => void;
 }
 
-/** One question in the list: select box, preview that opens the editor, and bookmark. */
+/** One question in the list: select box, preview that opens the editor, bookmark, and a menu of more actions. */
 export const QuestionRow = memo(function QuestionRow({
   q,
   path,
@@ -25,6 +29,9 @@ export const QuestionRow = memo(function QuestionRow({
   onToggle,
   onOpen,
   onBookmark,
+  onPractise,
+  onRevise,
+  onArchive,
 }: Props) {
   return (
     <li className="lv-card flex items-start gap-3 p-3.5">
@@ -65,6 +72,22 @@ export const QuestionRow = memo(function QuestionRow({
           {bookmarked ? "Bookmarked" : "Bookmark"}
         </button>
       )}
+      <ActionMenu
+        label={`Actions: ${q.stem.slice(0, 40)}`}
+        items={
+          archive
+            ? [
+                { label: "Edit", onSelect: () => onOpen(q.id) },
+                { label: "Restore", onSelect: () => onArchive(q.id) },
+              ]
+            : [
+                { label: "Edit", onSelect: () => onOpen(q.id) },
+                { label: "Practise this question", onSelect: () => onPractise(q.id) },
+                { label: "Add to revision", onSelect: () => onRevise(q.id) },
+                { label: "Archive", onSelect: () => onArchive(q.id) },
+              ]
+        }
+      />
     </li>
   );
 });

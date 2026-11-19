@@ -23,6 +23,8 @@ import { subjectOptions } from "./subjectOptions.ts";
 import { QuestionEditor } from "./QuestionEditor.tsx";
 import { errorText, useBank, useLoad } from "./bank.tsx";
 import { useWorkspace } from "../../workspace/ui/workspace.tsx";
+import { handoff, usePractice } from "../../practice/ui/practice.tsx";
+import { startFromQuestions } from "../../practice/ui/start.ts";
 
 const PAGE = 50;
 
@@ -37,8 +39,9 @@ function useDebounced<T>(value: T, ms: number): T {
 
 type Panel = null | "hub" | "import" | "export" | "manage" | "duplicates";
 
-export default function QuestionsScreen() {
+export default function QuestionsScreen({ onNavigate }: { onNavigate: (route: string) => void }) {
   const { repo, rev, refresh } = useBank();
+  const { attempts } = usePractice();
   useIntent((i) => {
     if (i.kind === "search") setSearchText(i.text);
     else if (i.kind === "add") setEditing("new");
@@ -141,37 +144,67 @@ export default function QuestionsScreen() {
       return next;
     });
 
+  /** Applies one change to some questions and offers Undo for the reversible ones. */
+  async function change(ids: string[], action: BulkAction, done: string) {
+    await repo.bulk(ids, action);
+    // Archiving and restoring are reversible, so the toast offers to take it back.
+    const back: BulkAction | null =
+      action.kind === "archive"
+        ? { kind: "restore" }
+        : action.kind === "restore"
+          ? { kind: "archive" }
+          : null;
+    showToast(
+      done,
+      back
+        ? {
+            label: "Undo",
+            run: () => {
+              repo.bulk(ids, back).then(refresh, (e) => setError(errorText(e)));
+            },
+          }
+        : undefined,
+    );
+    refresh();
+  }
+
   async function bulk(action: BulkAction, done: string) {
     setBulkBusy(true);
     setError(undefined);
     try {
-      const ids = [...selected];
-      await repo.bulk(ids, action);
-      // Archiving and restoring are reversible, so the toast offers to take it back.
-      const back: BulkAction | null =
-        action.kind === "archive"
-          ? { kind: "restore" }
-          : action.kind === "restore"
-            ? { kind: "archive" }
-            : null;
-      showToast(
-        done,
-        back
-          ? {
-              label: "Undo",
-              run: () => {
-                repo.bulk(ids, back).then(refresh, (e) => setError(errorText(e)));
-              },
-            }
-          : undefined,
-      );
+      await change([...selected], action, done);
       setSelected(new Set());
-      refresh();
     } catch (e) {
       setError(errorText(e));
     }
     setBulkBusy(false);
   }
+
+  /** The actions in a row's menu. */
+  const rowActions = {
+    archive: (id: string) =>
+      change(
+        [id],
+        { kind: archive ? "restore" : "archive" },
+        archive ? "Restored." : "Archived.",
+      ).catch((e) => setError(errorText(e))),
+    revise: (id: string) =>
+      ws.repo.addCards([id]).then(
+        () => {
+          ws.refresh();
+          showToast("Added to revision.");
+        },
+        (e) => setError(errorText(e)),
+      ),
+    practise: (id: string) =>
+      startFromQuestions(repo, attempts, [id], "Practice: one question").then(
+        (attemptId) => {
+          handoff.attemptId = attemptId;
+          onNavigate("#/practice");
+        },
+        (e) => setError(errorText(e)),
+      ),
+  };
 
   const empty = !loading && total === 0 && !filtered && !error;
 
@@ -323,6 +356,9 @@ export default function QuestionsScreen() {
                 onToggle={toggle}
                 onOpen={setEditing}
                 onBookmark={(id) => void toggleBookmark(id)}
+                onPractise={rowActions.practise}
+                onRevise={rowActions.revise}
+                onArchive={rowActions.archive}
               />
             ))}
           </ul>
