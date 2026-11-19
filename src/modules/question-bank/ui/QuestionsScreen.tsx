@@ -1,28 +1,21 @@
 import { showToast } from "../../../core/toast.ts";
 import { QuestionRow } from "./QuestionRow.tsx";
 import { DuplicatesDialog } from "./DuplicatesDialog.tsx";
-import { SavedViews } from "./SavedViews.tsx";
 import AddHub, { type AddChoice } from "./AddHub.tsx";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { BulkBar } from "./parts/BulkBar.tsx";
+import { FilterBar } from "./parts/FilterBar.tsx";
+import { useQuestionPages } from "./parts/useQuestionPages.ts";
 import { useIntent } from "../../../core/intents.ts";
 import {
   Button,
-  Dialog,
   EmptyState,
   ListSkeleton,
-  Picker,
   PlusIcon,
   QuestionsIcon,
   SearchIcon,
 } from "../../../ui-kit/index.ts";
-import { QUESTION_TYPES, TYPE_LABELS, type QuestionType } from "../domain/model.ts";
-import {
-  DEFAULT_QUERY,
-  pathOf,
-  type BulkAction,
-  type QuestionQuery,
-  type QuestionRecord,
-} from "../data/repo.ts";
+import { DEFAULT_QUERY, pathOf, type BulkAction, type QuestionQuery } from "../data/repo.ts";
 import { ImportDialog } from "./ImportExportDialogs.tsx";
 import { ExportDialog } from "./ExportDialog.tsx";
 import { ManageDialog } from "./ManageDialog.tsx";
@@ -43,7 +36,6 @@ function useDebounced<T>(value: T, ms: number): T {
 }
 
 type Panel = null | "hub" | "import" | "export" | "manage" | "duplicates";
-type BulkPick = "classify" | "tag" | "collection" | null;
 
 export default function QuestionsScreen() {
   const { repo, rev, refresh } = useBank();
@@ -61,11 +53,6 @@ export default function QuestionsScreen() {
   const [query, setQuery] = useState<QuestionQuery>(DEFAULT_QUERY);
   const [searchText, setSearchText] = useState("");
   const search = useDebounced(searchText, 250);
-  const [items, setItems] = useState<QuestionRecord[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [more, setMore] = useState(false);
-  const [error, setError] = useState<string>();
   const [editing, setEditing] = useState<null | "new" | string>(null);
   const [panel, setPanel] = useState<Panel>(null);
   const [importFrom, setImportFrom] = useState<"paste" | "upload" | "prompt" | "ai">("paste");
@@ -80,9 +67,6 @@ export default function QuestionsScreen() {
     }
   }
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [bulkPick, setBulkPick] = useState<BulkPick>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [typed, setTyped] = useState("");
   const [bulkBusy, setBulkBusy] = useState(false);
 
   useEffect(() => {
@@ -124,61 +108,14 @@ export default function QuestionsScreen() {
     [query, search],
   );
 
-  // Load the first page whenever the filters or the bank change.
-  useEffect(() => {
-    let alive = true;
-    setLoading(true);
-    repo.list(effective).then(
-      (page) => {
-        if (!alive) return;
-        setItems(page.items);
-        setTotal(page.total);
-        setError(undefined);
-        setLoading(false);
-      },
-      (e) => {
-        if (!alive) return;
-        setError(errorText(e));
-        setLoading(false);
-      },
-    );
-    return () => {
-      alive = false;
-    };
-  }, [repo, rev, effective]);
+  const { items, total, loading, more, error, setError, loadMore, endRef } = useQuestionPages(
+    repo,
+    rev,
+    effective,
+  );
 
   // A change to the filters clears the selection.
   useEffect(() => setSelected(new Set()), [query, search]);
-
-  async function loadMore() {
-    setMore(true);
-    try {
-      const page = await repo.list({ ...effective, offset: items.length });
-      setItems((cur) => [...cur, ...page.items]);
-      setTotal(page.total);
-    } catch (e) {
-      setError(errorText(e));
-    }
-    setMore(false);
-  }
-
-  // Load the next page when the end of the list scrolls into view. The button stays as a fallback.
-  const endRef = useRef<HTMLDivElement | null>(null);
-  const loadMoreRef = useRef(loadMore);
-  loadMoreRef.current = loadMore;
-  const canLoadMore = items.length < total && !more;
-  useEffect(() => {
-    const el = endRef.current;
-    if (!el || !canLoadMore || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) void loadMoreRef.current();
-      },
-      { rootMargin: "300px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [canLoadMore, items.length]);
 
   const patch = (p: Partial<QuestionQuery>) => setQuery((q) => ({ ...q, ...p }));
   const filtered =
@@ -190,54 +127,6 @@ export default function QuestionsScreen() {
     query.tagId !== null ||
     query.collectionId !== null;
   const archive = query.status === "archived";
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const activeChips: { id: string; label: string; clear: () => void }[] = [];
-  if (search !== "") {
-    activeChips.push({ id: "search", label: `"${search}"`, clear: () => setSearchText("") });
-  }
-  if (query.qtypes[0]) {
-    activeChips.push({
-      id: "type",
-      label: TYPE_LABELS[query.qtypes[0]],
-      clear: () => patch({ qtypes: [] }),
-    });
-  }
-  if (query.unclassified) {
-    activeChips.push({
-      id: "subject",
-      label: "Unclassified",
-      clear: () => patch({ unclassified: false }),
-    });
-  } else if (query.nodeId) {
-    activeChips.push({
-      id: "subject",
-      label: options.find((o) => o.value === query.nodeId)?.label ?? "Subject",
-      clear: () => patch({ nodeId: null }),
-    });
-  }
-  if (query.difficulties[0]) {
-    activeChips.push({
-      id: "difficulty",
-      label: `Difficulty ${query.difficulties[0]}`,
-      clear: () => patch({ difficulties: [] }),
-    });
-  }
-  if (query.tagId) {
-    activeChips.push({
-      id: "tag",
-      label: (tags.data ?? []).find((t) => t.id === query.tagId)?.name ?? "Tag",
-      clear: () => patch({ tagId: null }),
-    });
-  }
-  if (query.collectionId) {
-    activeChips.push({
-      id: "collection",
-      label:
-        (collections.data ?? []).find((c) => c.id === query.collectionId)?.name ?? "Collection",
-      clear: () => patch({ collectionId: null }),
-    });
-  }
-
   function clearFilters() {
     setSearchText("");
     setQuery((q) => ({ ...DEFAULT_QUERY, status: q.status, sort: q.sort }));
@@ -277,7 +166,6 @@ export default function QuestionsScreen() {
           : undefined,
       );
       setSelected(new Set());
-      setBulkPick(null);
       refresh();
     } catch (e) {
       setError(errorText(e));
@@ -336,144 +224,19 @@ export default function QuestionsScreen() {
       </div>
 
       {!empty && (
-        <section
-          aria-label="Search and filters"
-          className={`lv-card flex flex-col gap-3 p-4 ${
-            filtersOpen || selected.size > 0 ? "" : "max-md:sticky max-md:top-2 max-md:z-10"
-          }`}
-        >
-          <div className="flex gap-2">
-            <input
-              type="search"
-              className="lv-input min-w-0 flex-1"
-              aria-label="Search questions"
-              placeholder="Search questions and explanations"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-            />
-            <Button
-              variant="secondary"
-              className="md:hidden"
-              aria-expanded={filtersOpen}
-              aria-controls="question-filters"
-              onClick={() => setFiltersOpen((v) => !v)}
-            >
-              Filters{activeChips.length > 0 ? ` (${activeChips.length})` : ""}
-            </Button>
-          </div>
-          {activeChips.length > 0 && (
-            <ul aria-label="Active filters" className="m-0 flex list-none flex-wrap gap-1.5 p-0">
-              {activeChips.map((c) => (
-                <li key={c.id}>
-                  <button
-                    type="button"
-                    aria-label={`Remove filter: ${c.label}`}
-                    onClick={c.clear}
-                    className="inline-flex min-h-8 items-center gap-1 rounded-pill border border-line bg-surface-2 px-2.5 text-xs font-semibold"
-                  >
-                    {c.label}
-                    <span aria-hidden="true" className="text-muted">
-                      ×
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          {/* On a phone the filters open and close by height, not by popping in. */}
-          <div
-            className={`grid lv-t-smooth transition-[grid-template-rows,opacity,visibility] md:grid-rows-[1fr] ${
-              filtersOpen
-                ? "grid-rows-[1fr] opacity-100"
-                : "invisible grid-rows-[0fr] opacity-0 md:visible md:opacity-100"
-            }`}
-          >
-            <div
-              id="question-filters"
-              className="grid min-h-0 grid-cols-2 gap-2 max-md:overflow-hidden md:grid-cols-3 xl:grid-cols-6"
-            >
-              <Picker
-                hideLabel
-                label="Type"
-                emptyLabel="All types"
-                value={query.qtypes[0] ?? ""}
-                options={QUESTION_TYPES.map((t) => ({ value: t, label: TYPE_LABELS[t] }))}
-                onChange={(v) => patch({ qtypes: v ? [v as QuestionType] : [] })}
-              />
-              <Picker
-                hideLabel
-                label="Subject"
-                emptyLabel="All subjects"
-                value={query.unclassified ? "__none" : (query.nodeId ?? "")}
-                options={[{ value: "__none", label: "Unclassified" }, ...options]}
-                onChange={(v) =>
-                  patch({ nodeId: v && v !== "__none" ? v : null, unclassified: v === "__none" })
-                }
-              />
-              <Picker
-                hideLabel
-                label="Difficulty"
-                emptyLabel="Any difficulty"
-                value={query.difficulties[0] ? String(query.difficulties[0]) : ""}
-                options={[1, 2, 3, 4, 5].map((d) => ({ value: String(d), label: `Level ${d}` }))}
-                onChange={(v) => patch({ difficulties: v ? [Number(v)] : [] })}
-              />
-              <Picker
-                hideLabel
-                label="Tag"
-                emptyLabel="All tags"
-                value={query.tagId ?? ""}
-                options={(tags.data ?? []).map((t) => ({ value: t.id, label: t.name }))}
-                onChange={(v) => patch({ tagId: v || null })}
-              />
-              <Picker
-                hideLabel
-                label="Collection"
-                emptyLabel="All collections"
-                value={query.collectionId ?? ""}
-                options={(collections.data ?? []).map((c) => ({ value: c.id, label: c.name }))}
-                onChange={(v) => patch({ collectionId: v || null })}
-              />
-              <Picker
-                hideLabel
-                label="Sort"
-                value={query.sort}
-                options={[
-                  { value: "updated", label: "Last edited" },
-                  { value: "created", label: "Newest" },
-                  { value: "stem", label: "Alphabetical" },
-                ]}
-                onChange={(v) => patch({ sort: v as QuestionQuery["sort"] })}
-              />
-            </div>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {filtered && (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
-                Clear filters
-              </Button>
-            )}
-            <SavedViews
-              canSave={filtered}
-              current={{
-                search: searchText,
-                nodeId: query.nodeId,
-                unclassified: query.unclassified,
-                qtypes: query.qtypes,
-                difficulties: query.difficulties,
-                tagId: query.tagId,
-                collectionId: query.collectionId,
-                sort: query.sort,
-              }}
-              onApply={(f) => {
-                setSearchText(f.search);
-                const { search: _s, ...rest } = f;
-                void _s;
-                patch(rest);
-              }}
-            />
-          </div>
-        </section>
+        <FilterBar
+          query={query}
+          patch={patch}
+          searchText={searchText}
+          search={search}
+          setSearchText={setSearchText}
+          options={options}
+          tags={tags.data ?? []}
+          collections={collections.data ?? []}
+          filtered={filtered}
+          clearFilters={clearFilters}
+          selecting={selected.size > 0}
+        />
       )}
 
       {error && (
@@ -485,118 +248,16 @@ export default function QuestionsScreen() {
         </p>
       )}
 
-      {selected.size > 0 && (
-        <div
-          role="region"
-          aria-label="Bulk actions"
-          className="lv-card sticky top-2 z-10 flex flex-wrap items-center gap-2 p-3"
-        >
-          <span className="mr-2 text-sm font-semibold">{selected.size} selected</span>
-          {!archive && (
-            <>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setBulkPick(bulkPick === "classify" ? null : "classify")}
-              >
-                Classify
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setBulkPick(bulkPick === "tag" ? null : "tag")}
-              >
-                Add tag
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setBulkPick(bulkPick === "collection" ? null : "collection")}
-              >
-                Add to collection
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                loading={bulkBusy}
-                onClick={() =>
-                  void bulk({ kind: "archive" }, `Archived ${selected.size} question(s).`)
-                }
-              >
-                Archive
-              </Button>
-              <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
-                Delete
-              </Button>
-            </>
-          )}
-          {archive && (
-            <>
-              <Button
-                variant="secondary"
-                size="sm"
-                loading={bulkBusy}
-                onClick={() =>
-                  void bulk({ kind: "restore" }, `Restored ${selected.size} question(s).`)
-                }
-              >
-                Restore
-              </Button>
-              <Button variant="danger" size="sm" onClick={() => setConfirmDelete(true)}>
-                Delete forever
-              </Button>
-            </>
-          )}
-          <Button variant="ghost" size="sm" onClick={() => setSelected(new Set())}>
-            Clear selection
-          </Button>
-          {bulkPick === "classify" && (
-            <Picker
-              className="basis-full"
-              label="Move to subject"
-              placeholder="Choose a subject, chapter or topic"
-              value=""
-              options={[{ value: "__none", label: "Remove classification" }, ...options]}
-              onChange={(v) =>
-                void bulk(
-                  { kind: "classify", nodeId: v === "__none" ? null : v },
-                  "Classification updated.",
-                )
-              }
-            />
-          )}
-          {bulkPick === "tag" && (
-            <Picker
-              className="basis-full"
-              label="Tag to add"
-              placeholder="Choose a tag"
-              value=""
-              options={(tags.data ?? []).map((t) => ({ value: t.id, label: t.name }))}
-              onChange={(v) => void bulk({ kind: "tag", tagId: v, add: true }, "Tag added.")}
-            />
-          )}
-          {bulkPick === "collection" && (
-            <Picker
-              className="basis-full"
-              label="Collection to add to"
-              placeholder="Choose a collection"
-              value=""
-              options={(collections.data ?? []).map((c) => ({ value: c.id, label: c.name }))}
-              onChange={(v) =>
-                void bulk(
-                  { kind: "collection", collectionId: v, add: true },
-                  "Added to collection.",
-                )
-              }
-            />
-          )}
-          {bulkPick && (tags.data ?? []).length === 0 && bulkPick === "tag" && (
-            <p className="m-0 basis-full text-sm text-muted">
-              No tags yet. Create them under Organize.
-            </p>
-          )}
-        </div>
-      )}
+      <BulkBar
+        count={selected.size}
+        archive={archive}
+        busy={bulkBusy}
+        options={options}
+        tags={tags.data ?? []}
+        collections={collections.data ?? []}
+        onBulk={bulk}
+        onClear={() => setSelected(new Set())}
+      />
 
       {loading && items.length === 0 && !error ? (
         <ListSkeleton />
@@ -687,53 +348,6 @@ export default function QuestionsScreen() {
       {panel === "export" && <ExportDialog onClose={() => setPanel(null)} />}
       {panel === "manage" && <ManageDialog onClose={() => setPanel(null)} />}
       {panel === "duplicates" && <DuplicatesDialog onClose={() => setPanel(null)} />}
-
-      <Dialog
-        open={confirmDelete}
-        variant="modal"
-        title="Delete forever?"
-        onClose={() => {
-          setConfirmDelete(false);
-          setTyped("");
-        }}
-        footer={
-          <>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setConfirmDelete(false);
-                setTyped("");
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="danger"
-              disabled={typed !== "DELETE"}
-              loading={bulkBusy}
-              onClick={async () => {
-                await bulk({ kind: "delete" }, `Deleted ${selected.size} question(s).`);
-                setConfirmDelete(false);
-                setTyped("");
-              }}
-            >
-              Delete {selected.size} question{selected.size === 1 ? "" : "s"}
-            </Button>
-          </>
-        }
-      >
-        <div className="flex flex-col gap-3">
-          <p className="m-0">
-            This permanently deletes {selected.size} question{selected.size === 1 ? "" : "s"}, with
-            their bookmarks, notes and revision cards. Sessions you finished keep their own copy of
-            the question. It cannot be undone.
-          </p>
-          <label className="flex flex-col gap-1.5 text-sm font-semibold">
-            Type DELETE to confirm
-            <input className="lv-input" value={typed} onChange={(e) => setTyped(e.target.value)} />
-          </label>
-        </div>
-      </Dialog>
     </div>
   );
 }
