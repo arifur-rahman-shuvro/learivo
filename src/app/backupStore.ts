@@ -1,25 +1,8 @@
-import { useSyncExternalStore } from "react";
+import { createStore } from "../core/store.ts";
 
 /** Whether the backup dialog is open. Lets Settings and All features open it. */
-let open = false;
-const listeners = new Set<() => void>();
-const emit = () => listeners.forEach((l) => l());
+const open = createStore(false);
 
-export function openBackup() {
-  open = true;
-  emit();
-}
-export function closeBackup() {
-  open = false;
-  emit();
-}
-export function useBackupOpen(): boolean {
-  return useSyncExternalStore(
-    (cb) => {
-      listeners.add(cb);
-      return () => void listeners.delete(cb);
-    },
-    () => open,
-    () => false,
-  );
-}
+export const openBackup = () => open.set(true);
+export const closeBackup = () => open.set(false);
+export const useBackupOpen = open.use;

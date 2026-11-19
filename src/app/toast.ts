@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { createStore } from "../core/store.ts";
 
 /** One short confirmation at a time ("3 questions deleted"). Newer messages replace older ones. */
 export interface Toast {
@@ -8,29 +8,15 @@ export interface Toast {
   action?: { label: string; run: () => void };
 }
 
-let current: Toast | null = null;
+const store = createStore<Toast | null>(null);
 let counter = 0;
-const listeners = new Set<() => void>();
-const emit = () => listeners.forEach((l) => l());
 
 export function showToast(message: string, action?: Toast["action"]) {
   counter += 1;
-  current = { id: counter, message, action };
-  emit();
+  store.set({ id: counter, message, action });
 }
 export function dismissToast(id?: number) {
-  if (current && (id === undefined || current.id === id)) {
-    current = null;
-    emit();
-  }
+  const current = store.get();
+  if (current && (id === undefined || current.id === id)) store.set(null);
 }
-export function useToast(): Toast | null {
-  return useSyncExternalStore(
-    (cb) => {
-      listeners.add(cb);
-      return () => void listeners.delete(cb);
-    },
-    () => current,
-    () => null,
-  );
-}
+export const useToast = store.use;

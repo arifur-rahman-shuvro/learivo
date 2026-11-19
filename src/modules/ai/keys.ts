@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { createStore } from "../../core/store.ts";
 import { providerOf, PROVIDERS, type AiConfig, type ProviderId } from "./providers.ts";
 
 /**
@@ -98,22 +99,7 @@ export function reloadAi() {
   listeners.forEach((l) => l());
 }
 
-let dialogOpen = false;
-export function openAiConnection() {
-  dialogOpen = true;
-  listeners.forEach((l) => l());
-}
-export function closeAiConnection() {
-  dialogOpen = false;
-  listeners.forEach((l) => l());
-}
-export function useAiDialogOpen(): boolean {
-  return useSyncExternalStore(
-    (cb) => {
-      listeners.add(cb);
-      return () => void listeners.delete(cb);
-    },
-    () => dialogOpen,
-    () => false,
-  );
-}
+const dialog = createStore(false);
+export const openAiConnection = () => dialog.set(true);
+export const closeAiConnection = () => dialog.set(false);
+export const useAiDialogOpen = dialog.use;
