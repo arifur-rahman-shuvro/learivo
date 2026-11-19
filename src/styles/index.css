@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+/*
+ * The app's stylesheet, in the order it must load:
+ *   theme       maps theme tokens to Tailwind utilities
+ *   motion      every animation (tokens live in src/motion/tokens.ts)
+ *   base        page defaults, focus ring, skip link
+ *   components  cards, buttons, inputs and other shared blocks
+ */
+@import "./theme.css";
+@import "../motion/motion.css";
+@import "./base.css";
+@import "./components.css";

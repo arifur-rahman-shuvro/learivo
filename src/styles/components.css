@@ -1,51 +1,4 @@
-@import "tailwindcss";
-@import "./motion/motion.css";
-
-/* Map Tailwind utilities to the theme tokens (set per theme in the generated CSS). */
-@theme inline {
-  --color-bg: var(--lv-bg);
-  --color-surface-1: var(--lv-surface-1);
-  --color-surface-2: var(--lv-surface-2);
-  --color-surface-3: var(--lv-surface-3);
-  --color-fg: var(--lv-text);
-  --color-muted: var(--lv-text-muted);
-  --color-accent: var(--lv-accent);
-  --color-on-accent: var(--lv-accent-contrast);
-  --color-line: var(--lv-border);
-  --color-line-strong: var(--lv-border-strong);
-  --color-focus: var(--lv-focus);
-  --color-success: var(--lv-success);
-  --color-warning: var(--lv-warning);
-  --color-danger: var(--lv-danger);
-  --font-heading: var(--lv-font-heading);
-  --font-sans: var(--lv-font-body);
-  --font-mono: var(--lv-font-mono);
-  --radius-control: var(--lv-radius-control);
-  --radius-card: var(--lv-radius-card);
-  --radius-pill: var(--lv-radius-pill);
-}
-
-html {
-  background: var(--lv-bg);
-  color: var(--lv-text);
-  font-family: var(--lv-font-body);
-  -webkit-text-size-adjust: 100%;
-}
-
-body {
-  margin: 0;
-  min-height: 100dvh;
-  background: var(--lv-page-background);
-  background-attachment: fixed;
-}
-
-h1,
-h2,
-h3 {
-  font-family: var(--lv-font-heading);
-  letter-spacing: -0.015em;
-}
-
+/* Look of the shared building blocks: cards, buttons, inputs, progress, background art. */
 /* Theme-aware surfaces */
 .lv-card {
   background-color: var(--lv-surface-1);
@@ -152,12 +105,6 @@ h3 {
   border-color: var(--lv-danger);
 }
 
-/* Focus: one clear ring for every interactive element */
-:where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 3px solid var(--lv-focus);
-  outline-offset: 2px;
-}
-
 /* Progress */
 .lv-ring-arc {
   stroke-linecap: var(--lv-ring-cap);
@@ -173,21 +120,4 @@ h3 {
   height: 100%;
   pointer-events: none;
   z-index: 0;
-}
-
-/* Skip link: hidden until it gets keyboard focus. */
-.lv-skip {
-  position: fixed;
-  left: 0.75rem;
-  top: 0.75rem;
-  z-index: 60;
-  padding: 0.5rem 0.9rem;
-  border-radius: var(--lv-radius-control, 0.5rem);
-  background: var(--lv-surface-1);
-  color: var(--lv-text);
-  border: 2px solid var(--lv-accent);
-  transform: translateY(-200%);
-}
-.lv-skip:focus {
-  transform: none;
 }

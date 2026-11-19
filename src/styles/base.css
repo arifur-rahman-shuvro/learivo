@@ -1,0 +1,44 @@
+/* Page defaults, the focus ring and the skip link. */
+html {
+  background: var(--lv-bg);
+  color: var(--lv-text);
+  font-family: var(--lv-font-body);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--lv-page-background);
+  background-attachment: fixed;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--lv-font-heading);
+  letter-spacing: -0.015em;
+}
+
+/* Focus: one clear ring for every interactive element */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--lv-focus);
+  outline-offset: 2px;
+}
+
+/* Skip link: hidden until it gets keyboard focus. */
+.lv-skip {
+  position: fixed;
+  left: 0.75rem;
+  top: 0.75rem;
+  z-index: 60;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--lv-radius-control, 0.5rem);
+  background: var(--lv-surface-1);
+  color: var(--lv-text);
+  border: 2px solid var(--lv-accent);
+  transform: translateY(-200%);
+}
+.lv-skip:focus {
+  transform: none;
+}

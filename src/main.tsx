@@ -6,7 +6,7 @@ import "@fontsource-variable/nunito-sans";
 import "@fontsource-variable/space-grotesk";
 import "@fontsource-variable/jetbrains-mono";
 import "virtual:learivo-theme.css";
-import "./app.css";
+import "./styles/index.css";
 import AppShell from "./app/AppShell.tsx";
 import { AuthProvider } from "./auth/AuthProvider.tsx";
 import { createSupabaseAuth } from "./auth/supabaseClient.ts";
