@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { ThemeProvider } from "../../../themes/ThemeProvider.tsx";
+import { ThemeProvider } from "../../../ui-kit/themes/ThemeProvider.tsx";
 import { blankQuestion, type AnswerSpec } from "../domain/model.ts";
 import { AnswerEditor } from "./AnswerEditor.tsx";
 

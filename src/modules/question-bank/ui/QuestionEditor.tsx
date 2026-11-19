@@ -1,7 +1,7 @@
 import { qualityHints } from "../domain/quality.ts";
 import { findSimilarInBank } from "./similar.ts";
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Button, Dialog, Field, Spinner, Picker } from "../../../design-system/index.ts";
+import { Badge, Button, Dialog, Field, Spinner, Picker } from "../../../ui-kit/index.ts";
 import { contentHash } from "../domain/hash.ts";
 import {
   QUESTION_TYPES,

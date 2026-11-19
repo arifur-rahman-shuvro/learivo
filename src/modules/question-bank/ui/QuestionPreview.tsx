@@ -1,4 +1,4 @@
-import { RichText } from "../../../design-system/index.ts";
+import { RichText } from "../../../ui-kit/index.ts";
 import { BLANK_PATTERN, TYPE_LABELS, type QuestionInput } from "../domain/model.ts";
 
 /** A question as a student will see it. Read-only. */

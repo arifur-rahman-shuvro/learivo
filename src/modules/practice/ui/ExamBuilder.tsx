@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, Dialog, Picker } from "../../../design-system/index.ts";
+import { Button, Dialog, Picker } from "../../../ui-kit/index.ts";
 import { type TaxonomyNode } from "../../question-bank/data/repo.ts";
 import { subjectOptions } from "../../question-bank/ui/subjectOptions.ts";
 import { errorText, useBank } from "../../question-bank/ui/bank.tsx";

@@ -1,4 +1,4 @@
-import { Button, Segmented } from "../../../design-system/index.ts";
+import { Button, Segmented } from "../../../ui-kit/index.ts";
 import { OPTION_MAX, OPTION_MIN, type AnswerSpec, type QuestionType } from "../domain/model.ts";
 
 interface Props {

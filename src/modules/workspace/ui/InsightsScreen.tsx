@@ -11,7 +11,7 @@ import {
   ProgressBar,
   ProgressRing,
   PanelSkeleton,
-} from "../../../design-system/index.ts";
+} from "../../../ui-kit/index.ts";
 import { clock } from "../../practice/ui/practice.tsx";
 import { useInsightsData } from "./useInsightsData.ts";
 import { FlameIcon, Heatmap, ReasonBars } from "./InsightsParts.tsx";

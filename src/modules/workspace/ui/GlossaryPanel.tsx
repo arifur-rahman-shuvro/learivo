@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, Dialog, EmptyState, ListSkeleton } from "../../../design-system/index.ts";
+import { Button, Dialog, EmptyState, ListSkeleton } from "../../../ui-kit/index.ts";
 import { errorText } from "../../question-bank/ui/bank.tsx";
 import { searchTerms, type GlossaryTerm } from "../domain/cards.ts";
 import { useWorkspace } from "./workspace.tsx";

@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Dialog } from "./Dialog.tsx";
-import { CheckIcon, SearchIcon } from "./icons.tsx";
+import { CheckIcon, SearchIcon } from "../icons/icons.tsx";
 
 export interface PickerOption {
   value: string;

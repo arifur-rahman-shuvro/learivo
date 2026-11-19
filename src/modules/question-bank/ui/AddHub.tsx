@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Dialog, Button } from "../../../design-system/index.ts";
+import { Dialog, Button } from "../../../ui-kit/index.ts";
 import { FeatureIcon } from "../../../app/FeatureIcon.tsx";
 import type { FeatureIcon as IconName } from "../../../app/features.ts";
 

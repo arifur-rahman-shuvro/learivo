@@ -1,7 +1,7 @@
 import { defaultTheme } from "./default/tokens.ts";
 import { forestTheme } from "./forest/tokens.ts";
 import { spaceTheme } from "./space/tokens.ts";
-import type { Mode, ThemeDefinition, ThemeId, ThemeTokenSet } from "./types";
+import type { Mode, ThemeDefinition, ThemeId, ThemeTokenSet } from "./types.ts";
 
 /**
  * Theme registry. To add a theme: create a folder with a `tokens.ts` that exports

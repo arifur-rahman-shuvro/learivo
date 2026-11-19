@@ -1,6 +1,6 @@
 import { lazy, Suspense, useMemo } from "react";
 import { BackupGate, GuideGate } from "./Gates.tsx";
-import { PanelSkeleton } from "../design-system/index.ts";
+import { PanelSkeleton } from "../ui-kit/index.ts";
 import { useServices } from "../platform/offline/OfflineProvider.tsx";
 import type { ModuleId } from "./registry.ts";
 import { supabase } from "../core/supabase.ts";

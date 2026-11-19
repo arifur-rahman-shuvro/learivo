@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { Badge } from "../../../design-system/index.ts";
+import { Badge } from "../../../ui-kit/index.ts";
 import { TYPE_LABELS } from "../domain/model.ts";
 import type { QuestionRecord } from "../data/repo.ts";
 import { DifficultyDots } from "./DifficultyDots.tsx";

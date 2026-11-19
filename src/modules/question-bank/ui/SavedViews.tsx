@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Picker } from "../../../design-system/index.ts";
+import { Button, Picker } from "../../../ui-kit/index.ts";
 import type { QuestionQuery } from "../data/repo.ts";
 
 /** The filters a student can save under a name. Page position is not part of a view. */

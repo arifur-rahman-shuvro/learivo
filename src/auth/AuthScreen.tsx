@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Button, Field, LogoWordmark, ThemeBackground } from "../design-system/index.ts";
+import { Button, Field, LogoWordmark, ThemeBackground } from "../ui-kit/index.ts";
 import AppearanceMenu from "../app/AppearanceMenu.tsx";
 import { useAuth } from "./AuthProvider.tsx";
 

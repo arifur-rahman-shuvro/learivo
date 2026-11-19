@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Dialog } from "../../../design-system/index.ts";
+import { Button, Dialog } from "../../../ui-kit/index.ts";
 import { errorText } from "../../question-bank/ui/bank.tsx";
 import type { Note } from "../data/repo.ts";
 import { useWorkspace } from "./workspace.tsx";

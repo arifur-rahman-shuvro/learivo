@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { ThemeProvider } from "../../../themes/ThemeProvider.tsx";
+import { ThemeProvider } from "../../../ui-kit/themes/ThemeProvider.tsx";
 import { MemoryRepo } from "../data/memoryRepo.ts";
 import { DEFAULT_QUERY } from "../data/repo.ts";
 import { BankProvider } from "./bank.tsx";

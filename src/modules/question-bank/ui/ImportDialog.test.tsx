@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { reloadAi, removeKey, saveAi } from "../../ai/keys.ts";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { ThemeProvider } from "../../../themes/ThemeProvider.tsx";
+import { ThemeProvider } from "../../../ui-kit/themes/ThemeProvider.tsx";
 import { MemoryRepo } from "../data/memoryRepo.ts";
 import { BankProvider } from "./bank.tsx";
 import { ImportDialog } from "./ImportExportDialogs.tsx";

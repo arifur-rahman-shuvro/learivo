@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Badge, Button, Dialog } from "../../../design-system/index.ts";
+import { Badge, Button, Dialog } from "../../../ui-kit/index.ts";
 import { DEFAULT_QUERY, type QuestionRecord } from "../data/repo.ts";
 import { findDuplicates, pairKey, pairToGroup, type DuplicateGroup } from "../domain/duplicates.ts";
 import { contentHash } from "../domain/hash.ts";

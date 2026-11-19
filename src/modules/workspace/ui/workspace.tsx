@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import type { TermSplitter } from "../../../design-system/RichText.tsx";
+import type { TermSplitter } from "../../../ui-kit/primitives/RichText.tsx";
 import type { WorkspaceRepo } from "../data/repo.ts";
 import { splitByTerms, type GlossaryTerm } from "../domain/cards.ts";
 

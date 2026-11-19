@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Button, Dialog, ProgressBar } from "../design-system/index.ts";
+import { Button, Dialog, ProgressBar } from "../ui-kit/index.ts";
 import { FeatureIcon } from "./FeatureIcon.tsx";
 import type { FeatureIcon as IconName } from "./features.ts";
 import { closeGuide, useGuideOpen } from "./guide.ts";

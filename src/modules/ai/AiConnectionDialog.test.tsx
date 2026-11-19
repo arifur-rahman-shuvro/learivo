@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ThemeProvider } from "../../themes/ThemeProvider.tsx";
+import { ThemeProvider } from "../../ui-kit/themes/ThemeProvider.tsx";
 import { AiConnectionDialog } from "./AiConnectionDialog.tsx";
 import { activeConfig, closeAiConnection, openAiConnection, reloadAi } from "./keys.ts";
 

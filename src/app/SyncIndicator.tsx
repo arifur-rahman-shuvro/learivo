@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
-import { Button, Dialog } from "../design-system/index.ts";
+import { Button, Dialog } from "../ui-kit/index.ts";
 import { useOfflineControls } from "../platform/offline/OfflineProvider.tsx";
 import type { PackStatus } from "../platform/offline/pack.ts";
 import { useOnline } from "../platform/pwa/pwa.ts";

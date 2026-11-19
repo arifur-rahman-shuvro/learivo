@@ -10,7 +10,7 @@ import "./app.css";
 import AppShell from "./app/AppShell.tsx";
 import { AuthProvider } from "./auth/AuthProvider.tsx";
 import { createSupabaseAuth } from "./auth/supabaseClient.ts";
-import { ThemeProvider } from "./themes/ThemeProvider.tsx";
+import { ThemeProvider } from "./ui-kit/themes/ThemeProvider.tsx";
 import { registerServiceWorker } from "./platform/pwa/pwa.ts";
 import { startMonitoring } from "./core/monitoring.ts";
 import { trackOrigins } from "./motion/index.ts";

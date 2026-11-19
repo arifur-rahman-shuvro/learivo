@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Badge, Button, PlusIcon, ProgressRing } from "../../design-system/index.ts";
+import { Badge, Button, PlusIcon, ProgressRing } from "../../ui-kit/index.ts";
 import FeaturesDialog from "../FeaturesDialog.tsx";
 import { openGuide } from "../guide.ts";
 import { sendIntent } from "../intents.ts";

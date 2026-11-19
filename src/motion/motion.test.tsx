@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
-import { Dialog } from "../design-system/Dialog.tsx";
+import { Dialog } from "../ui-kit/overlays/Dialog.tsx";
 import { originPose, recentOrigin, trackOrigins } from "./origin.ts";
 
 beforeEach(() => {

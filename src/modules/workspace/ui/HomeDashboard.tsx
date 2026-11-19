@@ -1,6 +1,6 @@
 import FeaturesDialog from "../../../app/FeaturesDialog.tsx";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Button, ProgressBar, ProgressRing, Spinner } from "../../../design-system/index.ts";
+import { Button, ProgressBar, ProgressRing, Spinner } from "../../../ui-kit/index.ts";
 import Home from "../../../app/screens/Home.tsx";
 import { SAMPLE_QUESTIONS } from "../../question-bank/domain/sample.ts";
 import { DEFAULT_QUERY } from "../../question-bank/data/repo.ts";

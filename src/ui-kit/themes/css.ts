@@ -1,5 +1,5 @@
 import { themeList, getTokens, resolveMode } from "./registry.ts";
-import type { Mode, ThemeDefinition } from "./types";
+import type { Mode, ThemeDefinition } from "./types.ts";
 
 const kebab = (s: string) => s.replace(/[A-Z0-9]/g, (c) => "-" + c.toLowerCase());
 

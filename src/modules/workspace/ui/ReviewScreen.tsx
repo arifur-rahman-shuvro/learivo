@@ -10,7 +10,7 @@ import {
   QuestionsIcon,
   ReviewIcon,
   PanelSkeleton,
-} from "../../../design-system/index.ts";
+} from "../../../ui-kit/index.ts";
 import type { QuestionRecord } from "../../question-bank/data/repo.ts";
 import { TYPE_LABELS } from "../../question-bank/domain/model.ts";
 import { errorText, useBank } from "../../question-bank/ui/bank.tsx";

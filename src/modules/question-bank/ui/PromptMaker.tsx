@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Button, Picker, Segmented } from "../../../design-system/index.ts";
+import { Button, Picker, Segmented } from "../../../ui-kit/index.ts";
 import { generateMany, type Progress } from "../../ai/generate.ts";
 import { activeConfig, openAiConnection, useAiState } from "../../ai/keys.ts";
 import { AiError, providerOf } from "../../ai/providers.ts";

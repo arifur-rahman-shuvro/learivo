@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { SettingsIcon, ThemeSwitcher } from "../design-system/index.ts";
+import { SettingsIcon, ThemeSwitcher } from "../ui-kit/index.ts";
 
 /** Theme and mode picker for the signed-out screen. Signed-in students use the account menu. */
 export default function AppearanceMenu() {

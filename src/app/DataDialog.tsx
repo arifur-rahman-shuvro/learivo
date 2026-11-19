@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button, Dialog } from "../design-system/index.ts";
+import { Button, Dialog } from "../ui-kit/index.ts";
 import { useDataRepo, useOfflineControls } from "../platform/offline/OfflineProvider.tsx";
 import type { ClearScope, DataCounts } from "../modules/data/data/repo.ts";
 

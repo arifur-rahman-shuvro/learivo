@@ -9,7 +9,7 @@ import {
   PlusIcon,
   PracticeIcon,
   ListSkeleton,
-} from "../../../design-system/index.ts";
+} from "../../../ui-kit/index.ts";
 import { errorText, useBank, useLoad } from "../../question-bank/ui/bank.tsx";
 import type { Attempt, Exam } from "../data/repo.ts";
 import type { PracticeFilter } from "../domain/session.ts";

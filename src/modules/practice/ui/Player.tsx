@@ -1,7 +1,7 @@
 import { useRequestFocus } from "../../../app/focus.ts";
 import GlossaryText from "../../workspace/ui/GlossaryText.tsx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Dialog, ProgressBar, Spinner } from "../../../design-system/index.ts";
+import { Button, Dialog, ProgressBar, Spinner } from "../../../ui-kit/index.ts";
 import { errorText } from "../../question-bank/ui/bank.tsx";
 import { TYPE_LABELS } from "../../question-bank/domain/model.ts";
 import type { AttemptWithItems } from "../data/repo.ts";

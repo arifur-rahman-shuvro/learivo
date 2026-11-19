@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { ThemeProvider } from "../../../themes/ThemeProvider.tsx";
+import { ThemeProvider } from "../../../ui-kit/themes/ThemeProvider.tsx";
 import { MemoryRepo } from "../../question-bank/data/memoryRepo.ts";
 import { BankProvider } from "../../question-bank/ui/bank.tsx";
 import { blankQuestion, type QuestionInput } from "../../question-bank/domain/model.ts";

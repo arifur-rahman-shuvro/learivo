@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Dialog, Picker } from "../../design-system/index.ts";
+import { Button, Dialog, Picker } from "../../ui-kit/index.ts";
 import { keyGuidePrompt } from "./guidePrompt.ts";
 import {
   aiState,

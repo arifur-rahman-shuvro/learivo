@@ -1,4 +1,4 @@
-import type { PickerOption } from "../../../design-system/index.ts";
+import type { PickerOption } from "../../../ui-kit/index.ts";
 import { KIND_BY_DEPTH, type TaxonomyNode } from "../data/repo.ts";
 
 /** The subject tree flattened for a Picker: each item knows how deep it sits. */

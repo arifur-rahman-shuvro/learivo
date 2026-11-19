@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { contrastRatio } from "./contrast";
-import { themeToCss } from "./css";
-import { getTheme, getTokens, resolveMode, supportedModes, themeList } from "./registry";
+import { contrastRatio } from "./contrast.ts";
+import { themeToCss } from "./css.ts";
+import { getTheme, getTokens, resolveMode, supportedModes, themeList } from "./registry.ts";
 
 const modes = themeList.flatMap((theme) =>
   supportedModes(theme).map((mode) => ({ theme, mode, label: `${theme.id}/${mode}` })),

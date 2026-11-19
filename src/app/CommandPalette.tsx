@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { Dialog } from "../design-system/index.ts";
+import { Dialog } from "../ui-kit/index.ts";
 import { useServices } from "../platform/offline/OfflineProvider.tsx";
 import { DEFAULT_QUERY, type QuestionRecord } from "../modules/question-bank/data/repo.ts";
 import { MODULES } from "./registry.ts";

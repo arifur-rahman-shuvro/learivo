@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button } from "../../../design-system/index.ts";
+import { Button } from "../../../ui-kit/index.ts";
 import { errorText, useBank } from "../../question-bank/ui/bank.tsx";
 import { handoff, usePractice } from "../../practice/ui/practice.tsx";
 import { startForArea } from "../../practice/ui/start.ts";

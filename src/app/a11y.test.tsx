@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import axe from "axe-core";
-import { ThemeProvider } from "../themes/ThemeProvider.tsx";
+import { ThemeProvider } from "../ui-kit/themes/ThemeProvider.tsx";
 import AppShell from "./AppShell.tsx";
 import { AuthProvider } from "../auth/AuthProvider.tsx";
 import { fakeAuth } from "../core/testing/fakeAuth.ts";

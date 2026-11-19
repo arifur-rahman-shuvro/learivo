@@ -1,6 +1,6 @@
 import { useState } from "react";
+import { BottomNav } from "./shell/navigation/BottomNav.tsx";
 import {
-  BottomNav,
   Badge,
   Button,
   Card,
@@ -15,9 +15,9 @@ import {
   Spinner,
   ThemeBackground,
   ThemeSwitcher,
-} from "./design-system/index.ts";
-import { getTokens } from "./themes/registry.ts";
-import { useTheme } from "./themes/ThemeProvider.tsx";
+} from "./ui-kit/index.ts";
+import { getTokens } from "./ui-kit/themes/registry.ts";
+import { useTheme } from "./ui-kit/themes/ThemeProvider.tsx";
 
 /** Design Lab: every core component, live in the active theme. Not a product screen. */
 export default function App() {

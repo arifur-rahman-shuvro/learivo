@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Button, LogoWordmark, PlusIcon, SearchIcon } from "../design-system/index.ts";
+import { Button, LogoWordmark, PlusIcon, SearchIcon } from "../ui-kit/index.ts";
 import StatusBanner from "./StatusBanner.tsx";
 import SyncIndicator from "./SyncIndicator.tsx";
 

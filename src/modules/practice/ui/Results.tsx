@@ -2,7 +2,7 @@ import { compareSentence, previousAttempt } from "../domain/compare.ts";
 import { paceNote, paceOf, shortTime } from "../domain/pace.ts";
 import GlossaryText from "../../workspace/ui/GlossaryText.tsx";
 import { useEffect, useMemo, useState } from "react";
-import { Badge, Button, ProgressRing, PanelSkeleton } from "../../../design-system/index.ts";
+import { Badge, Button, ProgressRing, PanelSkeleton } from "../../../ui-kit/index.ts";
 import { errorText } from "../../question-bank/ui/bank.tsx";
 import { TYPE_LABELS } from "../../question-bank/domain/model.ts";
 import type { AttemptWithItems } from "../data/repo.ts";

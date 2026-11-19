@@ -6,7 +6,7 @@ import {
   usePresence,
   type EnterKind,
   type Origin,
-} from "../motion/index.ts";
+} from "../../motion/index.ts";
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';

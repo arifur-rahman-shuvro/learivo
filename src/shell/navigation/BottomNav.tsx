@@ -1,5 +1,11 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { HomeIcon, InsightsIcon, PracticeIcon, QuestionsIcon, ReviewIcon } from "./icons.tsx";
+import {
+  HomeIcon,
+  InsightsIcon,
+  PracticeIcon,
+  QuestionsIcon,
+  ReviewIcon,
+} from "../../ui-kit/icons/icons.tsx";
 
 const items: Array<{ id: string; label: string; icon: ReactNode }> = [
   { id: "home", label: "Home", icon: <HomeIcon /> },

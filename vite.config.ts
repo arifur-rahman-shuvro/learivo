@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { createHash } from "node:crypto";
 import { fileURLToPath, URL } from "node:url";
-import { themeToCss } from "./src/themes/css.ts";
+import { themeToCss } from "./src/ui-kit/themes/css.ts";
 import { motionToCss } from "./src/motion/tokens.ts";
 
 /** Serves the compiled theme tokens as a virtual CSS module. */

@@ -1,6 +1,6 @@
-import { supportedModes, themeList } from "../themes/registry.ts";
-import { useTheme } from "../themes/ThemeProvider.tsx";
-import type { ModePreference } from "../themes/types.ts";
+import { supportedModes, themeList } from "./registry.ts";
+import { useTheme } from "./ThemeProvider.tsx";
+import type { ModePreference } from "./types.ts";
 
 const modeLabels: Record<ModePreference, string> = {
   system: "System",

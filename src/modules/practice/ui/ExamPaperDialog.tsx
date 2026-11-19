@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Button, Dialog } from "../../../design-system/index.ts";
+import { Button, Dialog } from "../../../ui-kit/index.ts";
 import type { QuestionInput } from "../../question-bank/domain/model.ts";
 import { paperHtml } from "../../question-bank/domain/paper.ts";
 import type { QuestionRepo } from "../../question-bank/data/repo.ts";

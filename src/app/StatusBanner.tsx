@@ -1,4 +1,4 @@
-import { Button } from "../design-system/index.ts";
+import { Button } from "../ui-kit/index.ts";
 import { useOnline, useUpdate } from "../platform/pwa/pwa.ts";
 
 /** Tells the student about being offline and about a new version, without blocking anything. */

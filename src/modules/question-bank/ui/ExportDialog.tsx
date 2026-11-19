@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Dialog } from "../../../design-system/index.ts";
+import { Button, Dialog } from "../../../ui-kit/index.ts";
 import { exportCsv, exportJson, type ImportFormat } from "../domain/importExport.ts";
 import { errorText, useBank } from "./bank.tsx";
 import { download } from "./importParts.tsx";

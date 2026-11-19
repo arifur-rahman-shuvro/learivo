@@ -1,6 +1,6 @@
 import { loadComparables } from "./similar.ts";
 import { useRef, useState } from "react";
-import { Badge, Button, Dialog, ProgressBar } from "../../../design-system/index.ts";
+import { Badge, Button, Dialog, ProgressBar } from "../../../ui-kit/index.ts";
 import {
   MAX_IMPORT_ROWS,
   analyzeImport,

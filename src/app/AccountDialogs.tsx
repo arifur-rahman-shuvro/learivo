@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { openAiConnection } from "../modules/ai/keys.ts";
 import { openBackup } from "./backupStore.ts";
-import { Avatar, Button, Dialog, ThemeSwitcher } from "../design-system/index.ts";
+import { Avatar, Button, Dialog, ThemeSwitcher } from "../ui-kit/index.ts";
 import {
   AVATARS,
   NAME_MAX,

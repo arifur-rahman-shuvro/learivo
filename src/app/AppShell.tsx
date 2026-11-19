@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { BottomNav, EmptyState, ThemeBackground } from "../design-system/index.ts";
+import { EmptyState, ThemeBackground } from "../ui-kit/index.ts";
+import { BottomNav } from "../shell/navigation/BottomNav.tsx";
 import App from "../App.tsx";
 import { useAuth } from "../auth/AuthProvider.tsx";
 import AuthScreen from "../auth/AuthScreen.tsx";

@@ -1,6 +1,6 @@
 import GlossaryText from "./GlossaryText.tsx";
 import { useEffect, useState } from "react";
-import { Badge, Button, Dialog, EmptyState, ListSkeleton } from "../../../design-system/index.ts";
+import { Badge, Button, Dialog, EmptyState, ListSkeleton } from "../../../ui-kit/index.ts";
 import { errorText } from "../../question-bank/ui/bank.tsx";
 import type { Flashcard } from "../domain/cards.ts";
 import {

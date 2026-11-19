@@ -1,6 +1,6 @@
 import { forgetAllKeys } from "../modules/ai/keys.ts";
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { Avatar } from "../design-system/index.ts";
+import { Avatar } from "../ui-kit/index.ts";
 import { canAnimate, MOTION, usePresence } from "../motion/index.ts";
 import { useAuth } from "../auth/AuthProvider.tsx";
 import { useOfflineControls } from "../platform/offline/OfflineProvider.tsx";

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Button, Dialog } from "../design-system/index.ts";
+import { Button, Dialog } from "../ui-kit/index.ts";
 import { FeatureIcon } from "./FeatureIcon.tsx";
 import { FEATURE_GROUPS, type Feature } from "./features.ts";
 import { openAiConnection } from "../modules/ai/keys.ts";

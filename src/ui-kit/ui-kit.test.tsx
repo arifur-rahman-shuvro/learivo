@@ -1,16 +1,8 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  Badge,
-  Button,
-  Card,
-  EmptyState,
-  Field,
-  ProgressBar,
-  ProgressRing,
-} from "./components.tsx";
-import { ThemeSwitcher } from "./ThemeSwitcher.tsx";
-import { ThemeProvider } from "../themes/ThemeProvider.tsx";
+import { Badge, Button, Card, EmptyState, Field, ProgressBar, ProgressRing } from "./index.ts";
+import { ThemeSwitcher } from "./themes/ThemeSwitcher.tsx";
+import { ThemeProvider } from "./themes/ThemeProvider.tsx";
 
 function renderWithTheme(ui: React.ReactNode) {
   return render(<ThemeProvider>{ui}</ThemeProvider>);

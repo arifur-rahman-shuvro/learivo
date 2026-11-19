@@ -14,7 +14,7 @@ import {
   PlusIcon,
   QuestionsIcon,
   SearchIcon,
-} from "../../../design-system/index.ts";
+} from "../../../ui-kit/index.ts";
 import { QUESTION_TYPES, TYPE_LABELS, type QuestionType } from "../domain/model.ts";
 import {
   DEFAULT_QUERY,

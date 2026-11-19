@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Button, Dialog } from "../design-system/index.ts";
+import { Button, Dialog } from "../ui-kit/index.ts";
 import { useBank, errorText } from "../modules/question-bank/ui/bank.tsx";
 import { usePractice } from "../modules/practice/ui/practice.tsx";
 import { useWorkspace } from "../modules/workspace/ui/workspace.tsx";
