@@ -12,7 +12,7 @@ import {
   type Profile,
 } from "../modules/profile/domain/profile.ts";
 import { useAuth } from "../auth/AuthProvider.tsx";
-import { useDataRepo } from "../offline/OfflineProvider.tsx";
+import { useDataRepo } from "../platform/offline/OfflineProvider.tsx";
 import { errorText } from "../modules/question-bank/ui/bank.tsx";
 
 export function ProfileDialog({

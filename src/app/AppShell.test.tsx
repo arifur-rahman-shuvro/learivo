@@ -3,7 +3,7 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { ThemeProvider } from "../themes/ThemeProvider.tsx";
 import AppShell from "./AppShell.tsx";
 import { AuthProvider } from "../auth/AuthProvider.tsx";
-import { fakeAuth } from "../test/fakeAuth.ts";
+import { fakeAuth } from "../core/testing/fakeAuth.ts";
 import { MemoryRepo } from "../modules/question-bank/data/memoryRepo.ts";
 import { MemoryAttempts } from "../modules/practice/data/memoryAttempts.ts";
 import { MemoryWorkspace } from "../modules/workspace/data/memoryWorkspace.ts";

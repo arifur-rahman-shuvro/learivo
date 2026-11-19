@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
-import type { QuestionRepo } from "../modules/question-bank/data/repo.ts";
-import type { DataRepo } from "../modules/data/data/repo.ts";
-import type { AttemptRepo } from "../modules/practice/data/repo.ts";
+import type { QuestionRepo } from "../../modules/question-bank/data/repo.ts";
+import type { DataRepo } from "../../modules/data/data/repo.ts";
+import type { AttemptRepo } from "../../modules/practice/data/repo.ts";
 import { OfflineAwareRepo } from "./pack.ts";
 import { SyncedAttempts } from "./syncedAttempts.ts";
 import { deviceStore } from "./store.ts";

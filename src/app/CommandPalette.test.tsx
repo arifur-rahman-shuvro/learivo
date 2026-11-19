@@ -1,12 +1,12 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { OfflineProvider } from "../offline/OfflineProvider.tsx";
+import { OfflineProvider } from "../platform/offline/OfflineProvider.tsx";
 import { MemoryRepo } from "../modules/question-bank/data/memoryRepo.ts";
 import { blankQuestion } from "../modules/question-bank/domain/model.ts";
 import { MemoryAttempts } from "../modules/practice/data/memoryAttempts.ts";
 import CommandPalette from "./CommandPalette.tsx";
 import { useIntent, type Intent } from "./intents.ts";
-import { TF_ANSWER } from "../test/fixtures.ts";
+import { TF_ANSWER } from "../core/testing/fixtures.ts";
 
 function Probe({ onIntent }: { onIntent: (i: Intent) => void }) {
   useIntent(onIntent);

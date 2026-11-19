@@ -9,7 +9,7 @@ import { MemoryWorkspace } from "../../workspace/data/memoryWorkspace.ts";
 import { WorkspaceProvider } from "../../workspace/ui/workspace.tsx";
 import { sendIntent } from "../../../app/intents.ts";
 import { blankQuestion, type QuestionInput } from "../domain/model.ts";
-import { TF_ANSWER } from "../../../test/fixtures.ts";
+import { TF_ANSWER } from "../../../core/testing/fixtures.ts";
 
 function tf(stem: string): QuestionInput {
   return { ...blankQuestion("true_false"), stem, answer: TF_ANSWER };

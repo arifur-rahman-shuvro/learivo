@@ -3,7 +3,7 @@ import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } f
 import { Avatar } from "../design-system/index.ts";
 import { canAnimate, MOTION, usePresence } from "../motion/index.ts";
 import { useAuth } from "../auth/AuthProvider.tsx";
-import { useOfflineControls } from "../offline/OfflineProvider.tsx";
+import { useOfflineControls } from "../platform/offline/OfflineProvider.tsx";
 import { avatarColor, initials } from "../modules/profile/domain/profile.ts";
 import type { ProfileRepo } from "../modules/profile/data/repo.ts";
 import { openGuide } from "./guide.ts";

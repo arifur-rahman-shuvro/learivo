@@ -1,9 +1,9 @@
 import { lazy, Suspense, useMemo } from "react";
 import { BackupGate, GuideGate } from "./Gates.tsx";
 import { PanelSkeleton } from "../design-system/index.ts";
-import { useServices } from "../offline/OfflineProvider.tsx";
+import { useServices } from "../platform/offline/OfflineProvider.tsx";
 import type { ModuleId } from "./registry.ts";
-import { supabase } from "../lib/supabase.ts";
+import { supabase } from "../core/supabase.ts";
 import { BankProvider } from "../modules/question-bank/ui/bank.tsx";
 import { PracticeProvider } from "../modules/practice/ui/practice.tsx";
 import { SupabaseWorkspace } from "../modules/workspace/data/supabaseWorkspace.ts";

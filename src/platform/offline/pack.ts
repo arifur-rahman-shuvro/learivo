@@ -1,5 +1,5 @@
-import { contentHash } from "../modules/question-bank/domain/hash.ts";
-import type { QuestionInput } from "../modules/question-bank/domain/model.ts";
+import { contentHash } from "../../modules/question-bank/domain/hash.ts";
+import type { QuestionInput } from "../../modules/question-bank/domain/model.ts";
 import {
   DEFAULT_QUERY,
   subtreeIds,
@@ -11,7 +11,7 @@ import {
   type QuestionVersion,
   type Tag,
   type TaxonomyNode,
-} from "../modules/question-bank/data/repo.ts";
+} from "../../modules/question-bank/data/repo.ts";
 import type { KeyValueStore } from "./store.ts";
 
 /** A copy of the active question bank kept on this device so practice works without internet. */

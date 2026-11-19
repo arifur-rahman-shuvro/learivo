@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ThemeProvider } from "../themes/ThemeProvider.tsx";
-import { OfflineProvider } from "../offline/OfflineProvider.tsx";
+import { OfflineProvider } from "../platform/offline/OfflineProvider.tsx";
 import { MemoryRepo } from "../modules/question-bank/data/memoryRepo.ts";
 import { MemoryAttempts } from "../modules/practice/data/memoryAttempts.ts";
 import type { ClearScope, DataCounts, DataRepo } from "../modules/data/data/repo.ts";

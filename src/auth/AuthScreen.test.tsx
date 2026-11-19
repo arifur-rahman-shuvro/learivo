@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { ThemeProvider } from "../themes/ThemeProvider.tsx";
 import AppShell from "../app/AppShell.tsx";
 import { AuthProvider } from "./AuthProvider.tsx";
-import { fakeAuth } from "../test/fakeAuth.ts";
+import { fakeAuth } from "../core/testing/fakeAuth.ts";
 import type { AuthClient } from "./types.ts";
 import { MemoryProfile } from "../modules/profile/data/memoryProfile.ts";
 

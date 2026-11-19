@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { MemoryRepo } from "../modules/question-bank/data/memoryRepo.ts";
-import { DEFAULT_QUERY } from "../modules/question-bank/data/repo.ts";
-import { blankQuestion, type QuestionInput } from "../modules/question-bank/domain/model.ts";
-import { MemoryAttempts } from "../modules/practice/data/memoryAttempts.ts";
-import type { NewAttempt } from "../modules/practice/data/repo.ts";
+import { MemoryRepo } from "../../modules/question-bank/data/memoryRepo.ts";
+import { DEFAULT_QUERY } from "../../modules/question-bank/data/repo.ts";
+import { blankQuestion, type QuestionInput } from "../../modules/question-bank/domain/model.ts";
+import { MemoryAttempts } from "../../modules/practice/data/memoryAttempts.ts";
+import type { NewAttempt } from "../../modules/practice/data/repo.ts";
 import { OFFLINE_MESSAGE, OfflineAwareRepo, PackRepo, buildPack } from "./pack.ts";
 import { MemoryStore } from "./store.ts";
 import { SyncedAttempts } from "./syncedAttempts.ts";
-import { TF_ANSWER } from "../test/fixtures.ts";
+import { TF_ANSWER } from "../../core/testing/fixtures.ts";
 
 const tf = (stem: string, path: string[] = [], tags: string[] = []): QuestionInput => ({
   ...blankQuestion("true_false"),

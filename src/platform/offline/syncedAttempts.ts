@@ -1,6 +1,6 @@
-import type { Fact } from "../modules/workspace/domain/insights.ts";
-import type { Past } from "../modules/practice/domain/session.ts";
-import { MemoryAttempts } from "../modules/practice/data/memoryAttempts.ts";
+import type { Fact } from "../../modules/workspace/domain/insights.ts";
+import type { Past } from "../../modules/practice/domain/session.ts";
+import { MemoryAttempts } from "../../modules/practice/data/memoryAttempts.ts";
 import type {
   Attempt,
   AttemptRepo,
@@ -11,7 +11,7 @@ import type {
   ItemPatch,
   NewAttempt,
   Totals,
-} from "../modules/practice/data/repo.ts";
+} from "../../modules/practice/data/repo.ts";
 import type { KeyValueStore } from "./store.ts";
 
 /** One session recorded on this device that the database may not have yet. */

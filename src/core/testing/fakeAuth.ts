@@ -1,4 +1,4 @@
-import type { AuthClient, AuthUser, SignInResult, SignUpResult } from "../auth/types.ts";
+import type { AuthClient, AuthUser, SignInResult, SignUpResult } from "../../auth/types.ts";
 
 /** In-memory authentication for tests. */
 export function fakeAuth(

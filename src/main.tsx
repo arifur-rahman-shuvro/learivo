@@ -11,8 +11,8 @@ import AppShell from "./app/AppShell.tsx";
 import { AuthProvider } from "./auth/AuthProvider.tsx";
 import { createSupabaseAuth } from "./auth/supabaseClient.ts";
 import { ThemeProvider } from "./themes/ThemeProvider.tsx";
-import { registerServiceWorker } from "./pwa/pwa.ts";
-import { startMonitoring } from "./lib/monitoring.ts";
+import { registerServiceWorker } from "./platform/pwa/pwa.ts";
+import { startMonitoring } from "./core/monitoring.ts";
 import { trackOrigins } from "./motion/index.ts";
 
 trackOrigins();

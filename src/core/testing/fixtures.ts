@@ -1,4 +1,4 @@
-import type { AnswerSpec } from "../modules/question-bank/domain/model.ts";
+import type { AnswerSpec } from "../../modules/question-bank/domain/model.ts";
 
 /** A valid true/false answer: five statements, keys T F T F F. */
 export const TF_ANSWER: AnswerSpec = {

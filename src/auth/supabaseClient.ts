@@ -1,5 +1,5 @@
 import type { Session } from "@supabase/supabase-js";
-import { supabase } from "../lib/supabase.ts";
+import { supabase } from "../core/supabase.ts";
 import type { AuthClient, AuthUser } from "./types.ts";
 
 const toUser = (s: Session | null): AuthUser | null =>

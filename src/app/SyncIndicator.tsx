@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Button, Dialog } from "../design-system/index.ts";
-import { useOfflineControls } from "../offline/OfflineProvider.tsx";
-import type { PackStatus } from "../offline/pack.ts";
-import { useOnline } from "../pwa/pwa.ts";
+import { useOfflineControls } from "../platform/offline/OfflineProvider.tsx";
+import type { PackStatus } from "../platform/offline/pack.ts";
+import { useOnline } from "../platform/pwa/pwa.ts";
 
 const IDLE = { waiting: 0, syncing: false, problem: null };
 
