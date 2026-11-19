@@ -1,5 +1,6 @@
 import type { TaxonomyNode } from "../../question-bank/data/repo.ts";
 import type { QuestionRepo } from "../../question-bank/data/repo.ts";
+import { inGroup } from "../domain/groups.ts";
 import { pathOf } from "../../question-bank/data/repo.ts";
 import type { QuestionInput } from "../../question-bank/domain/model.ts";
 import type { AttemptRepo, AttemptWithItems, Exam } from "../data/repo.ts";
@@ -213,8 +214,14 @@ export async function startSmart(
   const byId = new Map(pool.map((q) => [q.id, q]));
   const due = cards.filter((c) => isDue(c, now) && byId.has(c.questionId)).map((c) => c.questionId);
   const weakNames = new Set(weakAreas(facts).map((a) => a.name));
+  // Weak means a weak area, or a question answered sure-but-wrong or right-but-unsure last time.
   const weak = pool
-    .filter((q) => weakNames.has(pathOf(q.nodeId, nodes).slice(0, 2).join(" › ")))
+    .filter(
+      (q) =>
+        weakNames.has(pathOf(q.nodeId, nodes).slice(0, 2).join(" › ")) ||
+        inGroup(past.get(q.id), "overconfident") ||
+        inGroup(past.get(q.id), "shaky"),
+    )
     .map((q) => q.id);
   const fresh = pool.filter((q) => !past.has(q.id)).map((q) => q.id);
   const ids = composeSmart({ due, weak, fresh, rest: pool.map((q) => q.id) }, SMART_SIZE);

@@ -53,6 +53,7 @@ export class MemoryAttempts implements AttemptRepo {
       flagged: false,
       mistakeReason: null,
       seconds: 0,
+      confidence: null,
       verdict: null,
       credit: null,
       marks: null,
@@ -115,6 +116,7 @@ export class MemoryAttempts implements AttemptRepo {
     if (patch.mistakeReason !== undefined) item.mistakeReason = patch.mistakeReason;
     if ("response" in patch) item.response = patch.response ?? null;
     if (patch.flagged !== undefined) item.flagged = patch.flagged;
+    if (patch.confidence !== undefined) item.confidence = patch.confidence;
     if (patch.seconds !== undefined) item.seconds = Math.max(0, Math.round(patch.seconds));
   }
 
@@ -160,6 +162,7 @@ export class MemoryAttempts implements AttemptRepo {
           path: item.snapshot.path,
           correct: item.verdict === "correct",
           reason: item.mistakeReason,
+          confidence: item.confidence,
           seconds: item.seconds,
         });
       }
@@ -180,6 +183,8 @@ export class MemoryAttempts implements AttemptRepo {
         out.set(qid, {
           last: item.verdict === "correct" ? "correct" : "wrong",
           times: (prev?.times ?? 0) + 1,
+          reason: item.mistakeReason,
+          confidence: item.confidence,
         });
       });
     }

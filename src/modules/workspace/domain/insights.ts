@@ -1,3 +1,4 @@
+import { CONFIDENCE, countCalibration, type Confidence } from "../../practice/domain/confidence.ts";
 import type { Reason } from "../../practice/domain/reasons.ts";
 
 /** Numbers for the Insights and Home screens, worked out from finished sessions. */
@@ -10,6 +11,8 @@ export interface Fact {
   correct: boolean;
   /** The student's reason for a missed question, when they gave one. */
   reason?: Reason | null;
+  /** How sure the student said they were, when they said. */
+  confidence?: Confidence | null;
   /** Seconds spent on the question, when recorded. */
   seconds?: number;
 }
@@ -255,4 +258,30 @@ export function speedByArea(facts: readonly Fact[], depth: 1 | 2 = 1, minTimed =
     .filter(([, r]) => r.timed >= minTimed)
     .map(([name, r]) => ({ name, average: r.total / r.timed, timed: r.timed }))
     .sort((a, b) => b.average - a.average || a.name.localeCompare(b.name));
+}
+
+export interface ConfidenceRow {
+  confidence: Confidence;
+  answered: number;
+  correct: number;
+  accuracy: number;
+}
+
+/**
+ * How accurate the student is at each confidence level, and how the answers split between solid,
+ * over-confident, shaky and known-gap. A student whose "sure" answers are right far less than
+ * about 90% of the time is over-confident.
+ */
+export function byConfidence(facts: readonly Fact[]) {
+  const rows: ConfidenceRow[] = CONFIDENCE.map((c) => {
+    const mine = facts.filter((f) => f.confidence === c.id);
+    const correct = mine.filter((f) => f.correct).length;
+    return {
+      confidence: c.id,
+      answered: mine.length,
+      correct,
+      accuracy: mine.length === 0 ? 0 : correct / mine.length,
+    };
+  });
+  return { rows, counts: countCalibration(facts) };
 }

@@ -1,5 +1,6 @@
 import { useGrown } from "../../../motion/index.ts";
-import type { ActivityDay, ReasonRow } from "../domain/insights.ts";
+import type { ActivityDay, ConfidenceRow, ReasonRow } from "../domain/insights.ts";
+import { confidenceLabel, type CalibrationCounts } from "../../practice/domain/confidence.ts";
 import { REASONS, reasonLabel } from "../../practice/domain/reasons.ts";
 
 export function FlameIcon({ size = 20 }: { size?: number }) {
@@ -208,5 +209,70 @@ export function WeekBars({ days, goal }: { days: ActivityDay[]; goal: number }) 
           : `${total} answered in 7 days. The dashed line is your daily goal.`}
       </figcaption>
     </figure>
+  );
+}
+
+/** Accuracy at each confidence level, plus a plain-words note on over-confidence and luck. */
+export function ConfidenceBars({
+  rows,
+  counts,
+}: {
+  rows: ConfidenceRow[];
+  counts: CalibrationCounts;
+}) {
+  if (counts.rated === 0) {
+    return (
+      <p className="m-0 text-sm text-muted">
+        While you answer, tap Sure, Not sure or Guess under the answer. Here you will see how often
+        each one is right, and which answers were wrong beliefs or lucky guesses.
+      </p>
+    );
+  }
+  const sure = rows.find((r) => r.confidence === "sure");
+  const overconfident =
+    sure && sure.answered >= 5 && sure.accuracy < 0.8
+      ? `When you are sure you are right only ${Math.round(sure.accuracy * 100)}% of the time. Double-check answers you feel certain about.`
+      : null;
+  return (
+    <div className="flex flex-col gap-3">
+      <ul className="m-0 flex list-none flex-col gap-2.5 p-0">
+        {rows.map((r) => (
+          <li key={r.confidence} className="flex flex-col gap-1">
+            <div className="flex items-baseline justify-between gap-3 text-sm">
+              <span className="font-semibold">{confidenceLabel(r.confidence)}</span>
+              <span className="font-mono text-muted">
+                {r.answered === 0
+                  ? "no answers"
+                  : `${Math.round(r.accuracy * 100)}% right · ${r.answered}`}
+              </span>
+            </div>
+            <div
+              role="img"
+              aria-label={`${confidenceLabel(r.confidence)}: ${Math.round(r.accuracy * 100)}% right of ${r.answered} answers`}
+              className="h-2.5 w-full overflow-hidden rounded-pill bg-surface-3"
+            >
+              <div
+                className="h-full rounded-pill bg-accent"
+                style={{ width: `${Math.round(r.accuracy * 100)}%` }}
+              />
+            </div>
+          </li>
+        ))}
+      </ul>
+      <ul className="m-0 flex list-none flex-col gap-1 p-0 text-sm">
+        {counts.overconfident > 0 && (
+          <li>
+            <strong>{counts.overconfident}</strong> answers were sure but wrong: wrong beliefs, the
+            most important to fix.
+          </li>
+        )}
+        {counts.shaky > 0 && (
+          <li>
+            <strong>{counts.shaky}</strong> right answers were unsure or guessed: they may be luck.
+          </li>
+        )}
+        {overconfident && <li>{overconfident}</li>}
+      </ul>
+    </div>
   );
 }

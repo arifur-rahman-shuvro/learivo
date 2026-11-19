@@ -1,3 +1,5 @@
+import ConfidenceRow from "./ConfidenceRow.tsx";
+import type { Confidence } from "../domain/confidence.ts";
 import { useRequestFocus } from "../../../core/focus.ts";
 import GlossaryText from "../../workspace/ui/GlossaryText.tsx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -208,10 +210,25 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
       (cur) =>
         cur && {
           ...cur,
-          items: cur.items.map((i) => (i.position === position ? { ...i, response } : i)),
+          items: cur.items.map((i) =>
+            i.position === position
+              ? { ...i, response, confidence: response === null ? null : i.confidence }
+              : i,
+          ),
         },
     );
-    attempts.patchItem(attemptId, position, { response }).catch((e) => setError(errorText(e)));
+    const patch = response === null ? { response, confidence: null } : { response };
+    attempts.patchItem(attemptId, position, patch).catch((e) => setError(errorText(e)));
+  }
+  function sure(position: number, confidence: Confidence | null) {
+    setAttempt(
+      (cur) =>
+        cur && {
+          ...cur,
+          items: cur.items.map((i) => (i.position === position ? { ...i, confidence } : i)),
+        },
+    );
+    attempts.patchItem(attemptId, position, { confidence }).catch((e) => setError(errorText(e)));
   }
   function flag(position: number) {
     const next = !attempt!.items[position]!.flagged;
@@ -323,6 +340,14 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
             locked={locked}
             reveal={locked}
           />
+          {isAnswered(item.response) && (
+            <ConfidenceRow
+              key={`conf-${attemptId}-${index}`}
+              value={item.confidence}
+              disabled={locked}
+              onChange={(c) => sure(index, c)}
+            />
+          )}
           {locked && snap.explanation.trim() !== "" && (
             <div className="rounded-control border border-line bg-surface-2 p-3.5">
               <p className="m-0 mb-1 text-sm font-semibold">Explanation</p>

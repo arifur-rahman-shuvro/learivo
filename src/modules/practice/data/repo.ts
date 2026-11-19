@@ -1,4 +1,5 @@
 import type { Snapshot, Response, Verdict } from "../domain/grading.ts";
+import type { Confidence } from "../domain/confidence.ts";
 import type { Reason } from "../domain/reasons.ts";
 import type { ExamRule, Past } from "../domain/session.ts";
 import type { Fact } from "../../workspace/domain/insights.ts";
@@ -28,6 +29,8 @@ export interface AttemptItem {
   mistakeReason: Reason | null;
   /** Seconds spent looking at this question, summed over every visit. */
   seconds: number;
+  /** How sure the student said they were; null when they did not say. */
+  confidence: Confidence | null;
   verdict: Verdict | null;
   /** Share of full credit earned, 0 to 1. */
   credit: number | null;
@@ -77,6 +80,7 @@ export interface ItemPatch {
   response?: Response | null;
   flagged?: boolean;
   seconds?: number;
+  confidence?: Confidence | null;
   /** Can be set after the attempt is submitted. */
   mistakeReason?: Reason | null;
 }

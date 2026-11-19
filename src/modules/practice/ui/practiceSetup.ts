@@ -1,3 +1,4 @@
+import { MISTAKE_GROUPS } from "../domain/groups.ts";
 import type { PracticeFilter } from "../domain/session.ts";
 import { type PracticeSetup } from "./start.ts";
 
@@ -19,7 +20,12 @@ export function rememberedSetup(): PracticeSetup {
     const raw: unknown = JSON.parse(window.localStorage.getItem(SETUP_KEY) ?? "null");
     if (!raw || typeof raw !== "object") return DEFAULT_SETUP;
     const o = raw as Partial<PracticeSetup>;
-    const filters: PracticeFilter[] = ["all", "unattempted", "incorrect", "bookmarked"];
+    const filters: PracticeFilter[] = [
+      "all",
+      "unattempted",
+      "bookmarked",
+      ...MISTAKE_GROUPS.map((g) => (g.id === "wrong" ? "incorrect" : g.id) as PracticeFilter),
+    ];
     return {
       ...DEFAULT_SETUP,
       filter: filters.includes(o.filter as PracticeFilter) ? (o.filter as PracticeFilter) : "all",

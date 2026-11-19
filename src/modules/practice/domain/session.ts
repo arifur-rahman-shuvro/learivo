@@ -1,5 +1,8 @@
 import type { QuestionRecord } from "../../question-bank/data/repo.ts";
+import type { Confidence } from "./confidence.ts";
 import type { Snapshot } from "./grading.ts";
+import { inGroup, type MistakeGroup } from "./groups.ts";
+import type { Reason } from "./reasons.ts";
 
 /** Small deterministic random generator, so a draw can be repeated in tests. */
 export function mulberry32(seed: number) {
@@ -44,12 +47,17 @@ export function snapshotOf(
 }
 
 /** Which questions a practice session may draw from, beyond the subject, tag or collection. */
-export type PracticeFilter = "all" | "unattempted" | "incorrect" | "bookmarked";
+export type PracticeFilter =
+  "all" | "unattempted" | "bookmarked" | "incorrect" | Exclude<MistakeGroup, "wrong">;
 
 export interface Past {
   /** Result of the most recent graded answer to this question. */
   last: "correct" | "wrong";
   times: number;
+  /** The reason the student gave for the latest answer, when it was wrong. */
+  reason?: Reason | null;
+  /** How sure the student was on the latest answer. */
+  confidence?: Confidence | null;
 }
 
 export function applyFilter(
@@ -60,8 +68,9 @@ export function applyFilter(
 ): QuestionRecord[] {
   if (filter === "bookmarked") return pool.filter((q) => bookmarks.has(q.id));
   if (filter === "unattempted") return pool.filter((q) => !past.has(q.id));
-  if (filter === "incorrect") return pool.filter((q) => past.get(q.id)?.last === "wrong");
-  return [...pool];
+  if (filter === "all") return [...pool];
+  const group = filter === "incorrect" ? "wrong" : filter;
+  return pool.filter((q) => inGroup(past.get(q.id), group));
 }
 
 /** One exam rule: take `count` questions from a subject (or from everything when nodeId is null). */

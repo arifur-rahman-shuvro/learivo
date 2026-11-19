@@ -12,6 +12,8 @@ import {
 } from "../../../ui-kit/index.ts";
 import { errorText, useBank, useLoad } from "../../question-bank/ui/bank.tsx";
 import type { Attempt, Exam } from "../data/repo.ts";
+import { MISTAKE_GROUPS } from "../domain/groups.ts";
+import { REASONS } from "../domain/reasons.ts";
 import type { PracticeFilter } from "../domain/session.ts";
 import ExamBuilder from "./ExamBuilder.tsx";
 import { clock, usePractice } from "./practice.tsx";
@@ -265,8 +267,12 @@ export default function PracticeHome({ onOpen }: { onOpen: (v: View) => void }) 
               options={[
                 { value: "all", label: "All" },
                 { value: "unattempted", label: "Not attempted yet" },
-                { value: "incorrect", label: "Last answered wrong" },
                 { value: "bookmarked", label: "Bookmarked" },
+                { value: "incorrect", label: "Last answered wrong" },
+                ...MISTAKE_GROUPS.filter((g) => g.id !== "wrong").map((g) => ({
+                  value: g.id,
+                  label: REASONS.some((r) => r.id === g.id) ? `Missed: ${g.label}` : g.label,
+                })),
               ]}
               onChange={(v) => patch({ filter: v as PracticeFilter })}
             />

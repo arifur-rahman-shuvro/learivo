@@ -163,7 +163,43 @@ describe("Practice", () => {
     const list = await attempts.list(5);
     expect(list.map((a) => a.title)).toContain("Retry: missed questions");
     // The history now knows this question was last answered wrong.
-    expect([...(await attempts.past()).values()][0]).toEqual({ last: "wrong", times: 1 });
+    expect([...(await attempts.past()).values()][0]).toMatchObject({ last: "wrong", times: 1 });
+  });
+
+  it("asks how sure the student is after an answer, locks it on check, and shows it in the results", async () => {
+    const { ready, attempts } = setup([tf("Sure test")]);
+    await ready;
+    await startPractice(1);
+    await screen.findByText(/Question 1 of 1/);
+    // Nothing to rate before an answer is chosen.
+    expect(screen.queryByRole("radiogroup", { name: "How sure are you?" })).toBeNull();
+    fireEvent.click(screen.getByLabelText(/Wrong answer 1/));
+    const group = screen.getByRole("radiogroup", { name: "How sure are you?" });
+    fireEvent.click(within(group).getByRole("radio", { name: "Sure" }));
+    expect(within(group).getByRole("radio", { name: "Sure" }).getAttribute("aria-checked")).toBe(
+      "true",
+    );
+    // Tapping the chosen one again clears it, then choose it again.
+    fireEvent.click(within(group).getByRole("radio", { name: "Sure" }));
+    expect(within(group).getByRole("radio", { name: "Sure" }).getAttribute("aria-checked")).toBe(
+      "false",
+    );
+    fireEvent.click(within(group).getByRole("radio", { name: "Sure" }));
+    fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
+    await screen.findByText("Explanation");
+    expect(
+      (within(group).getByRole("radio", { name: "Not sure" }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Finish" }));
+    fireEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", { name: "Submit" }),
+    );
+    const summary = await screen.findByRole("region", { name: "Confidence" });
+    expect(within(summary).getByText(/sure but wrong/)).toBeTruthy();
+    expect([...(await attempts.past()).values()][0]).toMatchObject({
+      last: "wrong",
+      confidence: "sure",
+    });
   });
 
   it("marks a true/false question statement by statement: 3 of 5 right earns 0.6", async () => {

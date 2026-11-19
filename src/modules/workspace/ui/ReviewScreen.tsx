@@ -15,12 +15,14 @@ import { errorText, useBank } from "../../question-bank/ui/bank.tsx";
 import { usePractice, handoff } from "../../practice/ui/practice.tsx";
 import { startFromQuestions } from "../../practice/ui/start.ts";
 import type { Note } from "../data/repo.ts";
+import type { QuestionRecord } from "../../question-bank/data/repo.ts";
 import { isDue, review } from "../domain/scheduler.ts";
 import FlashcardsPanel from "./FlashcardsPanel.tsx";
 import GlossaryPanel from "./GlossaryPanel.tsx";
 import NoteDialog from "./NoteDialog.tsx";
 import { useWorkspace } from "./workspace.tsx";
 import { List, DueNow, type Data } from "./ReviewParts.tsx";
+import { inGroup, MISTAKE_GROUPS, type MistakeGroup } from "../../practice/domain/groups.ts";
 
 type Tab = "due" | "mistakes" | "bookmarks" | "notes" | "flashcards" | "glossary";
 const TABS: [Tab, string][] = [
@@ -32,11 +34,19 @@ const TABS: [Tab, string][] = [
   ["glossary", "Glossary"],
 ];
 
+/** The active questions in one mistake group, from the loaded data. */
+function questionsIn(data: Data | null, group: MistakeGroup): QuestionRecord[] {
+  return [...(data?.past.entries() ?? [])]
+    .filter(([id, p]) => inGroup(p, group) && data?.questions.get(id)?.status === "active")
+    .map(([id]) => data!.questions.get(id)!);
+}
+
 export default function ReviewScreen({ onNavigate }: { onNavigate: (route: string) => void }) {
   const { repo: bank, rev: bankRev } = useBank();
   const { attempts } = usePractice();
   const ws = useWorkspace();
   const [tab, setTab] = useState<Tab>("due");
+  const [group, setGroup] = useState<MistakeGroup>("wrong");
   useIntent((i) => {
     if (i.kind === "open" && TABS.some(([k]) => k === i.target)) setTab(i.target as Tab);
   });
@@ -57,7 +67,9 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
         ws.repo.notes(),
         attempts.past(),
       ]);
-      const wrong = [...past.entries()].filter(([, p]) => p.last === "wrong").map(([id]) => id);
+      const wrong = [...past.entries()]
+        .filter(([, p]) => inGroup(p, "wrong") || inGroup(p, "shaky"))
+        .map(([id]) => id);
       const ids = new Set<string>([
         ...cards.map((c) => c.questionId),
         ...marks,
@@ -88,13 +100,12 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
         .sort((a, b) => a.due.localeCompare(b.due)),
     [data, now],
   );
-  const mistakes = useMemo(
-    () =>
-      [...(data?.past.entries() ?? [])]
-        .filter(([id, p]) => p.last === "wrong" && data?.questions.get(id)?.status === "active")
-        .map(([id]) => data!.questions.get(id)!),
+  const groupCounts = useMemo(
+    () => new Map(MISTAKE_GROUPS.map((g) => [g.id, questionsIn(data, g.id).length])),
     [data],
   );
+  const mistakes = useMemo(() => questionsIn(data, group), [data, group]);
+  const mistakeTotal = groupCounts.get("wrong") ?? 0;
   const marked = useMemo(
     () =>
       [...(data?.marks ?? [])].flatMap((id) =>
@@ -137,7 +148,7 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
 
   const counts: Record<Tab, number> = {
     due: due.length,
-    mistakes: mistakes.length,
+    mistakes: mistakeTotal,
     bookmarks: marked.length,
     notes: data?.notes.length ?? 0,
     flashcards: 0,
@@ -210,12 +221,34 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
 
       {data && tab === "mistakes" && (
         <>
+          {[...groupCounts.values()].some((n) => n > 0) && (
+            <div role="tablist" aria-label="Group mistakes by" className="flex flex-wrap gap-2">
+              {MISTAKE_GROUPS.map((g) => (
+                <button
+                  key={g.id}
+                  role="tab"
+                  type="button"
+                  aria-selected={group === g.id}
+                  onClick={() => setGroup(g.id)}
+                  className={`rounded-pill border px-3.5 py-1.5 text-sm font-semibold ${
+                    group === g.id ? "border-accent bg-surface-2" : "border-line text-muted"
+                  }`}
+                >
+                  {g.label} <span className="font-mono">{groupCounts.get(g.id) ?? 0}</span>
+                </button>
+              ))}
+            </div>
+          )}
           {mistakes.length === 0 ? (
             <div className="lv-card">
               <EmptyState
-                title="No mistakes to review"
+                title={group === "wrong" ? "No mistakes to review" : "Nothing in this group"}
                 icon={<CheckIcon size={36} />}
-                description="Questions you last answered wrong in a session appear here."
+                description={
+                  group === "wrong"
+                    ? "Questions you last answered wrong in a session appear here."
+                    : "Tag why you missed a question in Results, or rate how sure you are while you practise, to fill these groups."
+                }
               />
             </div>
           ) : (
@@ -226,7 +259,7 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
                   onClick={() =>
                     void practise(
                       mistakes.map((q) => q.id),
-                      "Practice: my mistakes",
+                      `Practice: ${MISTAKE_GROUPS.find((g) => g.id === group)?.label.toLowerCase() ?? "mistakes"}`,
                     )
                   }
                 >

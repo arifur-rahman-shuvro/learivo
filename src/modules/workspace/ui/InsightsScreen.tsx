@@ -14,13 +14,14 @@ import {
 } from "../../../ui-kit/index.ts";
 import { clock } from "../../practice/ui/practice.tsx";
 import { useInsightsData } from "./useInsightsData.ts";
-import { FlameIcon, Heatmap, ReasonBars } from "./InsightsParts.tsx";
+import { ConfidenceBars, FlameIcon, Heatmap, ReasonBars } from "./InsightsParts.tsx";
 import {
   accuracyByDay,
   activeDaySet,
   activityByDay,
   bestAndWorst,
   byArea,
+  byConfidence,
   byReason,
   examHistory,
   overall,
@@ -68,6 +69,7 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
       sessions: sessions.length,
       badges: achievements(facts, sessions),
       reasons: byReason(facts),
+      confidence: byConfidence(facts),
       activity: activityByDay(facts, today, 84),
       extremes: bestAndWorst(facts),
       speed: speedByArea(facts, depth),
@@ -196,6 +198,11 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
                   untagged={view.reasons.untagged}
                   missed={view.reasons.missed}
                 />
+              </section>
+
+              <section aria-label="Confidence" className="lv-card flex flex-col gap-3 p-5">
+                <h2 className="m-0 text-lg font-semibold">How sure you are</h2>
+                <ConfidenceBars rows={view.confidence.rows} counts={view.confidence.counts} />
               </section>
 
               <section aria-label="Activity" className="lv-card flex flex-col gap-3 p-5">

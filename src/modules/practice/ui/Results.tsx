@@ -10,8 +10,9 @@ import { clock, usePractice } from "./practice.tsx";
 import ResponseInput from "./ResponseInput.tsx";
 import { startRetry } from "./start.ts";
 import { REASONS, reasonLabel, type Reason } from "../domain/reasons.ts";
+import { calibration, countCalibration } from "../domain/confidence.ts";
 
-type Show = "all" | "wrong" | "unanswered" | "flagged";
+type Show = "all" | "wrong" | "unanswered" | "flagged" | "overconfident" | "shaky";
 
 interface Props {
   attemptId: string;
@@ -89,7 +90,16 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
       show === "all" ||
       (show === "wrong" && (i.verdict === "wrong" || i.verdict === "partial")) ||
       (show === "unanswered" && i.verdict === "unanswered") ||
-      (show === "flagged" && i.flagged),
+      (show === "flagged" && i.flagged) ||
+      (show === "overconfident" &&
+        calibration(i.verdict === "correct", i.confidence) === "overconfident" &&
+        i.verdict !== "unanswered") ||
+      (show === "shaky" && calibration(i.verdict === "correct", i.confidence) === "shaky"),
+  );
+  const sureness = countCalibration(
+    a.items
+      .filter((i) => i.verdict !== "unanswered")
+      .map((i) => ({ correct: i.verdict === "correct", confidence: i.confidence })),
   );
   const answered = (a.correct ?? 0) + (a.partial ?? 0) + (a.wrong ?? 0);
   const earned = a.items.reduce((n, i) => n + (i.credit ?? (i.verdict === "correct" ? 1 : 0)), 0);
@@ -180,6 +190,29 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
         </dl>
       </section>
 
+      {sureness.rated > 0 && (
+        <section aria-label="Confidence" className="lv-card flex flex-col gap-2 p-5">
+          <h2 className="m-0 text-lg font-semibold">How sure you were</h2>
+          <p className="m-0 text-sm text-muted">
+            You rated {sureness.rated} of {answered} answers.
+          </p>
+          <ul className="m-0 flex list-none flex-col gap-1.5 p-0 text-sm">
+            <li>
+              <strong>{sureness.overconfident}</strong> sure but wrong
+              {sureness.overconfident > 0 ? ": a wrong belief, fix these first." : "."}
+            </li>
+            <li>
+              <strong>{sureness.shaky}</strong> right but unsure
+              {sureness.shaky > 0 ? ": could be luck, worth a revisit." : "."}
+            </li>
+            <li>
+              <strong>{sureness.solid}</strong> sure and right, <strong>{sureness.gap}</strong>{" "}
+              wrong and unsure.
+            </li>
+          </ul>
+        </section>
+      )}
+
       {pace && (pace.slowest.length > 0 || paceNote(pace)) && (
         <section aria-label="Pace" className="lv-card flex flex-col gap-3 p-5">
           <h2 className="m-0 text-lg font-semibold">Pace</h2>
@@ -233,6 +266,11 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
               ["wrong", "Wrong"],
               ["unanswered", "Skipped"],
               ["flagged", "Flagged"],
+              ...((sureness.overconfident > 0 ? [["overconfident", "Sure but wrong"]] : []) as [
+                Show,
+                string,
+              ][]),
+              ...((sureness.shaky > 0 ? [["shaky", "Right but unsure"]] : []) as [Show, string][]),
             ] as const
           ).map(([k, label]) => (
             <button
@@ -286,6 +324,11 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
                     {i.verdict !== "unanswered" && i.marks !== null ? ` · ${i.marks}` : ""}
                   </Badge>
                   {i.mistakeReason && <Badge tone="neutral">{reasonLabel(i.mistakeReason)}</Badge>}
+                  {calibration(i.verdict === "correct", i.confidence) === "overconfident" &&
+                    i.verdict !== "unanswered" && <Badge tone="danger">Sure but wrong</Badge>}
+                  {calibration(i.verdict === "correct", i.confidence) === "shaky" && (
+                    <Badge tone="warning">Right but unsure</Badge>
+                  )}
                   {i.seconds > 0 && (
                     <span className="shrink-0 font-mono text-xs text-muted">
                       {shortTime(i.seconds)}
