@@ -333,3 +333,5 @@ Progress, row actions (2026-11-19): every question row has a "more" button (thre
 - Backup V3: manifest with record counts and SHA-256 (damaged or cut-short files are refused), confidence, collections, Home layout, full history in pages. The owner's excellence list is tracked in docs/EXCELLENCE.md.
 
 - Safe sign-out: unsent offline changes are sent first; otherwise the student can save them as a file, stay signed in, or discard. Unreadable saved changes are set aside, not replayed.
+
+- Conflict resolution: offline edits that overlap a change made elsewhere are never overwritten; non-overlapping parts merge, the rest is decided field by field in the Saved dialog, with history.

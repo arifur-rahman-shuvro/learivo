@@ -24,7 +24,9 @@ Todo: the sign-out dialog itself is not covered by a screen test; a stored-data 
 ## Phase 2: Offline and sync [P0]
 
 4. Offline engine — Partial. Questions: add, edit, archive, delete, classify, tag, collect work offline. Todo: subjects, tags and collections themselves, notes, bookmarks, revision actions offline.
-5. Conflict resolution — Partial. Version check on edit; the replaced version stays in history; deleted-elsewhere is dropped and counted. Todo: keep-mine / keep-cloud / manual merge screen, three-way comparison, conflict history, notification.
+5. Conflict resolution — Partial (done 2026-11-20). An offline edit is compared field by field with the version it started from and with what is in the account now. Fields changed on one side only are combined silently; fields changed on both sides stop and ask. The Saved screen shows each clash side by side (mine, the account's, and what it was before) with a choice per field, plus Keep all of mine / Keep the account's version. A question deleted elsewhere asks whether to add the edit back. Nothing is overwritten before the choice; a toast and the "N to decide" label tell the student. The last 20 decisions are kept and either side can be brought back. Undecided clashes count as unsent when signing out. Tested at logic and panel level.
+   Todo: a screen test of the whole Saved dialog; conflict handling for tag, collection and subject changes (those still need a connection); edits saved by an older app version compare without a starting version (every difference asks).
+
 6. Sync engine — Partial. Ordered replay, stops on connection trouble, retry on reconnect and when the app becomes visible. Todo: exponential backoff, per-change status screen, diagnostics, multi-device and large-queue stress tests.
 
 ## Phase 3: Security and backend [P0/P1]

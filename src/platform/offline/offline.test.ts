@@ -13,6 +13,7 @@ import {
   buildPack,
 } from "./pack.ts";
 import { MemoryStore } from "./store.ts";
+import { inputOf } from "./merge.ts";
 import { analyzeImport } from "../../modules/question-bank/domain/importExport.ts";
 import { SyncedAttempts } from "./syncedAttempts.ts";
 import { TF_ANSWER } from "../../testing/fixtures.ts";
@@ -350,11 +351,11 @@ describe("offline edits", () => {
     expect((await repo.status()).waiting).toBe(1);
     net.online = true;
     const report = await repo.flushEdits();
-    expect(report).toMatchObject({ sent: 1, overwritten: 0 });
+    expect(report).toMatchObject({ sent: 1, conflicts: 0 });
     expect((await bank.get(rec.id))?.stem).toBe("Heart pumps blood, edit 2");
   });
 
-  it("keeps the older version in history when it replaces a newer change from another device", async () => {
+  it("holds a clash for a decision instead of overwriting, and keeps both versions", async () => {
     const { bank, net, repo } = await setup();
     const rec = (await repo.list({ ...DEFAULT_QUERY, search: "femur" })).items[0]!;
     net.online = false;
@@ -362,14 +363,99 @@ describe("offline edits", () => {
     await bank.update(rec.id, { ...tf("Femur, laptop edit"), path: rec.path, tags: [] });
     net.online = true;
     const report = await repo.flushEdits();
-    expect(report.overwritten).toBe(1);
-    expect((await bank.get(rec.id))?.stem).toBe("Femur, my phone edit");
-    expect(
-      (await bank.versions(rec.id)).some((v) => v.question.stem === "Femur, laptop edit"),
-    ).toBe(true);
+    expect(report).toMatchObject({ conflicts: 1, merged: 0 });
+    expect((await bank.get(rec.id))?.stem).toBe("Femur, laptop edit"); // not overwritten
+    const [c] = (await repo.status()).conflicts;
+    expect(c).toMatchObject({ kind: "edited" });
+    expect(c!.clashes).toContain("stem");
+    expect(c!.mine.stem).toBe("Femur, my phone edit");
+    expect(c!.theirs!.stem).toBe("Femur, laptop edit");
+    expect(c!.base!.stem).toContain("emur");
   });
 
-  it("archives and tags offline, and drops edits to questions deleted elsewhere", async () => {
+  it("combines edits to different parts of a question without asking", async () => {
+    const { bank, net, repo } = await setup();
+    const rec = (await repo.list({ ...DEFAULT_QUERY, search: "femur" })).items[0]!;
+    const base = await bank.get(rec.id);
+    net.online = false;
+    await repo.update(rec.id, { ...inputOf(base!), explanation: "Written on my phone" });
+    await bank.update(rec.id, { ...inputOf(base!), stem: "Femur, edited on the laptop" });
+    net.online = true;
+    const report = await repo.flushEdits();
+    expect(report).toMatchObject({ merged: 1, conflicts: 0 });
+    const now = await bank.get(rec.id);
+    expect(now?.stem).toBe("Femur, edited on the laptop");
+    expect(now?.explanation).toBe("Written on my phone");
+  });
+
+  it("applies the student's decision: mine, the account's, or field by field", async () => {
+    const { bank, net, repo } = await setup();
+    const rec = (await repo.list({ ...DEFAULT_QUERY, search: "femur" })).items[0]!;
+    const base = inputOf((await bank.get(rec.id))!);
+    const clash = async (mine: Partial<typeof base>, theirs: Partial<typeof base>) => {
+      net.online = false;
+      await repo.update(rec.id, { ...base, ...mine });
+      await bank.update(rec.id, { ...base, ...theirs });
+      net.online = true;
+      await repo.flushEdits();
+    };
+    await clash(
+      { stem: "Mine A", explanation: "Mine X" },
+      { stem: "Cloud A", explanation: "Cloud X" },
+    );
+    await repo.resolveConflict(rec.id, { stem: "mine", explanation: "theirs" });
+    let now = await bank.get(rec.id);
+    expect([now?.stem, now?.explanation]).toEqual(["Mine A", "Cloud X"]);
+    expect((await repo.status()).conflicts).toHaveLength(0);
+    expect((await repo.status()).resolved[0]).toMatchObject({ outcome: "merged" });
+
+    await clash({ stem: "Mine B" }, { stem: "Cloud B" });
+    await repo.resolveConflict(rec.id, "theirs");
+    now = await bank.get(rec.id);
+    expect(now?.stem).toBe("Cloud B");
+
+    await clash({ stem: "Mine C" }, { stem: "Cloud C" });
+    await repo.resolveConflict(rec.id, "mine");
+    expect((await bank.get(rec.id))?.stem).toBe("Mine C");
+
+    // an earlier decision can be undone from the history list
+    const idx = (await repo.status()).resolved.findIndex((r) => r.outcome === "theirs");
+    await repo.reapply(idx, "mine");
+    expect((await bank.get(rec.id))?.stem).toBe("Mine B");
+  });
+
+  it("asks what to do with an edit to a question deleted elsewhere", async () => {
+    const { bank, net, repo } = await setup();
+    const rec = (await repo.list({ ...DEFAULT_QUERY, search: "femur" })).items[0]!;
+    net.online = false;
+    await repo.update(rec.id, {
+      ...inputOf((await bank.get(rec.id))!),
+      stem: "Edited then deleted",
+    });
+    await bank.bulk([rec.id], { kind: "delete" });
+    net.online = true;
+    expect(await repo.flushEdits()).toMatchObject({ conflicts: 1 });
+    expect((await repo.status()).conflicts[0]).toMatchObject({ kind: "deleted", theirs: null });
+    await repo.resolveConflict(rec.id, "mine");
+    expect((await bank.exportAll()).map((q) => q.stem)).toContain("Edited then deleted");
+    expect((await repo.status()).resolved[0]).toMatchObject({ outcome: "re-added" });
+  });
+
+  it("does not sign out over an undecided clash without asking", async () => {
+    const { bank, net, repo } = await setup();
+    const rec = (await repo.list({ ...DEFAULT_QUERY, search: "femur" })).items[0]!;
+    net.online = false;
+    await repo.update(rec.id, { ...inputOf((await bank.get(rec.id))!), stem: "Mine" });
+    await bank.update(rec.id, { ...inputOf((await bank.get(rec.id))!), stem: "Theirs" });
+    net.online = true;
+    await repo.flushEdits();
+    const err = await repo.clear().catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(UnsentChangesError);
+    expect((err as UnsentChangesError).summaries[0]).toContain("Decision needed");
+    expect(JSON.parse((await repo.exportPending())!).questions[0].stem).toBe("Mine");
+  });
+
+  it("archives and tags offline, and holds edits to questions deleted elsewhere", async () => {
     const { bank, net, repo } = await setup();
     const all = (await repo.list(DEFAULT_QUERY)).items;
     const [a, b] = [all[0]!, all[1]!];
@@ -383,7 +469,7 @@ describe("offline edits", () => {
     await bank.bulk([all[2]!.id], { kind: "delete" });
     net.online = true;
     const report = await repo.flushEdits();
-    expect(report).toMatchObject({ removed: 1 });
+    expect(report).toMatchObject({ conflicts: 1 });
     expect((await bank.get(a.id))?.status).toBe("archived");
     expect((await bank.get(b.id))?.tagIds).toContain(tag.id);
   });

@@ -3,6 +3,8 @@ import { Button, Dialog } from "../../ui-kit/index.ts";
 import { useOfflineControls } from "../../platform/offline/OfflineProvider.tsx";
 import type { PackStatus } from "../../platform/offline/pack.ts";
 import { useOnline } from "../../platform/pwa/pwa.ts";
+import { showToast } from "../../core/toast.ts";
+import ConflictsPanel from "./ConflictsPanel.tsx";
 
 const IDLE = { waiting: 0, syncing: false, problem: null };
 
@@ -41,11 +43,21 @@ export default function SyncIndicator() {
     return controls.pack.subscribe(load);
   }, [controls]);
 
+  const clashes = pack?.conflicts.length ?? 0;
+  const [seen, setSeen] = useState(0);
+  useEffect(() => {
+    // Tell the student once when new clashes appear, wherever they are in the app.
+    if (clashes > seen)
+      showToast("Some offline edits clash with changes made elsewhere. Open Saved to decide.");
+    setSeen(clashes);
+  }, [clashes]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!controls) return null;
 
   let label = "Saved";
   let tone: Tone = "ok";
   if (state.problem) [label, tone] = ["Needs attention", "warn"];
+  else if (clashes > 0) [label, tone] = [`${clashes} to decide`, "warn"];
   else if (state.syncing) [label, tone] = ["Syncing", "busy"];
   else if (state.waiting + (pack?.waiting ?? 0) > 0) {
     [label, tone] = [`${state.waiting + (pack?.waiting ?? 0)} waiting to sync`, "busy"];
@@ -103,6 +115,19 @@ export default function SyncIndicator() {
               </Button>
             </div>
           </section>
+
+          {pack && (pack.conflicts.length > 0 || pack.resolved.length > 0) && (
+            <ConflictsPanel
+              status={pack}
+              busy={busy}
+              onResolve={(id, choice) =>
+                void act(() => controls.pack.resolveConflict(id, choice), "Decision applied.")
+              }
+              onReapply={(i, side) =>
+                void act(() => controls.pack.reapply(i, side), "That version is back.")
+              }
+            />
+          )}
 
           <section className="flex flex-col gap-1">
             <h3 className="m-0 text-base font-semibold">Questions on this device</h3>

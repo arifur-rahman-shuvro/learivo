@@ -12,7 +12,14 @@ import type { Pack } from "./pack.ts";
  */
 export type EditOp =
   | { kind: "create"; id: string; input: QuestionInput }
-  | { kind: "update"; id: string; input: QuestionInput; baseVersion: number }
+  | {
+      kind: "update";
+      id: string;
+      input: QuestionInput;
+      baseVersion: number;
+      /** The question as it was before the first offline edit, for the three-way comparison. */
+      base?: QuestionInput;
+    }
   | { kind: "bulk"; ids: string[]; action: BulkAction };
 
 export interface FailedEdit {
@@ -70,7 +77,7 @@ export function enqueue(queue: EditOp[], op: EditOp): EditOp[] {
   next[at] =
     had.kind === "create"
       ? { kind: "create", id: had.id, input: op.input }
-      : { ...op, baseVersion: had.baseVersion };
+      : { ...op, baseVersion: had.baseVersion, base: had.base };
   return next;
 }
 

@@ -23,6 +23,14 @@ import {
   type FailedEdit,
 } from "./edits.ts";
 import { questionToRecord } from "../../modules/question-bank/domain/importExport.ts";
+import {
+  applyChoices,
+  inputOf,
+  threeWay,
+  type Conflict,
+  type ResolvedConflict,
+  type Side,
+} from "./merge.ts";
 
 /** A copy of the active question bank kept on this device so practice works without internet. */
 export interface Pack {
@@ -152,6 +160,10 @@ export interface PackStatus {
   waiting: number;
   /** Changes the database refused, kept so the student can see what was not saved. */
   failed: FailedEdit[];
+  /** Offline edits that clash with a change made elsewhere and wait for a decision. */
+  conflicts: Conflict[];
+  /** The most recent decisions, kept so an older version can be brought back. */
+  resolved: ResolvedConflict[];
 }
 
 /** Thrown instead of wiping the device while changes made offline are still unsent. */
@@ -163,15 +175,18 @@ export class UnsentChangesError extends Error {
 
 export interface FlushReport {
   sent: number;
-  /** Edits that replaced a newer change made somewhere else (the old version stays in history). */
-  overwritten: number;
-  /** Edits to questions that no longer exist. */
-  removed: number;
+  /** Edits that were combined with a change made elsewhere because they touched different parts. */
+  merged: number;
+  /** Edits that clash with another change, or with a deletion, and wait for a decision. */
+  conflicts: number;
   failed: number;
 }
 
 const editsKey = (userId: string) => `u:${userId}:edits`;
 const failedKey = (userId: string) => `u:${userId}:edits-failed`;
+const conflictsKey = (userId: string) => `u:${userId}:conflicts`;
+const resolvedKey = (userId: string) => `u:${userId}:conflicts-resolved`;
+const KEEP_RESOLVED = 20;
 
 /**
  * The question bank as the app sees it: the live one when there is a connection, the pack when
@@ -185,6 +200,8 @@ export class OfflineAwareRepo implements QuestionRepo {
   private flushedListeners = new Set<(r: FlushReport) => void>();
   private queue: EditOp[] = [];
   private failed: FailedEdit[] = [];
+  private conflicts: Conflict[] = [];
+  private resolved: ResolvedConflict[] = [];
   private flushing?: Promise<FlushReport>;
 
   constructor(
@@ -202,6 +219,10 @@ export class OfflineAwareRepo implements QuestionRepo {
     const rows = Array.isArray(saved) ? saved : [];
     this.queue = rows.filter(isEditOp);
     this.failed = (await this.store.get<FailedEdit[]>(failedKey(this.userId))) ?? [];
+    const cs = await this.store.get<unknown>(conflictsKey(this.userId));
+    this.conflicts = Array.isArray(cs) ? (cs as Conflict[]).filter((c) => c && c.mine && c.id) : [];
+    const rs = await this.store.get<unknown>(resolvedKey(this.userId));
+    this.resolved = Array.isArray(rs) ? (rs as ResolvedConflict[]).filter((r) => r?.conflict) : [];
     if (saved !== undefined && (!Array.isArray(saved) || this.queue.length < rows.length)) {
       // Never replay something unreadable; say so instead of failing silently.
       const lost = Array.isArray(saved) ? rows.length - this.queue.length : 1;
@@ -237,6 +258,8 @@ export class OfflineAwareRepo implements QuestionRepo {
       count: this.pack?.questions.length ?? 0,
       waiting: this.queue.length,
       failed: [...this.failed],
+      conflicts: [...this.conflicts],
+      resolved: [...this.resolved],
     };
   }
 
@@ -382,8 +405,10 @@ export class OfflineAwareRepo implements QuestionRepo {
     const base = this.pack?.questions.find((q) => q.id === id)?.version ?? 0;
     const pending = this.queue.find((q) => q.kind === "update" && q.id === id);
     const baseVersion = pending?.kind === "update" ? pending.baseVersion : base;
+    const was = this.pack?.questions.find((q) => q.id === id);
+    const start = pending?.kind === "update" ? pending.base : was ? inputOf(was) : undefined;
     await this.edit(
-      [{ kind: "update", id, input, baseVersion }],
+      [{ kind: "update", id, input, baseVersion, ...(start ? { base: start } : {}) }],
       () => this.remote.update(id, input),
       undefined,
     );
@@ -412,7 +437,7 @@ export class OfflineAwareRepo implements QuestionRepo {
 
   private async runFlush(): Promise<FlushReport> {
     await this.load();
-    const report: FlushReport = { sent: 0, overwritten: 0, removed: 0, failed: 0 };
+    const report: FlushReport = { sent: 0, merged: 0, conflicts: 0, failed: 0 };
     let touched = false;
     while (this.queue.length > 0 && this.isOnline()) {
       const op = this.queue[0]!;
@@ -430,6 +455,7 @@ export class OfflineAwareRepo implements QuestionRepo {
       this.queue.shift();
       await this.store.set(editsKey(this.userId), this.queue);
       await this.store.set(failedKey(this.userId), this.failed);
+      await this.store.set(conflictsKey(this.userId), this.conflicts);
       this.changed();
     }
     if (touched && this.queue.length === 0 && this.enabled) {
@@ -447,16 +473,103 @@ export class OfflineAwareRepo implements QuestionRepo {
     } else if (op.kind === "update") {
       const cur = await this.remote.get(op.id);
       if (!cur) {
-        report.removed += 1;
+        // Deleted elsewhere: the student decides whether the edit brings it back.
+        this.holdConflict(report, {
+          id: op.id,
+          kind: "deleted",
+          base: op.base ?? null,
+          mine: op.input,
+          theirs: null,
+          clashes: [],
+          at: new Date().toISOString(),
+        });
         return;
       }
-      // The database keeps the replaced version in the question's history, so nothing is lost.
-      if (cur.version !== op.baseVersion) report.overwritten += 1;
-      await this.remote.update(op.id, op.input);
+      let input = op.input;
+      if (cur.version !== op.baseVersion) {
+        // Changed elsewhere too: combine what does not overlap, ask about what does.
+        const theirs = inputOf(cur);
+        const { merged, clashes } = threeWay(op.base ?? null, op.input, theirs);
+        if (clashes.length > 0) {
+          this.holdConflict(report, {
+            id: op.id,
+            kind: "edited",
+            base: op.base ?? null,
+            mine: op.input,
+            theirs,
+            clashes,
+            at: new Date().toISOString(),
+          });
+          return;
+        }
+        input = merged;
+        report.merged += 1;
+      }
+      await this.remote.update(op.id, input);
     } else {
       await this.remote.bulk(op.ids, op.action);
     }
     report.sent += 1;
+  }
+
+  private holdConflict(report: FlushReport, c: Conflict) {
+    this.conflicts = [...this.conflicts.filter((x) => x.id !== c.id), c];
+    report.conflicts += 1;
+  }
+
+  /**
+   * Applies the student's decision on a clash: keep mine, keep the account's version, or choose
+   * field by field. The version that is not kept stays in the history list and can be brought back.
+   */
+  async resolveConflict(
+    id: string,
+    choice: Side | Partial<Record<keyof QuestionInput, Side>>,
+  ): Promise<void> {
+    await this.load();
+    const c = this.conflicts.find((x) => x.id === id);
+    if (!c) return;
+    if (!this.isOnline()) throw new Error("Connect to the internet to apply your decision.");
+    let outcome: ResolvedConflict["outcome"];
+    if (c.kind === "deleted") {
+      if (choice === "mine") {
+        await this.remote.create([c.mine], [crypto.randomUUID()]);
+        outcome = "re-added";
+      } else {
+        outcome = "discarded";
+      }
+    } else if (choice === "theirs") {
+      outcome = "theirs";
+    } else {
+      await this.remote.update(id, applyChoices(c, choice));
+      outcome = choice === "mine" ? "mine" : "merged";
+    }
+    this.conflicts = this.conflicts.filter((x) => x.id !== id);
+    this.resolved = [
+      { conflict: c, outcome, at: new Date().toISOString() },
+      ...this.resolved,
+    ].slice(0, KEEP_RESOLVED);
+    await this.store.set(conflictsKey(this.userId), this.conflicts);
+    await this.store.set(resolvedKey(this.userId), this.resolved);
+    this.changed();
+    if (this.enabled) await this.download().catch(() => undefined);
+    this.flushedListeners.forEach((l) => l({ sent: 1, merged: 0, conflicts: 0, failed: 0 }));
+  }
+
+  /** Brings back one side of an earlier decision, as a new edit (or a new question if it was deleted). */
+  async reapply(index: number, side: Side): Promise<void> {
+    await this.load();
+    const entry = this.resolved[index];
+    if (!entry) return;
+    if (!this.isOnline()) throw new Error("Connect to the internet to bring a version back.");
+    const input = side === "mine" ? entry.conflict.mine : entry.conflict.theirs;
+    if (!input) return;
+    if ((await this.remote.getMany([entry.conflict.id])).length > 0) {
+      await this.remote.update(entry.conflict.id, input);
+    } else {
+      await this.remote.create([input], [crypto.randomUUID()]);
+    }
+    if (this.enabled) await this.download().catch(() => undefined);
+    this.flushedListeners.forEach((l) => l({ sent: 1, merged: 0, conflicts: 0, failed: 0 }));
   }
 
   /** Forgets the list of refused changes once the student has seen it. */
@@ -483,7 +596,10 @@ export class OfflineAwareRepo implements QuestionRepo {
   /** What is waiting to be sent, one line each. */
   async pendingSummaries(): Promise<string[]> {
     await this.load();
-    return this.queue.map(summarise);
+    return [
+      ...this.queue.map(summarise),
+      ...this.conflicts.map((c) => `Decision needed: ${c.mine.stem.slice(0, 70)}`),
+    ];
   }
 
   /**
@@ -492,10 +608,11 @@ export class OfflineAwareRepo implements QuestionRepo {
    */
   async exportPending(): Promise<string | null> {
     await this.load();
-    if (this.queue.length === 0) return null;
-    const questions = this.queue.flatMap((op) =>
-      op.kind === "bulk" ? [] : [questionToRecord(op.input)],
-    );
+    if (this.queue.length === 0 && this.conflicts.length === 0) return null;
+    const questions = [
+      ...this.queue.flatMap((op) => (op.kind === "bulk" ? [] : [questionToRecord(op.input)])),
+      ...this.conflicts.map((c) => questionToRecord(c.mine)), // my side of each undecided clash
+    ];
     const others = this.queue.filter((op) => op.kind === "bulk").map(summarise);
     return JSON.stringify(
       { format: "learivo-questions", version: 1, questions, otherChanges: others },
@@ -511,13 +628,16 @@ export class OfflineAwareRepo implements QuestionRepo {
   async clear(opts: { discardUnsent?: boolean } = {}): Promise<void> {
     await this.load();
     if (this.queue.length > 0 && this.isOnline()) await this.flushEdits().catch(() => undefined);
-    if (this.queue.length > 0 && !opts.discardUnsent) {
-      throw new UnsentChangesError(this.queue.map(summarise));
+    if ((this.queue.length > 0 || this.conflicts.length > 0) && !opts.discardUnsent) {
+      throw new UnsentChangesError(await this.pendingSummaries());
     }
-    await this.store.del(editsKey(this.userId));
-    await this.store.del(failedKey(this.userId));
+    for (const k of [editsKey, failedKey, conflictsKey, resolvedKey]) {
+      await this.store.del(k(this.userId));
+    }
     this.queue = [];
     this.failed = [];
+    this.conflicts = [];
+    this.resolved = [];
     await this.store.del(packKey(this.userId));
     this.pack = null;
     this.loaded = false;

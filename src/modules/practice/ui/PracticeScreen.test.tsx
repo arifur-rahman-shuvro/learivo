@@ -209,8 +209,12 @@ describe("Practice", () => {
     await screen.findByText(/Question 1 of 1/);
     const radios = () => screen.getAllByRole("radio").filter((r) => r.hasAttribute("data-choice"));
     const checked = () => radios().map((r) => (r as HTMLInputElement).checked);
-    fireEvent.keyDown(window, { key: "2" });
-    await waitFor(() => expect(checked()).toEqual([false, true, false, false, false]));
+    await waitFor(() => expect(radios()).toHaveLength(5)); // the options are on screen
+    // The key listener is attached just after the screen mounts; press until it takes.
+    await waitFor(() => {
+      fireEvent.keyDown(window, { key: "2" });
+      expect(checked()).toEqual([false, true, false, false, false]);
+    });
     fireEvent.keyDown(window, { key: "1" });
     await waitFor(() => expect(checked()).toEqual([true, false, false, false, false]));
     fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
