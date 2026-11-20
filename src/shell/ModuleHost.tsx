@@ -1,6 +1,6 @@
 import { lazy, Suspense, useMemo } from "react";
 import { BackupGate, GuideGate } from "./Gates.tsx";
-import { PanelSkeleton } from "../ui-kit/index.ts";
+import { ErrorBoundary, PanelSkeleton } from "../ui-kit/index.ts";
 import { useServices } from "../platform/offline/OfflineProvider.tsx";
 import type { ModuleId } from "./navigation/registry.ts";
 import { supabase } from "../core/supabase.ts";
@@ -43,19 +43,21 @@ export default function ModuleHost({
           <Suspense fallback={<PanelSkeleton />}>
             <GuideGate onNavigate={onNavigate} />
             <BackupGate />
-            <div key={module} className="lv-fade-in">
-              {module === "home" ? (
-                <HomeDashboard onNavigate={onNavigate} />
-              ) : module === "questions" ? (
-                <QuestionsScreen onNavigate={onNavigate} />
-              ) : module === "practice" ? (
-                <PracticeScreen />
-              ) : module === "review" ? (
-                <ReviewScreen onNavigate={onNavigate} />
-              ) : (
-                <InsightsScreen onNavigate={onNavigate} />
-              )}
-            </div>
+            <ErrorBoundary resetKey={module}>
+              <div key={module} className="lv-fade-in">
+                {module === "home" ? (
+                  <HomeDashboard onNavigate={onNavigate} />
+                ) : module === "questions" ? (
+                  <QuestionsScreen onNavigate={onNavigate} />
+                ) : module === "practice" ? (
+                  <PracticeScreen />
+                ) : module === "review" ? (
+                  <ReviewScreen onNavigate={onNavigate} />
+                ) : (
+                  <InsightsScreen onNavigate={onNavigate} />
+                )}
+              </div>
+            </ErrorBoundary>
           </Suspense>
         </WorkspaceProvider>
       </PracticeProvider>

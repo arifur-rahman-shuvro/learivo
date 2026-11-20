@@ -4,13 +4,18 @@ import type { AuthClient, AuthUser, SignInResult, SignUpResult } from "../auth/t
 export function fakeAuth(
   initial: AuthUser | null = null,
   over: Partial<Pick<AuthClient, "signIn" | "signUp" | "changePassword" | "deleteAccount">> = {},
-): AuthClient & { calls: string[] } {
+): AuthClient & { calls: string[]; expire: () => void } {
   let user = initial;
   const listeners = new Set<(u: AuthUser | null) => void>();
   const emit = () => listeners.forEach((l) => l(user));
   const calls: string[] = [];
   return {
     calls,
+    /** The session ends without the student asking (it expired, or was revoked elsewhere). */
+    expire: () => {
+      user = null;
+      emit();
+    },
     getUser: async () => user,
     onChange: (l) => {
       listeners.add(l);

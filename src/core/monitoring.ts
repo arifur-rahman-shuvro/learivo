@@ -10,6 +10,17 @@ export function scrub<T extends { user?: unknown; request?: unknown; breadcrumbs
   return event;
 }
 
+let sentry: typeof import("@sentry/browser") | null = null;
+
+/** Sends one handled failure to crash reporting, when it is on. Never throws. */
+export function reportError(e: unknown): void {
+  try {
+    sentry?.captureException(e);
+  } catch {
+    /* reporting must never cause another failure */
+  }
+}
+
 /**
  * Starts crash reporting, but only when a DSN was provided at build time. Without one this does
  * nothing and the reporting library is never even downloaded.
@@ -18,6 +29,7 @@ export async function startMonitoring(dsn: string = config.sentryDsn): Promise<b
   if (!dsn) return false;
   try {
     const Sentry = await import("@sentry/browser");
+    sentry = Sentry;
     Sentry.init({
       dsn,
       defaultIntegrations: false,

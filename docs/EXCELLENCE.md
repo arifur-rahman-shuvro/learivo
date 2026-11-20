@@ -31,7 +31,7 @@ Todo: the sign-out dialog itself is not covered by a screen test; a stored-data 
 
 ## Phase 3: Security and backend [P0/P1]
 
-7. Authentication — Partial. Todo: expired-session screen, token-refresh recovery test, concurrent sessions, password reset and account deletion verified end to end on a throwaway account (Needs you), re-authentication for sensitive actions (delete account already re-checks the password). Leaked-password protection is a dashboard switch (Needs you).
+7. Authentication — Partial. Done 2026-11-20: when the session ends by itself (expired or revoked), the sign-in screen says so and that waiting changes are kept; signing out or deleting the account yourself shows no such notice (tested); the offline copy is not wiped by an expiry. Todo: token-refresh recovery test, concurrent sessions, password reset and account deletion verified end to end on a throwaway account (Needs you), re-authentication for sensitive actions (delete account already re-checks the password). Leaked-password protection is a dashboard switch (Needs you).
 8. Database security — Partial. Done: owner-only RLS on every table; advisors reviewed; delete_my_account is intentional. Todo: cross-user isolation test against a real second account, search_path hardening review of every function, migration rollback notes.
 9. Application security — Partial. Done: CSP trimmed, security headers, dependency audit in CI, AI keys device-only and cleared on sign-out, import size limits. Todo: XSS regression tests, header verification test against the live site, independent penetration test (Needs a third party).
 10. Go backend — Not used by the app today. Decision: keep or remove `backend/`.
@@ -46,7 +46,8 @@ Todo: the sign-out dialog itself is not covered by a screen test; a stored-data 
 
 14. Architecture — Partial. Done: layer rules enforced by lint, dead-code sweep, stores. Todo: circular-dependency check in CI.
 15. TypeScript — Partial. Strict mode on. Todo: audit casts and assertions, runtime validation of database rows.
-16. Error management — Partial. Todo: global and per-screen error boundaries, unhandled-rejection reporting, error classification (network, session) with recovery buttons.
+16. Error management — Partial (done 2026-11-20). A crash in one screen now stays in that screen (the menu and other screens keep working) with "Try again"; a crash outside screens shows a whole-page message with "Reload the app". Failures are sorted into lost connection, ended session or other, each with its own plain advice. Unhandled promise failures are reported and shown as one short message (not a pile), cancellations stay silent. Crash reports go to monitoring only when a DSN is set.
+    Todo: boundaries around individual dialogs; retry buttons wired to the failed request itself; a log screen for the student.
 17. Maintainability — Partial. Todo: split the largest files where it helps, document decisions.
 
 ## Phase 6: Performance [P1]

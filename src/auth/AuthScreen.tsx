@@ -7,7 +7,7 @@ type Mode = "sign-in" | "sign-up";
 const MIN_PASSWORD = 8;
 
 export default function AuthScreen() {
-  const { client } = useAuth();
+  const { client, notice } = useAuth();
   const [mode, setMode] = useState<Mode>("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -55,6 +55,11 @@ export default function AuthScreen() {
           <AppearanceMenu />
         </header>
         <main className="lv-card flex flex-col gap-5 p-6 sm:p-8">
+          {notice && (
+            <p role="status" className="m-0 rounded-control border border-line p-3 text-sm">
+              {notice}
+            </p>
+          )}
           {sentTo ? (
             <div role="status" className="flex flex-col gap-3">
               <h1 className="m-0 text-2xl font-bold">Check your email</h1>

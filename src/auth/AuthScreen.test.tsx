@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { ThemeProvider } from "../ui-kit/themes/ThemeProvider.tsx";
 import AppShell from "../shell/AppShell.tsx";
 import { AuthProvider } from "./AuthProvider.tsx";
@@ -107,5 +107,22 @@ describe("sign-up", () => {
       expect(screen.getByRole("heading", { name: "Check your email" })).toBeTruthy(),
     );
     expect(client.calls).toContain("signUp:sara@example.test");
+  });
+
+  it("says so when the session ends by itself, but not when the student signs out", async () => {
+    const client = fakeAuth({ id: "u1", email: "a@b.co" });
+    renderApp(client);
+    await screen.findByRole("button", { name: "Account menu" });
+    act(() => client.expire());
+    expect((await screen.findByRole("status")).textContent).toContain("Your session ended");
+    cleanup();
+
+    const own = fakeAuth({ id: "u1", email: "a@b.co" });
+    renderApp(own);
+    await screen.findByRole("button", { name: "Account menu" });
+    fireEvent.click(screen.getByRole("button", { name: "Account menu" }));
+    fireEvent.click(await screen.findByRole("menuitem", { name: "Sign out" }));
+    await screen.findByRole("heading", { name: "Sign in to Learivo" });
+    expect(screen.queryByText(/Your session ended/)).toBeNull();
   });
 });

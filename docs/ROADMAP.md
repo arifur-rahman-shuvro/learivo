@@ -335,3 +335,5 @@ Progress, row actions (2026-11-19): every question row has a "more" button (thre
 - Safe sign-out: unsent offline changes are sent first; otherwise the student can save them as a file, stay signed in, or discard. Unreadable saved changes are set aside, not replayed.
 
 - Conflict resolution: offline edits that overlap a change made elsewhere are never overwritten; non-overlapping parts merge, the rest is decided field by field in the Saved dialog, with history.
+
+- Error handling: screen-level and page-level error boundaries, plain-language failure classes, global unhandled-failure message, "session ended" notice on sign-in.

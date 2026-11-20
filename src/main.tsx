@@ -13,21 +13,26 @@ import { createSupabaseAuth } from "./auth/supabaseClient.ts";
 import { ThemeProvider } from "./ui-kit/themes/ThemeProvider.tsx";
 import { registerServiceWorker } from "./platform/pwa/pwa.ts";
 import { startMonitoring } from "./core/monitoring.ts";
+import { installGlobalErrorHandlers } from "./core/globalErrors.ts";
+import { ErrorBoundary } from "./ui-kit/index.ts";
 import { trackOrigins } from "./motion/index.ts";
 
 trackOrigins();
 registerServiceWorker();
 void startMonitoring();
+installGlobalErrorHandlers();
 const authClient = createSupabaseAuth();
 const root = document.getElementById("root");
 if (!root) throw new Error("Missing #root element");
 
 createRoot(root).render(
   <StrictMode>
-    <ThemeProvider>
-      <AuthProvider client={authClient}>
-        <AppShell />
-      </AuthProvider>
-    </ThemeProvider>
+    <ErrorBoundary page>
+      <ThemeProvider>
+        <AuthProvider client={authClient}>
+          <AppShell />
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   </StrictMode>,
 );
