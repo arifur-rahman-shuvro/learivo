@@ -80,7 +80,7 @@ Todo: real-database query timing (Needs you or a test project: the sandbox canno
 
 32. Observability — Partial (error monitoring hook exists). Todo: sync and backup monitoring, alerts.
 33. CI/CD — Partial. CI runs format, lint, audit, typecheck, SQL checks, tests, build, smoke. Todo: branch protection (Needs you, GitHub settings), rollback procedure, environment checks.
-34. Documentation — Partial. README, STRUCTURE, ROADMAP, AUDIT exist. Todo: backup and restore runbook, offline sync document, security document, release checklist.
+34. Documentation — Partial. README, STRUCTURE, ROADMAP, AUDIT exist. Done 2026-11-20: docs/OPERATIONS.md holds the backup and restore runbook, offline and sync behaviour, security summary, failure guide and release checklist. Todo: an architecture decision log, a restore drill record, an on-call style incident checklist.
 
 ## Working order
 
