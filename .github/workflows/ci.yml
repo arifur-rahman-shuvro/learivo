@@ -37,6 +37,7 @@ jobs:
           npx playwright install --with-deps chromium
           pnpm smoke
           pnpm a11y
+          pnpm e2e
 
   backend:
     runs-on: ubuntu-latest
