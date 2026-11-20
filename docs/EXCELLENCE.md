@@ -48,8 +48,8 @@ Todo: the sign-out dialog itself is not covered by a screen test; a stored-data 
 
 ## Phase 5: Frontend architecture [P1]
 
-14. Architecture — Partial. Done: layer rules enforced by lint, dead-code sweep, stores. Todo: circular-dependency check in CI.
-15. TypeScript — Partial. Strict mode on. Todo: audit casts and assertions, runtime validation of database rows.
+14. Architecture — Partial. Done: layer rules enforced by lint, dead-code sweep, stores. Done 2026-11-20: `pnpm cycles` (madge, type-only imports ignored since they vanish at build) runs in CI and fails on any real import loop; checked that a deliberately made loop is caught. Today: no loops in 252 files.
+15. TypeScript — Partial. Strict mode on. Audit 2026-11-20: no ts-ignore, ts-nocheck or `any` in app code. About 150 `as` casts remain, mostly database rows typed after the query (RLS-protected, written only by this app). Todo: runtime validation of database rows (Not verified: a row written by hand could differ from its type).
 16. Error management — Partial (done 2026-11-20). A crash in one screen now stays in that screen (the menu and other screens keep working) with "Try again"; a crash outside screens shows a whole-page message with "Reload the app". Failures are sorted into lost connection, ended session or other, each with its own plain advice. Unhandled promise failures are reported and shown as one short message (not a pile), cancellations stay silent. Crash reports go to monitoring only when a DSN is set.
     Todo: boundaries around individual dialogs; retry buttons wired to the failed request itself; a log screen for the student.
 17. Maintainability — Partial. Todo: split the largest files where it helps, document decisions.
