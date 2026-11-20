@@ -337,3 +337,5 @@ Progress, row actions (2026-11-19): every question row has a "more" button (thre
 - Conflict resolution: offline edits that overlap a change made elsewhere are never overwritten; non-overlapping parts merge, the rest is decided field by field in the Saved dialog, with history.
 
 - Error handling: screen-level and page-level error boundaries, plain-language failure classes, global unhandled-failure message, "session ended" notice on sign-in.
+
+- Security: schema audit in CI (RLS, policies, function hardening), source and header guard tests, hostile-text rendering tests.

@@ -36,3 +36,28 @@ describe("RichText", () => {
     expect(container.textContent).toBe("2 * 3 and ** alone");
   });
 });
+
+describe("RichText with hostile text", () => {
+  const payloads = [
+    "<script>window.hacked = 1</script>",
+    '<img src=x onerror="window.hacked = 1">',
+    "**<b onmouseover=alert(1)>bold</b>**",
+    "[click](javascript:alert(1))",
+    '`<iframe src="https://evil.test"></iframe>`',
+    "- <svg onload=alert(1)>",
+    '"><script>alert(1)</script>',
+  ];
+  it("shows every payload as plain text and creates no element from it", () => {
+    for (const p of payloads) {
+      const { container, unmount } = render(<RichText text={p} />);
+      expect(
+        container.querySelector("script, img, iframe, svg, a, [onerror], [onload], [onmouseover]"),
+      ).toBeNull();
+      expect((window as unknown as { hacked?: number }).hacked).toBeUndefined();
+      expect(container.textContent).toContain(
+        p.replace(/[*`]/g, "").replace(/^- /, "").slice(0, 8),
+      );
+      unmount();
+    }
+  });
+});

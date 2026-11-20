@@ -97,5 +97,7 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/confidence_check.sql
       - name: Account deletion check
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/delete_account_check.sql
+      - name: Schema security audit
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/schema_audit_check.sql
       - name: Answer spec checks
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/answer_spec_check.sql

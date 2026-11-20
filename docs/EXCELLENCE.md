@@ -32,8 +32,12 @@ Todo: the sign-out dialog itself is not covered by a screen test; a stored-data 
 ## Phase 3: Security and backend [P0/P1]
 
 7. Authentication — Partial. Done 2026-11-20: when the session ends by itself (expired or revoked), the sign-in screen says so and that waiting changes are kept; signing out or deleting the account yourself shows no such notice (tested); the offline copy is not wiped by an expiry. Todo: token-refresh recovery test, concurrent sessions, password reset and account deletion verified end to end on a throwaway account (Needs you), re-authentication for sensitive actions (delete account already re-checks the password). Leaked-password protection is a dashboard switch (Needs you).
-8. Database security — Partial. Done: owner-only RLS on every table; advisors reviewed; delete_my_account is intentional. Todo: cross-user isolation test against a real second account, search_path hardening review of every function, migration rollback notes.
-9. Application security — Partial. Done: CSP trimmed, security headers, dependency audit in CI, AI keys device-only and cleared on sign-out, import size limits. Todo: XSS regression tests, header verification test against the live site, independent penetration test (Needs a third party).
+8. Database security — Partial (2026-11-20). Production was queried directly: no table without row-level security, every policy is for signed-in students and their own rows only, visitors who are not signed in have no table access, every function pins its search path, none is runnable by visitors, and the only function a student can call with owner rights is delete_my_account. A new automated check (supabase/tests/schema_audit_check.sql, 114 checks, run in CI) keeps it that way: a new table without protection, a new policy that is not own-rows, or a new owner-rights function fails the build. Shown to fail when a bad table and function were added.
+   Todo: a live test with two real accounts against production (needs two throwaway accounts: Needs you); migration rollback notes.
+
+9. Application security — Partial (2026-11-20). Done: tests that fail the build if source code uses innerHTML, dangerouslySetInnerHTML, eval, document.write, javascript: links or string timers, or builds a link from student content; hostile text (script tags, event handlers, javascript: links, iframes) rendered through the text formatter creates no elements; the header file is tested (script-src only our own, no eval, no object/frame embedding, https-only named connections, nosniff, frame deny, HSTS, no inline script in the page). Dependency audit runs in CI. AI keys stay on the device.
+   Todo: the live site's headers have not been fetched from here (the sandbox cannot reach it): check on securityheaders.com (Needs you); independent penetration test (Needs a third party); file-import fuzzing.
+
 10. Go backend — Not used by the app today. Decision: keep or remove `backend/`.
 
 ## Phase 4: AI [P1]
