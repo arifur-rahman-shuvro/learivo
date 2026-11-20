@@ -65,8 +65,8 @@ Todo: real-database query timing (Needs you or a test project: the sandbox canno
 
 22. Unit — Partial (462 tests; scoring, scheduling, confidence, backup, offline queue covered).
 23. Integration — Partial (SQL checks for RLS, delete account, confidence run in CI). Todo: auth lifecycle, repository tests against a real test database.
-24. End-to-end — Todo (no browser end-to-end suite yet; a phone-width smoke test runs in CI).
-25. Automated QA — Partial (360/390/430 px smoke). Todo: cross-browser, visual regression, accessibility checks in CI, WCAG audit.
+24. End-to-end — Partial (2026-11-20). A real-browser run signs in against a stand-in account service and walks the five main screens. Todo: add/edit/practice/exam flows in a browser, real-database run, offline flow in a browser.
+25. Automated QA — Partial (done 2026-11-20). CI runs `pnpm a11y`: a real Chromium at 360 px opens the sign-in screen and, with a stand-in account service returning an empty account, Home, Questions, Practice, Review and Insights, in 5 theme/mode combinations. It runs axe (including colour contrast), a tap-target check (40px, label-wrapped checkboxes count by their label) and a no-sideways-scroll check. It found and fixed: Practice buttons whose spoken name did not match the visible text, and tabs and small buttons under 40px. Todo: screens with real data (only empty state is checked in a browser), dialogs, cross-browser (only Chromium), visual regression, a manual screen-reader pass. Not a full WCAG audit.
 
 ## Phase 8: Learning engine [P2]
 

@@ -46,7 +46,7 @@
   transform: translateY(1px);
 }
 .lv-btn-sm {
-  min-height: 36px;
+  min-height: 40px;
   padding: 0 0.8rem;
   font-size: 0.875rem;
 }
@@ -120,4 +120,9 @@
   height: 100%;
   pointer-events: none;
   z-index: 0;
+}
+
+/* Tabs are tap targets on a phone: at least 40px tall. */
+[role="tab"] {
+  min-height: 40px;
 }

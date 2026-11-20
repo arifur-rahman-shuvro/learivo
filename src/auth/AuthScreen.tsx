@@ -106,7 +106,7 @@ export default function AuthScreen() {
                 {mode === "sign-in" ? "New to Learivo? " : "Already have an account? "}
                 <button
                   type="button"
-                  className="font-semibold text-accent underline"
+                  className="inline-flex min-h-10 items-center px-1 font-semibold text-accent underline"
                   onClick={() => switchMode(mode === "sign-in" ? "sign-up" : "sign-in")}
                 >
                   {mode === "sign-in" ? "Create an account" : "Sign in"}

@@ -200,7 +200,6 @@ export default function PracticeHome({ onOpen }: { onOpen: (v: View) => void }) 
                 key={p.id}
                 type="button"
                 disabled={empty || busy !== null}
-                aria-label={`${p.label}${n === undefined ? "" : `, ${n} available`}`}
                 onClick={() =>
                   void begin(p.id, () =>
                     startPractice(repo, attempts, { ...DEFAULT_SETUP, ...p.patch }, workspace),

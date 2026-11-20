@@ -339,7 +339,7 @@ describe("Practice", () => {
     it("disables a preset when nothing matches and says so", async () => {
       const { ready } = setup();
       await ready;
-      const mistakes = await screen.findByRole("button", { name: /^My mistakes, 0 available/ });
+      const mistakes = await screen.findByRole("button", { name: /^My mistakes.*None yet/ });
       expect((mistakes as HTMLButtonElement).disabled).toBe(true);
       expect(within(mistakes).getByText("None yet")).toBeTruthy();
     });
