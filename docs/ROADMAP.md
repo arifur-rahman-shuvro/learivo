@@ -331,3 +331,5 @@ Progress, row actions (2026-11-19): every question row has a "more" button (thre
 - Offline editing: add, edit, archive, delete, classify, tag and collect questions without a connection. Changes wait on the device and are sent in order (see docs/AUDIT.md). Subjects, tags and collections themselves still need a connection.
 
 - Backup V3: manifest with record counts and SHA-256 (damaged or cut-short files are refused), confidence, collections, Home layout, full history in pages. The owner's excellence list is tracked in docs/EXCELLENCE.md.
+
+- Safe sign-out: unsent offline changes are sent first; otherwise the student can save them as a file, stay signed in, or discard. Unreadable saved changes are set aside, not replayed.

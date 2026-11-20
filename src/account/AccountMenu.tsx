@@ -1,5 +1,5 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { Avatar } from "../ui-kit/index.ts";
+import { Avatar, Button, Dialog } from "../ui-kit/index.ts";
 import { canAnimate, MOTION, usePresence } from "../motion/index.ts";
 import { useAuth } from "../auth/AuthProvider.tsx";
 import { avatarColor, initials } from "../modules/profile/domain/profile.ts";
@@ -9,6 +9,9 @@ import { useProfile } from "../modules/profile/ui/useProfile.ts";
 import { AppearanceDialog, SettingsDialog } from "./AccountDialogs.tsx";
 import { AccountDialog } from "./AccountDialog.tsx";
 import { useClearDeviceData } from "./clearDeviceData.ts";
+import { saveTextFile } from "../core/saveFile.ts";
+import { useOfflineControls } from "../platform/offline/OfflineProvider.tsx";
+import { UnsentChangesError } from "../platform/offline/pack.ts";
 import DataDialog from "./DataDialog.tsx";
 
 type Panel = "account" | "appearance" | "settings" | "data" | null;
@@ -47,6 +50,9 @@ function Item({
 export default function AccountMenu({ repo }: { repo: ProfileRepo }) {
   const { user, client } = useAuth();
   const clearDevice = useClearDeviceData();
+  const offline = useOfflineControls();
+  const [unsent, setUnsent] = useState<string[] | null>(null);
+  const [exportNote, setExportNote] = useState<string | null>(null);
   const { profile, save } = useProfile(repo);
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<Panel>(null);
@@ -116,10 +122,27 @@ export default function AccountMenu({ repo }: { repo: ProfileRepo }) {
     setPanel(p);
   };
 
-  async function signOut() {
+  async function signOut(discardUnsent = false) {
     setLeaving(true);
-    await clearDevice();
+    try {
+      await clearDevice({ discardUnsent });
+    } catch (e) {
+      if (!(e instanceof UnsentChangesError)) throw e;
+      // Changes made offline have not reached the account. Let the student decide.
+      setLeaving(false);
+      setOpen(false);
+      setExportNote(null);
+      setUnsent(e.summaries);
+      return;
+    }
     await client.signOut();
+  }
+
+  async function keepUnsent() {
+    const text = await offline?.pack.exportPending();
+    if (!text) return;
+    saveTextFile(`learivo-unsent-${new Date().toISOString().slice(0, 10)}.json`, text);
+    setExportNote("Saved. Import this file later from Add questions to get them back.");
   }
 
   return (
@@ -186,6 +209,52 @@ export default function AccountMenu({ repo }: { repo: ProfileRepo }) {
         onOpenAccount={() => setPanel("account")}
       />
       <DataDialog open={panel === "data"} onClose={() => setPanel(null)} />
+      <Dialog
+        open={unsent !== null}
+        variant="modal"
+        title="Changes not sent yet"
+        onClose={() => setUnsent(null)}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setUnsent(null)}>
+              Stay signed in
+            </Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                setUnsent(null);
+                void signOut(true);
+              }}
+            >
+              Sign out and discard
+            </Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-3 text-sm">
+          <p className="m-0">
+            You made {unsent?.length ?? 0} change{unsent?.length === 1 ? "" : "s"} without a
+            connection and they have not reached your account. Signing out now would lose them.
+            Connect to the internet and stay signed in to send them, or save them as a file first.
+          </p>
+          <ul className="m-0 pl-5">
+            {(unsent ?? []).slice(0, 8).map((u, i) => (
+              <li key={i}>{u}</li>
+            ))}
+          </ul>
+          {(unsent?.length ?? 0) > 8 && <p className="m-0 text-muted">and more.</p>}
+          <div>
+            <Button size="sm" variant="secondary" onClick={() => void keepUnsent()}>
+              Save changes as a file
+            </Button>
+          </div>
+          {exportNote && (
+            <p role="status" className="m-0 font-medium">
+              {exportNote}
+            </p>
+          )}
+        </div>
+      </Dialog>
     </div>
   );
 }

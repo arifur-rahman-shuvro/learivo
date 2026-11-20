@@ -18,7 +18,8 @@ Needs real production runs: scheduled backup verification, automated restore dri
 ### 3. Offline data safety — Partial
 
 Done: unsent changes are never dropped by a refresh; the queue survives closing the app; changes are written one at a time; a repeat send never duplicates a question; per-change result, and refused changes listed with the reason.
-Todo: sign-out with unsent changes should warn and offer to export them (today it sends them first when online, otherwise they are lost); export of pending changes; queue integrity check and corruption recovery; account-switch isolation test.
+Also done (2026-11-20): signing out or clearing the device sends waiting changes first and, if some cannot be sent, stops and asks (save them as a file, stay signed in, or discard); the saved file imports back; a waiting-list entry that cannot be read is set aside and reported, never replayed; the list is written before the local copy so a crash cannot lose a change; two accounts on one device are kept apart (tested).
+Todo: the sign-out dialog itself is not covered by a screen test; a stored-data version number for future format changes.
 
 ## Phase 2: Offline and sync [P0]
 

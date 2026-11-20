@@ -29,6 +29,27 @@ export const summarise = (op: EditOp): string => {
   return `${op.kind === "create" ? "Add" : "Edit"}: ${stem.length > 70 ? `${stem.slice(0, 70)}…` : stem}`;
 };
 
+/** A saved change that has the shape the replay code expects. */
+export function isEditOp(x: unknown): x is EditOp {
+  const o = x as Record<string, unknown> | null;
+  if (!o || typeof o !== "object") return false;
+  const input = (v: unknown) =>
+    !!v && typeof v === "object" && typeof (v as { stem?: unknown }).stem === "string";
+  if (o.kind === "create") return typeof o.id === "string" && input(o.input);
+  if (o.kind === "update") {
+    return typeof o.id === "string" && input(o.input) && typeof o.baseVersion === "number";
+  }
+  if (o.kind === "bulk") {
+    const a = o.action as { kind?: unknown } | null;
+    return (
+      Array.isArray(o.ids) &&
+      o.ids.every((i) => typeof i === "string") &&
+      typeof a?.kind === "string"
+    );
+  }
+  return false;
+}
+
 /** True for a failure that a later try can fix (no connection), false for one that cannot. */
 export function isTransient(e: unknown): boolean {
   if (e instanceof TypeError) return true;

@@ -16,11 +16,13 @@ import type { KeyValueStore } from "./store.ts";
 import {
   applyEdit,
   enqueue,
+  isEditOp,
   isTransient,
   summarise,
   type EditOp,
   type FailedEdit,
 } from "./edits.ts";
+import { questionToRecord } from "../../modules/question-bank/domain/importExport.ts";
 
 /** A copy of the active question bank kept on this device so practice works without internet. */
 export interface Pack {
@@ -152,6 +154,13 @@ export interface PackStatus {
   failed: FailedEdit[];
 }
 
+/** Thrown instead of wiping the device while changes made offline are still unsent. */
+export class UnsentChangesError extends Error {
+  constructor(readonly summaries: string[]) {
+    super(`${summaries.length} change${summaries.length === 1 ? " is" : "s are"} not sent yet.`);
+  }
+}
+
 export interface FlushReport {
   sent: number;
   /** Edits that replaced a newer change made somewhere else (the old version stays in history). */
@@ -189,8 +198,20 @@ export class OfflineAwareRepo implements QuestionRepo {
     if (this.loaded) return;
     this.pack = (await this.store.get<Pack>(packKey(this.userId))) ?? null;
     this.enabled = (await this.store.get<boolean>(enabledKey(this.userId))) ?? true;
-    this.queue = (await this.store.get<EditOp[]>(editsKey(this.userId))) ?? [];
+    const saved = await this.store.get<unknown>(editsKey(this.userId));
+    const rows = Array.isArray(saved) ? saved : [];
+    this.queue = rows.filter(isEditOp);
     this.failed = (await this.store.get<FailedEdit[]>(failedKey(this.userId))) ?? [];
+    if (saved !== undefined && (!Array.isArray(saved) || this.queue.length < rows.length)) {
+      // Never replay something unreadable; say so instead of failing silently.
+      const lost = Array.isArray(saved) ? rows.length - this.queue.length : 1;
+      this.failed.push({
+        summary: `${lost} saved change${lost === 1 ? "" : "s"}`,
+        message: "could not be read and were set aside.",
+      });
+      await this.store.set(editsKey(this.userId), this.queue);
+      await this.store.set(failedKey(this.userId), this.failed);
+    }
     this.loaded = true;
   }
 
@@ -340,8 +361,10 @@ export class OfflineAwareRepo implements QuestionRepo {
       this.queue = enqueue(this.queue, op);
       applyEdit(this.pack, op);
     }
-    await this.store.set(packKey(this.userId), this.pack);
+    // The list of changes is the record that matters, so it is written first: if the app is
+    // closed between the two writes, the change is still sent and the copy catches up afterwards.
     await this.store.set(editsKey(this.userId), this.queue);
+    await this.store.set(packKey(this.userId), this.pack);
     this.changed();
     if (this.isOnline()) void this.flushEdits().catch(() => undefined);
     return result;
@@ -457,10 +480,40 @@ export class OfflineAwareRepo implements QuestionRepo {
     this.write(() => this.remote.renameCollection(id, n));
   deleteCollection = (id: string) => this.write(() => this.remote.deleteCollection(id));
 
-  /** Wipes the copy on sign-out so the next person on this device cannot read it. */
-  async clear(): Promise<void> {
+  /** What is waiting to be sent, one line each. */
+  async pendingSummaries(): Promise<string[]> {
+    await this.load();
+    return this.queue.map(summarise);
+  }
+
+  /**
+   * Waiting changes as a file the student can keep: added and edited questions in the usual
+   * import format, plus a plain list of the other changes. Null when nothing is waiting.
+   */
+  async exportPending(): Promise<string | null> {
+    await this.load();
+    if (this.queue.length === 0) return null;
+    const questions = this.queue.flatMap((op) =>
+      op.kind === "bulk" ? [] : [questionToRecord(op.input)],
+    );
+    const others = this.queue.filter((op) => op.kind === "bulk").map(summarise);
+    return JSON.stringify(
+      { format: "learivo-questions", version: 1, questions, otherChanges: others },
+      null,
+      2,
+    );
+  }
+
+  /**
+   * Wipes the copy on sign-out so the next person on this device cannot read it. Changes made
+   * offline are sent first; if some cannot be sent this refuses, unless told to discard them.
+   */
+  async clear(opts: { discardUnsent?: boolean } = {}): Promise<void> {
     await this.load();
     if (this.queue.length > 0 && this.isOnline()) await this.flushEdits().catch(() => undefined);
+    if (this.queue.length > 0 && !opts.discardUnsent) {
+      throw new UnsentChangesError(this.queue.map(summarise));
+    }
     await this.store.del(editsKey(this.userId));
     await this.store.del(failedKey(this.userId));
     this.queue = [];

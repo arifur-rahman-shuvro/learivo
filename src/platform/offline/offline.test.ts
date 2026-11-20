@@ -4,8 +4,16 @@ import { DEFAULT_QUERY } from "../../modules/question-bank/data/repo.ts";
 import { blankQuestion, type QuestionInput } from "../../modules/question-bank/domain/model.ts";
 import { MemoryAttempts } from "../../modules/practice/data/memoryAttempts.ts";
 import type { NewAttempt } from "../../modules/practice/data/repo.ts";
-import { NO_COPY_MESSAGE, OFFLINE_MESSAGE, OfflineAwareRepo, PackRepo, buildPack } from "./pack.ts";
+import {
+  NO_COPY_MESSAGE,
+  OFFLINE_MESSAGE,
+  OfflineAwareRepo,
+  PackRepo,
+  UnsentChangesError,
+  buildPack,
+} from "./pack.ts";
 import { MemoryStore } from "./store.ts";
+import { analyzeImport } from "../../modules/question-bank/domain/importExport.ts";
 import { SyncedAttempts } from "./syncedAttempts.ts";
 import { TF_ANSWER } from "../../testing/fixtures.ts";
 
@@ -454,5 +462,70 @@ describe("offline edits", () => {
     expect((await bank.exportAll()).map((q) => q.stem)).toEqual(
       expect.arrayContaining(["First", "Second"]),
     );
+  });
+
+  it("will not wipe the device while changes are unsent, unless told to", async () => {
+    const { bank, net, repo } = await setup();
+    net.online = false;
+    await repo.create([tf("Not sent yet")]);
+    const err = await repo.clear().catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(UnsentChangesError);
+    expect((err as UnsentChangesError).summaries[0]).toContain("Not sent yet");
+    expect((await repo.status()).count).toBeGreaterThan(0); // nothing was wiped
+    await repo.clear({ discardUnsent: true });
+    expect((await repo.status()).waiting).toBe(0);
+    expect((await bank.exportAll()).map((q) => q.stem)).not.toContain("Not sent yet");
+  });
+
+  it("sends waiting changes first when signing out online", async () => {
+    const { bank, net, repo } = await setup();
+    net.online = false;
+    await repo.create([tf("Sent at sign-out")]);
+    net.online = true;
+    await repo.clear();
+    expect((await bank.exportAll()).map((q) => q.stem)).toContain("Sent at sign-out");
+  });
+
+  it("saves waiting changes as a file that imports back", async () => {
+    const { net, repo } = await setup();
+    expect(await repo.exportPending()).toBeNull();
+    net.online = false;
+    await repo.create([tf("Kept in a file", ["Anatomy"], ["core"])]);
+    await repo.bulk([(await repo.list(DEFAULT_QUERY)).items[1]!.id], { kind: "archive" });
+    const file = await repo.exportPending();
+    const parsed = JSON.parse(file!) as { questions: unknown[]; otherChanges: string[] };
+    expect(parsed.questions).toHaveLength(1);
+    expect(parsed.otherChanges).toEqual(["archive 1 question"]);
+    const rep = analyzeImport(file!, "json", new Set());
+    expect(rep.ok && rep.rows.map((r) => r.input.stem)).toEqual(["Kept in a file"]);
+  });
+
+  it("sets aside an unreadable saved list instead of replaying it", async () => {
+    const { store, make } = await setup();
+    await store.set("u:u1:edits", [
+      { kind: "create", id: "x", input: { stem: "fine" } },
+      { kind: "wat" },
+      "junk",
+    ]);
+    const fresh = make();
+    const status = await fresh.status();
+    expect(status.waiting).toBe(1);
+    expect(status.failed[0]!.message).toMatch(/could not be read/);
+    await store.set("u:u1:edits", "not a list");
+    const again = await make().status();
+    expect(again.waiting).toBe(0);
+  });
+
+  it("keeps one account's waiting changes away from another's", async () => {
+    const bank = await seededBank();
+    const store = new MemoryStore();
+    const a = new OfflineAwareRepo(bank, store, "alice", () => false);
+    const b = new OfflineAwareRepo(bank, store, "bob", () => false);
+    await new OfflineAwareRepo(bank, store, "alice", () => true).download();
+    await new OfflineAwareRepo(bank, store, "bob", () => true).download();
+    await a.create([tf("Alice only")]);
+    expect((await b.status()).waiting).toBe(0);
+    expect(await stems(b)).not.toContain("Alice only");
+    expect((await a.status()).waiting).toBe(1);
   });
 });

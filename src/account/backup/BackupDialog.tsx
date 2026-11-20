@@ -13,6 +13,7 @@ import {
   type RestoreResult,
 } from "./backupData.ts";
 import { MIN_PASSPHRASE, isSealed, seal, unseal } from "./seal.ts";
+import { saveTextFile } from "../../core/saveFile.ts";
 import { markBackedUp } from "../../core/backupReminder.ts";
 import { closeBackup, useBackupOpen } from "../../core/dialogs/backup.ts";
 
@@ -24,17 +25,6 @@ function readText(file: File): Promise<string> {
     r.onerror = () => reject(r.error);
     r.readAsText(file);
   });
-}
-
-function save(name: string, content: string) {
-  const url = URL.createObjectURL(new Blob([content], { type: "application/json" }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 interface Preview {
@@ -86,7 +76,7 @@ export default function BackupDialog() {
       }
       const b = await buildBackup(bank, ws, attempts);
       const text = JSON.stringify(b, null, 2);
-      save(
+      saveTextFile(
         `learivo-backup-${new Date().toISOString().slice(0, 10)}.json`,
         pass ? await seal(text, pass) : text,
       );
