@@ -589,7 +589,8 @@ describe("offline edits", () => {
   it("sets aside an unreadable saved list instead of replaying it", async () => {
     const { store, make } = await setup();
     await store.set("u:u1:edits", [
-      { kind: "create", id: "x", input: { stem: "fine" } },
+      { kind: "create", id: "x", input: tf("fine") },
+      { kind: "create", id: "y", input: { stem: "right name, wrong shape" } },
       { kind: "wat" },
       "junk",
     ]);
@@ -597,6 +598,7 @@ describe("offline edits", () => {
     const status = await fresh.status();
     expect(status.waiting).toBe(1);
     expect(status.failed[0]!.message).toMatch(/could not be read/);
+    expect(status.failed[0]!.summary).toBe("3 saved changes");
     await store.set("u:u1:edits", "not a list");
     const again = await make().status();
     expect(again.waiting).toBe(0);
@@ -613,5 +615,30 @@ describe("offline edits", () => {
     expect((await b.status()).waiting).toBe(0);
     expect(await stems(b)).not.toContain("Alice only");
     expect((await a.status()).waiting).toBe(1);
+  });
+
+  it("keeps every question in the copy, however many there are", async () => {
+    const bank = new MemoryRepo();
+    const N = 1300; // more than two pages of 500
+    for (let i = 0; i < N; i += 500) {
+      await bank.create(Array.from({ length: Math.min(500, N - i) }, (_, k) => tf(`Q ${i + k}`)));
+    }
+    const pack = await buildPack(bank);
+    expect(pack.questions).toHaveLength(N);
+    expect(new Set(pack.questions.map((q) => q.id)).size).toBe(N);
+  });
+
+  it("saves only the waiting list after an edit, not the whole copy", async () => {
+    const { store, net, repo } = await setup();
+    net.online = false;
+    const writes: string[] = [];
+    const realSet = store.set.bind(store);
+    store.set = async (k: string, v: unknown) => {
+      writes.push(k);
+      return realSet(k, v);
+    };
+    await repo.create([tf("Cheap to save")]);
+    expect(writes.filter((k) => k.endsWith(":pack"))).toEqual([]);
+    expect(writes).toContain("u:u1:edits");
   });
 });

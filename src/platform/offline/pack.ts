@@ -47,10 +47,13 @@ export const NO_COPY_MESSAGE =
   "You are offline and there is no copy of your questions on this device. Download the copy while online to edit offline.";
 
 /** Reads every active question and the lists that go with them. */
+const PACK_PAGE = 500;
+
 export async function buildPack(repo: QuestionRepo, now = () => new Date()): Promise<Pack> {
   const questions: QuestionRecord[] = [];
-  for (let offset = 0; offset < 20000; offset += 500) {
-    const page = await repo.list({ ...DEFAULT_QUERY, status: "active", offset, limit: 500 });
+  // Every question, however many: a copy that silently stopped short would look complete offline.
+  for (let offset = 0; ; offset += PACK_PAGE) {
+    const page = await repo.list({ ...DEFAULT_QUERY, status: "active", offset, limit: PACK_PAGE });
     questions.push(...page.items);
     if (questions.length >= page.total || page.items.length === 0) break;
   }
@@ -217,12 +220,22 @@ export class OfflineAwareRepo implements QuestionRepo {
     this.enabled = (await this.store.get<boolean>(enabledKey(this.userId))) ?? true;
     const saved = await this.store.get<unknown>(editsKey(this.userId));
     const rows = Array.isArray(saved) ? saved : [];
-    this.queue = rows.filter(isEditOp);
+    this.queue = rows.filter(isEditOp).filter((op) => {
+      // A saved change that cannot even be laid over the copy is unreadable: set it aside.
+      try {
+        if (this.pack) applyEdit(this.pack, op);
+        return true;
+      } catch {
+        return false;
+      }
+    });
     this.failed = (await this.store.get<FailedEdit[]>(failedKey(this.userId))) ?? [];
     const cs = await this.store.get<unknown>(conflictsKey(this.userId));
     this.conflicts = Array.isArray(cs) ? (cs as Conflict[]).filter((c) => c && c.mine && c.id) : [];
     const rs = await this.store.get<unknown>(resolvedKey(this.userId));
     this.resolved = Array.isArray(rs) ? (rs as ResolvedConflict[]).filter((r) => r?.conflict) : [];
+    // The stored copy never includes changes that are still waiting (writing the whole copy after
+    // every edit would stall a large bank), so they are laid over it each time it is loaded.
     if (saved !== undefined && (!Array.isArray(saved) || this.queue.length < rows.length)) {
       // Never replay something unreadable; say so instead of failing silently.
       const lost = Array.isArray(saved) ? rows.length - this.queue.length : 1;
@@ -384,10 +397,8 @@ export class OfflineAwareRepo implements QuestionRepo {
       this.queue = enqueue(this.queue, op);
       applyEdit(this.pack, op);
     }
-    // The list of changes is the record that matters, so it is written first: if the app is
-    // closed between the two writes, the change is still sent and the copy catches up afterwards.
+    // Only the short list of waiting changes is saved; the stored copy stays as the account had it.
     await this.store.set(editsKey(this.userId), this.queue);
-    await this.store.set(packKey(this.userId), this.pack);
     this.changed();
     if (this.isOnline()) void this.flushEdits().catch(() => undefined);
     return result;

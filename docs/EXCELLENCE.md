@@ -56,7 +56,10 @@ Todo: the sign-out dialog itself is not covered by a screen test; a stored-data 
 
 ## Phase 6: Performance [P1]
 
-18 to 21 — Todo. Needs a large-data test bed (10k, 50k, 100k questions) and a low-end Android phone (Needs you). Virtualised lists and bundle budgets are not built.
+18 to 21 — Partial (2026-11-20). Measured in memory on this machine (not a phone, not the real database): at 10,000 questions a page lists in 11 ms and a search in about 20 ms; at 50,000, 31 ms and about 85 ms. Copying 50,000 to the offline copy took about 1 s, and a full backup of 10,000 took 0.5 s and of 50,000 about 6 s.
+Found and fixed from this: (1) the offline copy silently stopped at 20,000 questions (a 50,000-question bank showed 20,000 offline); it now copies every question, tested at 20,500 and 1,300. (2) Every offline edit rewrote the whole copy (about 0.2 s of copying at 20,000 questions here, more on a phone); now only the short list of waiting changes is saved and they are laid over the copy when it loads (tested).
+Guards: src/performance.test.ts fails if listing, searching, copying or backing up a 20,500-question bank becomes about ten times slower.
+Todo: real-database query timing (Needs you or a test project: the sandbox cannot reach production), 100,000 questions, long-list virtualisation (the list loads pages on request, so it stays small until the student keeps loading more), bundle size budget in CI, startup time and memory on a low-end Android phone (Needs you), image-free so no image budget.
 
 ## Phase 7: Testing [P0/P1]
 

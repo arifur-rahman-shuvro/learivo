@@ -339,3 +339,5 @@ Progress, row actions (2026-11-19): every question row has a "more" button (thre
 - Error handling: screen-level and page-level error boundaries, plain-language failure classes, global unhandled-failure message, "session ended" notice on sign-in.
 
 - Security: schema audit in CI (RLS, policies, function hardening), source and header guard tests, hostile-text rendering tests.
+
+- Performance: offline copy no longer stops at 20,000 questions; offline edits save only the waiting list; large-bank guard tests.

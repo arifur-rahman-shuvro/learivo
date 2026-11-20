@@ -109,6 +109,7 @@ function bump<T extends { id: string; count: number }>(list: T[], id: string, by
 export function applyEdit(pack: Pack, op: EditOp, now: () => Date = () => new Date()): void {
   const at = now().toISOString();
   if (op.kind === "create") {
+    if (pack.questions.some((q) => q.id === op.id)) return; // already laid over this copy
     const rec: QuestionRecord = {
       ...structuredClone(op.input),
       id: op.id,
