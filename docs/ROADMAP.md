@@ -327,3 +327,5 @@ Progress, row actions (2026-11-19): every question row has a "more" button (thre
 - Home: new "All features" section (a movable Home section, can be hidden in Customize). It shows 8 feature buttons with icons, "More" loads 8 more each tap, "Fewer" folds back, "Browse all features" opens the searchable list. Existing users get the section at the end of their layout until they move it (Customize).
 
 - Audit (docs/AUDIT.md): AI requests time out after 90 s; CSP trimmed (+ upgrade-insecure-requests); dev dependency vulnerability fixed and CI now audits; unused sync skeleton removed; backups can be locked with an optional passphrase (AES-GCM).
+
+- Offline editing: add, edit, archive, delete, classify, tag and collect questions without a connection. Changes wait on the device and are sent in order (see docs/AUDIT.md). Subjects, tags and collections themselves still need a connection.

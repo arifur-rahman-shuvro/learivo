@@ -13,6 +13,14 @@ import {
   type TaxonomyNode,
 } from "../../modules/question-bank/data/repo.ts";
 import type { KeyValueStore } from "./store.ts";
+import {
+  applyEdit,
+  enqueue,
+  isTransient,
+  summarise,
+  type EditOp,
+  type FailedEdit,
+} from "./edits.ts";
 
 /** A copy of the active question bank kept on this device so practice works without internet. */
 export interface Pack {
@@ -23,7 +31,10 @@ export interface Pack {
   collections: Collection[];
 }
 
-export const OFFLINE_MESSAGE = "You are offline. Changes to the question bank need a connection.";
+export const OFFLINE_MESSAGE =
+  "You are offline. Changing subjects, tags and collections needs a connection. Adding, editing, archiving and moving questions work offline.";
+export const NO_COPY_MESSAGE =
+  "You are offline and there is no copy of your questions on this device. Download the copy while online to edit offline.";
 
 /** Reads every active question and the lists that go with them. */
 export async function buildPack(repo: QuestionRepo, now = () => new Date()): Promise<Pack> {
@@ -135,7 +146,23 @@ export interface PackStatus {
   enabled: boolean;
   savedAt: string | null;
   count: number;
+  /** Changes made offline that are not in the database yet. */
+  waiting: number;
+  /** Changes the database refused, kept so the student can see what was not saved. */
+  failed: FailedEdit[];
 }
+
+export interface FlushReport {
+  sent: number;
+  /** Edits that replaced a newer change made somewhere else (the old version stays in history). */
+  overwritten: number;
+  /** Edits to questions that no longer exist. */
+  removed: number;
+  failed: number;
+}
+
+const editsKey = (userId: string) => `u:${userId}:edits`;
+const failedKey = (userId: string) => `u:${userId}:edits-failed`;
 
 /**
  * The question bank as the app sees it: the live one when there is a connection, the pack when
@@ -146,6 +173,10 @@ export class OfflineAwareRepo implements QuestionRepo {
   private loaded = false;
   private enabled = true;
   private listeners = new Set<() => void>();
+  private flushedListeners = new Set<(r: FlushReport) => void>();
+  private queue: EditOp[] = [];
+  private failed: FailedEdit[] = [];
+  private flushing?: Promise<FlushReport>;
 
   constructor(
     private readonly remote: QuestionRepo,
@@ -158,7 +189,15 @@ export class OfflineAwareRepo implements QuestionRepo {
     if (this.loaded) return;
     this.pack = (await this.store.get<Pack>(packKey(this.userId))) ?? null;
     this.enabled = (await this.store.get<boolean>(enabledKey(this.userId))) ?? true;
+    this.queue = (await this.store.get<EditOp[]>(editsKey(this.userId))) ?? [];
+    this.failed = (await this.store.get<FailedEdit[]>(failedKey(this.userId))) ?? [];
     this.loaded = true;
+  }
+
+  /** Called after waiting changes have been sent, so screens can reload. */
+  onFlushed(fn: (r: FlushReport) => void) {
+    this.flushedListeners.add(fn);
+    return () => void this.flushedListeners.delete(fn);
   }
 
   subscribe(fn: () => void) {
@@ -175,12 +214,24 @@ export class OfflineAwareRepo implements QuestionRepo {
       enabled: this.enabled,
       savedAt: this.pack?.savedAt ?? null,
       count: this.pack?.questions.length ?? 0,
+      waiting: this.queue.length,
+      failed: [...this.failed],
     };
   }
 
   /** Downloads the whole bank to this device. */
   async download(): Promise<PackStatus> {
     await this.load();
+    if (this.queue.length > 0) {
+      // Replacing the copy now would throw away changes the database has not received.
+      await this.flushEdits();
+      if (this.queue.length > 0) {
+        throw new Error(
+          "Some changes are still waiting to be sent. Try again when you are online.",
+        );
+      }
+      return this.status();
+    }
     const pack = await buildPack(this.remote);
     await this.store.set(packKey(this.userId), pack);
     await this.store.set(enabledKey(this.userId), true);
@@ -193,6 +244,9 @@ export class OfflineAwareRepo implements QuestionRepo {
   /** Removes the copy from this device and stops keeping one. */
   async remove(): Promise<PackStatus> {
     await this.load();
+    if (this.queue.length > 0) {
+      throw new Error("Changes made offline are still waiting to be sent. Connect and sync first.");
+    }
     await this.store.del(packKey(this.userId));
     await this.store.set(enabledKey(this.userId), false);
     this.pack = null;
@@ -204,13 +258,18 @@ export class OfflineAwareRepo implements QuestionRepo {
   /** Refreshes the copy, when the student keeps one and a connection exists. */
   async refresh(): Promise<void> {
     await this.load();
-    if (this.enabled && this.isOnline()) await this.download();
+    if (!this.isOnline()) return;
+    if (this.queue.length > 0) await this.flushEdits();
+    else if (this.enabled) await this.download();
   }
 
   /** Online: the live bank. Offline, or the live bank cannot be reached: the pack. */
   private async readOffline<T>(live: () => Promise<T>, local: (p: PackRepo) => Promise<T>) {
     await this.load();
-    if (!this.isOnline() && this.pack) return local(new PackRepo(this.pack));
+    // While changes wait to be sent the database is behind the copy, so read the copy.
+    if ((!this.isOnline() || this.queue.length > 0) && this.pack) {
+      return local(new PackRepo(this.pack));
+    }
     try {
       return await live();
     } catch (e) {
@@ -262,13 +321,129 @@ export class OfflineAwareRepo implements QuestionRepo {
       (p) => p.collections(),
     );
 
+  /**
+   * Adding, editing, archiving, tagging and moving questions: sent straight away when online,
+   * otherwise saved on this device and sent later, in order.
+   */
+  private async edit<T>(ops: EditOp[], direct: () => Promise<T>, result: T): Promise<T> {
+    await this.load();
+    if (this.isOnline() && this.queue.length === 0) {
+      try {
+        return await direct();
+      } catch (e) {
+        // "Online" but the request never arrived: keep the change instead of losing it.
+        if (!isTransient(e) || !this.pack) throw e;
+      }
+    }
+    if (!this.pack) throw new Error(NO_COPY_MESSAGE);
+    for (const op of ops) {
+      this.queue = enqueue(this.queue, op);
+      applyEdit(this.pack, op);
+    }
+    await this.store.set(packKey(this.userId), this.pack);
+    await this.store.set(editsKey(this.userId), this.queue);
+    this.changed();
+    if (this.isOnline()) void this.flushEdits().catch(() => undefined);
+    return result;
+  }
+
+  create = (inputs: QuestionInput[], chosen?: string[]) => {
+    const ids = inputs.map((_, i) => chosen?.[i] ?? crypto.randomUUID());
+    // One queued change per question, so a retry can skip the ones that already arrived.
+    const ops = inputs.map((input, i): EditOp => ({ kind: "create", id: ids[i]!, input }));
+    return this.edit(ops, () => this.remote.create(inputs, ids), ids);
+  };
+
+  update = async (id: string, input: QuestionInput) => {
+    await this.load();
+    const base = this.pack?.questions.find((q) => q.id === id)?.version ?? 0;
+    const pending = this.queue.find((q) => q.kind === "update" && q.id === id);
+    const baseVersion = pending?.kind === "update" ? pending.baseVersion : base;
+    await this.edit(
+      [{ kind: "update", id, input, baseVersion }],
+      () => this.remote.update(id, input),
+      undefined,
+    );
+  };
+
+  bulk: QuestionRepo["bulk"] = (ids, action) =>
+    this.edit([{ kind: "bulk", ids, action }], () => this.remote.bulk(ids, action), undefined);
+
   private async write<T>(fn: () => Promise<T>): Promise<T> {
     if (!this.isOnline()) throw new Error(OFFLINE_MESSAGE);
+    await this.load();
+    // Renaming or deleting a subject while older changes wait could confuse them.
+    if (this.queue.length > 0) {
+      throw new Error("Changes made offline are still being sent. Try again in a moment.");
+    }
     return fn();
   }
-  create = (i: QuestionInput[]) => this.write(() => this.remote.create(i));
-  update = (id: string, i: QuestionInput) => this.write(() => this.remote.update(id, i));
-  bulk: QuestionRepo["bulk"] = (ids, a) => this.write(() => this.remote.bulk(ids, a));
+
+  /** Sends changes made offline, in order. Stops at the first connection problem and tries again later. */
+  flushEdits(): Promise<FlushReport> {
+    this.flushing ??= this.runFlush().finally(() => {
+      this.flushing = undefined;
+    });
+    return this.flushing;
+  }
+
+  private async runFlush(): Promise<FlushReport> {
+    await this.load();
+    const report: FlushReport = { sent: 0, overwritten: 0, removed: 0, failed: 0 };
+    let touched = false;
+    while (this.queue.length > 0 && this.isOnline()) {
+      const op = this.queue[0]!;
+      try {
+        await this.replay(op, report);
+      } catch (e) {
+        if (isTransient(e)) break;
+        this.failed.push({
+          summary: summarise(op),
+          message: e instanceof Error ? e.message : "The database refused this change.",
+        });
+        report.failed += 1;
+      }
+      touched = true;
+      this.queue.shift();
+      await this.store.set(editsKey(this.userId), this.queue);
+      await this.store.set(failedKey(this.userId), this.failed);
+      this.changed();
+    }
+    if (touched && this.queue.length === 0 && this.enabled) {
+      await this.download().catch(() => undefined);
+    }
+    if (touched) this.flushedListeners.forEach((l) => l(report));
+    return report;
+  }
+
+  private async replay(op: EditOp, report: FlushReport) {
+    if (op.kind === "create") {
+      if ((await this.remote.getMany([op.id])).length === 0) {
+        await this.remote.create([op.input], [op.id]);
+      }
+    } else if (op.kind === "update") {
+      const cur = await this.remote.get(op.id);
+      if (!cur) {
+        report.removed += 1;
+        return;
+      }
+      // The database keeps the replaced version in the question's history, so nothing is lost.
+      if (cur.version !== op.baseVersion) report.overwritten += 1;
+      await this.remote.update(op.id, op.input);
+    } else {
+      await this.remote.bulk(op.ids, op.action);
+    }
+    report.sent += 1;
+  }
+
+  /** Forgets the list of refused changes once the student has seen it. */
+  async dismissFailed(): Promise<void> {
+    await this.load();
+    this.failed = [];
+    await this.store.del(failedKey(this.userId));
+    this.changed();
+  }
+
   addNode: QuestionRepo["addNode"] = (p, n) => this.write(() => this.remote.addNode(p, n));
   renameNode = (id: string, n: string) => this.write(() => this.remote.renameNode(id, n));
   deleteNode = (id: string) => this.write(() => this.remote.deleteNode(id));
@@ -284,6 +459,12 @@ export class OfflineAwareRepo implements QuestionRepo {
 
   /** Wipes the copy on sign-out so the next person on this device cannot read it. */
   async clear(): Promise<void> {
+    await this.load();
+    if (this.queue.length > 0 && this.isOnline()) await this.flushEdits().catch(() => undefined);
+    await this.store.del(editsKey(this.userId));
+    await this.store.del(failedKey(this.userId));
+    this.queue = [];
+    this.failed = [];
     await this.store.del(packKey(this.userId));
     this.pack = null;
     this.loaded = false;

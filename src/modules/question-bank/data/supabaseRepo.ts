@@ -228,7 +228,7 @@ export class SupabaseRepo implements QuestionRepo {
     return out;
   }
 
-  async create(inputs: QuestionInput[]): Promise<string[]> {
+  async create(inputs: QuestionInput[], chosen?: string[]): Promise<string[]> {
     const nodeIds = new Map<string, string | null>();
     for (const input of inputs) {
       const key = input.path.join("\u0000").toLowerCase();
@@ -244,7 +244,8 @@ export class SupabaseRepo implements QuestionRepo {
       inputs.map((input, i) => ({ input, i })),
       500,
     )) {
-      const rows = part.map(({ input }) => ({
+      const rows = part.map(({ input, i }) => ({
+        ...(chosen?.[i] ? { id: chosen[i] } : {}),
         user_id: this.userId,
         ...this.columns(input, nodeIds.get(input.path.join("\u0000").toLowerCase()) ?? null),
       }));

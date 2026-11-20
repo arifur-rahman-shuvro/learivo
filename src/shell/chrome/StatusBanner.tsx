@@ -13,7 +13,8 @@ export default function StatusBanner() {
           role="status"
           className="m-0 rounded-control border border-line bg-surface-2 px-3 py-2 text-sm font-medium"
         >
-          You are offline. Anything saved on this device syncs when you are back online.
+          You are offline. Practice, and adding or editing questions, still work and sync when you
+          are back online.
         </p>
       )}
       {update.ready && (

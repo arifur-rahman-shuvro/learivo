@@ -47,7 +47,9 @@ export default function SyncIndicator() {
   let tone: Tone = "ok";
   if (state.problem) [label, tone] = ["Needs attention", "warn"];
   else if (state.syncing) [label, tone] = ["Syncing", "busy"];
-  else if (state.waiting > 0) [label, tone] = [`${state.waiting} waiting to sync`, "busy"];
+  else if (state.waiting + (pack?.waiting ?? 0) > 0) {
+    [label, tone] = [`${state.waiting + (pack?.waiting ?? 0)} waiting to sync`, "busy"];
+  } else if ((pack?.failed.length ?? 0) > 0) [label, tone] = ["Needs attention", "warn"];
   else if (!online) [label, tone] = ["Offline", "warn"];
 
   async function act(fn: () => Promise<unknown>, done: string) {
@@ -112,8 +114,37 @@ export default function SyncIndicator() {
                   : "A copy is downloaded the next time you are online."}
             </p>
             <p className="m-0 text-sm text-muted">
-              Editing the bank needs a connection. Reading, practice and exams do not.
+              {pack?.savedAt
+                ? "With this copy you can read, practise and add, edit, archive, tag and move questions offline. Changes are sent when you are back online. Changing subjects, tags and collections needs a connection."
+                : "Download the copy to use your questions, and edit them, without a connection."}
             </p>
+            {(pack?.waiting ?? 0) > 0 && (
+              <p className="m-0 text-sm font-medium">
+                {pack!.waiting} change{pack!.waiting === 1 ? "" : "s"} made offline will be sent
+                when you are online.
+              </p>
+            )}
+            {(pack?.failed.length ?? 0) > 0 && (
+              <div role="alert" className="flex flex-col gap-1 text-sm">
+                <p className="m-0 font-medium">These offline changes could not be saved:</p>
+                <ul className="m-0 pl-5">
+                  {pack!.failed.map((f, i) => (
+                    <li key={i}>
+                      {f.summary}. {f.message}
+                    </li>
+                  ))}
+                </ul>
+                <div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => void act(() => controls.pack.dismissFailed(), "Cleared.")}
+                  >
+                    Dismiss
+                  </Button>
+                </div>
+              </div>
+            )}
             <div className="flex flex-wrap gap-2">
               <Button
                 size="sm"

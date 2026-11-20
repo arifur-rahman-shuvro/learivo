@@ -156,13 +156,13 @@ export class MemoryRepo implements QuestionRepo {
     });
   }
 
-  async create(inputs: QuestionInput[]) {
+  async create(inputs: QuestionInput[], chosen?: string[]) {
     const ids: string[] = [];
-    for (const raw of inputs) {
+    for (const [n, raw] of inputs.entries()) {
       const input = this.checked(raw);
       const at = this.now();
       const row: Row = {
-        id: this.id("q"),
+        id: chosen?.[n] ?? this.id("q"),
         input,
         nodeId: this.ensurePath(input.path),
         status: "active",

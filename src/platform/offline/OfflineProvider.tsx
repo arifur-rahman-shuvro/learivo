@@ -73,7 +73,7 @@ export function OfflineProvider({ userId, live, injected, children }: Props) {
     if (!pack || !sync) return;
     const run = () => {
       void sync.sync();
-      void pack.refresh().catch(() => undefined);
+      void pack.refresh().catch(() => undefined); // sends offline changes first, then updates the copy
     };
     run();
     const onVisible = () => document.visibilityState === "visible" && run();

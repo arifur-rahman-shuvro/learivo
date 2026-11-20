@@ -21,6 +21,11 @@ const BankContext = createContext<BankValue | null>(null);
 export function BankProvider({ repo, children }: { repo: QuestionRepo; children: ReactNode }) {
   const [rev, setRev] = useState(0);
   const refresh = useCallback(() => setRev((n) => n + 1), []);
+  // A repository that sends changes made offline says so when it is done, so screens reload.
+  useEffect(() => {
+    const r = repo as QuestionRepo & { onFlushed?: (fn: () => void) => () => void };
+    return r.onFlushed?.(refresh);
+  }, [repo, refresh]);
   const value = useMemo(() => ({ repo, rev, refresh }), [repo, rev, refresh]);
   return <BankContext.Provider value={value}>{children}</BankContext.Provider>;
 }

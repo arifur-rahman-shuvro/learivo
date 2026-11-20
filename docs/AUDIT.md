@@ -21,6 +21,16 @@ Method: read the service worker, offline store and pack, sync, AI provider and k
 
 Findings 1 to 5 are fixed and tested (448 tests, build and phone-width smoke test pass). Findings 6, 9 and 10 need no change. Finding 7 is a deliberate limit; 8 is the owner's dashboard toggle.
 
+## Offline editing (added after the audit)
+
+- Offline you can add, edit, archive, restore-from-queue, delete, classify, tag and add to collections. Changing subjects, tags and collections themselves (rename, delete, merge, add) still needs a connection.
+- Needs the copy of the bank on the device (Download copy). Without it an offline add or edit is refused with that reason.
+- Changes apply to the copy at once and wait in a list on the device (kept if the app is closed). They are sent in order when you are online. New questions get their id on the device, so a repeated send never duplicates one.
+- Several edits to one question count as one. If the question was changed somewhere else meanwhile, your edit wins and the other version stays in that question's history. An edit to a question deleted elsewhere is dropped.
+- A change the database refuses is listed under Offline and sync with the reason; the rest carry on.
+- A request that fails on a connection that says "online" is kept the same way.
+- Limits: a new question's subject or tags that do not exist yet show on the question but are linked only after sending; signing out while offline with unsent changes discards them (the copy is wiped for privacy); a second device edited offline at the same time follows the rule above.
+
 ## Not verified
 
-Real AI provider calls, real account deletion, behaviour on a real phone and real offline mode on a device.
+Real AI provider calls, real account deletion, behaviour on a real phone, and offline editing on a real device (tested with simulated connection loss only).

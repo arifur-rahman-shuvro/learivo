@@ -4,7 +4,7 @@ import { DEFAULT_QUERY } from "../../modules/question-bank/data/repo.ts";
 import { blankQuestion, type QuestionInput } from "../../modules/question-bank/domain/model.ts";
 import { MemoryAttempts } from "../../modules/practice/data/memoryAttempts.ts";
 import type { NewAttempt } from "../../modules/practice/data/repo.ts";
-import { OFFLINE_MESSAGE, OfflineAwareRepo, PackRepo, buildPack } from "./pack.ts";
+import { NO_COPY_MESSAGE, OFFLINE_MESSAGE, OfflineAwareRepo, PackRepo, buildPack } from "./pack.ts";
 import { MemoryStore } from "./store.ts";
 import { SyncedAttempts } from "./syncedAttempts.ts";
 import { TF_ANSWER } from "../../testing/fixtures.ts";
@@ -61,7 +61,7 @@ describe("offline pack", () => {
     await expect(pack.addTag()).rejects.toThrow(OFFLINE_MESSAGE);
   });
 
-  it("uses the live bank online and the pack offline, and refuses edits offline", async () => {
+  it("uses the live bank online and the pack offline, and refuses structure changes offline", async () => {
     const bank = await seededBank();
     let online = true;
     const repo = new OfflineAwareRepo(bank, new MemoryStore(), "u1", () => online);
@@ -74,7 +74,12 @@ describe("offline pack", () => {
 
     online = false;
     expect((await repo.list(DEFAULT_QUERY)).total).toBe(3);
-    await expect(repo.create([tf("Nope")])).rejects.toThrow(OFFLINE_MESSAGE);
+    await expect(repo.addTag("nope")).rejects.toThrow(OFFLINE_MESSAGE);
+  });
+
+  it("without a copy on the device, an offline add is refused with a clear reason", async () => {
+    const repo = new OfflineAwareRepo(new MemoryRepo(), new MemoryStore(), "u1", () => false);
+    await expect(repo.create([tf("Nope")])).rejects.toThrow(NO_COPY_MESSAGE);
   });
 
   it("falls back to the pack when the connection claims to be up but fails", async () => {
@@ -283,5 +288,171 @@ describe("offline sessions", () => {
     await repo.remove(id);
     expect(repo.getState().waiting).toBe(0);
     expect(await repo.list(10)).toHaveLength(0);
+  });
+});
+
+describe("offline edits", () => {
+  async function setup() {
+    const bank = await seededBank();
+    const store = new MemoryStore();
+    const net = { online: true };
+    const make = () => new OfflineAwareRepo(bank, store, "u1", () => net.online);
+    const repo = make();
+    await repo.download();
+    return { bank, store, net, repo, make };
+  }
+  const stems = async (r: { list: OfflineAwareRepo["list"] }) =>
+    (await r.list({ ...DEFAULT_QUERY, sort: "stem" })).items.map((i) => i.stem);
+
+  it("adds a question offline, shows it at once, and sends it once back online", async () => {
+    const { bank, net, repo } = await setup();
+    net.online = false;
+    const [id] = await repo.create([tf("Written on the train", ["Anatomy", "Heart"], ["core"])]);
+    expect(await stems(repo)).toContain("Written on the train");
+    const rec = await repo.get(id!);
+    expect(rec?.nodeId).not.toBeNull();
+    expect(rec?.tagIds).toHaveLength(1);
+    expect((await repo.status()).waiting).toBe(1);
+    expect(await bank.get(id!)).toBeNull();
+
+    net.online = true;
+    const report = await repo.flushEdits();
+    expect(report.sent).toBe(1);
+    expect((await bank.get(id!))?.stem).toBe("Written on the train"); // same id as on the device
+    expect((await repo.status()).waiting).toBe(0);
+  });
+
+  it("does not add the same question twice when a send is repeated", async () => {
+    const { bank, net, repo } = await setup();
+    net.online = false;
+    const [id] = await repo.create([tf("Once only")]);
+    await bank.create([tf("Once only")], [id!]); // it already arrived, but the device never heard
+    net.online = true;
+    await repo.flushEdits();
+    expect((await bank.exportAll()).filter((q) => q.stem === "Once only")).toHaveLength(1);
+  });
+
+  it("edits offline; several edits to one question count as one", async () => {
+    const { bank, net, repo } = await setup();
+    const rec = (await repo.list({ ...DEFAULT_QUERY, search: "heart" })).items[0]!;
+    net.online = false;
+    await repo.update(rec.id, { ...tf("Heart pumps blood, edit 1"), path: rec.path, tags: [] });
+    await repo.update(rec.id, { ...tf("Heart pumps blood, edit 2"), path: rec.path, tags: [] });
+    expect((await repo.get(rec.id))?.stem).toBe("Heart pumps blood, edit 2");
+    expect((await repo.status()).waiting).toBe(1);
+    net.online = true;
+    const report = await repo.flushEdits();
+    expect(report).toMatchObject({ sent: 1, overwritten: 0 });
+    expect((await bank.get(rec.id))?.stem).toBe("Heart pumps blood, edit 2");
+  });
+
+  it("keeps the older version in history when it replaces a newer change from another device", async () => {
+    const { bank, net, repo } = await setup();
+    const rec = (await repo.list({ ...DEFAULT_QUERY, search: "femur" })).items[0]!;
+    net.online = false;
+    await repo.update(rec.id, { ...tf("Femur, my phone edit"), path: rec.path, tags: [] });
+    await bank.update(rec.id, { ...tf("Femur, laptop edit"), path: rec.path, tags: [] });
+    net.online = true;
+    const report = await repo.flushEdits();
+    expect(report.overwritten).toBe(1);
+    expect((await bank.get(rec.id))?.stem).toBe("Femur, my phone edit");
+    expect(
+      (await bank.versions(rec.id)).some((v) => v.question.stem === "Femur, laptop edit"),
+    ).toBe(true);
+  });
+
+  it("archives and tags offline, and drops edits to questions deleted elsewhere", async () => {
+    const { bank, net, repo } = await setup();
+    const all = (await repo.list(DEFAULT_QUERY)).items;
+    const [a, b] = [all[0]!, all[1]!];
+    const tag = (await repo.tags())[0]!;
+    net.online = false;
+    await repo.bulk([a.id], { kind: "archive" });
+    await repo.bulk([b.id], { kind: "tag", tagId: tag.id, add: true });
+    await repo.update(all[2]!.id, { ...tf("Edit of a deleted one"), path: [], tags: [] });
+    expect((await repo.list(DEFAULT_QUERY)).total).toBe(2);
+    expect((await repo.get(b.id))?.tagIds).toContain(tag.id);
+    await bank.bulk([all[2]!.id], { kind: "delete" });
+    net.online = true;
+    const report = await repo.flushEdits();
+    expect(report).toMatchObject({ removed: 1 });
+    expect((await bank.get(a.id))?.status).toBe("archived");
+    expect((await bank.get(b.id))?.tagIds).toContain(tag.id);
+  });
+
+  it("survives closing the app: a new session picks the waiting changes up", async () => {
+    const { bank, net, make, repo } = await setup();
+    net.online = false;
+    await repo.create([tf("Kept across restarts")]);
+    const again = make();
+    expect((await again.status()).waiting).toBe(1);
+    expect(await stems(again)).toContain("Kept across restarts");
+    net.online = true;
+    await again.flushEdits();
+    expect((await bank.exportAll()).map((q) => q.stem)).toContain("Kept across restarts");
+  });
+
+  it("does not replace the copy or remove it while changes wait", async () => {
+    const { net, repo } = await setup();
+    net.online = false;
+    await repo.create([tf("Unsent")]);
+    await repo.refresh(); // offline: does nothing
+    expect(await stems(repo)).toContain("Unsent");
+    await expect(repo.remove()).rejects.toThrow(/waiting to be sent/);
+  });
+
+  it("keeps a change when the connection says online but the request never arrives", async () => {
+    const { bank, repo } = await setup();
+    const real = bank.create.bind(bank);
+    bank.create = async () => {
+      throw new TypeError("Failed to fetch");
+    };
+    const [id] = await repo.create([tf("Flaky network")]);
+    expect((await repo.status()).waiting).toBe(1);
+    expect(await stems(repo)).toContain("Flaky network"); // read from the copy while it waits
+    bank.create = real;
+    await repo.flushEdits();
+    expect((await bank.get(id!))?.stem).toBe("Flaky network");
+  });
+
+  it("reports a change the database refuses and carries on with the rest", async () => {
+    const { bank, net, repo } = await setup();
+    net.online = false;
+    await repo.create([tf("Refused one")]);
+    await repo.create([tf("Accepted one")]);
+    net.online = true;
+    const real = bank.create.bind(bank);
+    bank.create = async (inputs, ids) => {
+      if (inputs[0]!.stem === "Refused one") throw new Error("value too long");
+      return real(inputs, ids);
+    };
+    const report = await repo.flushEdits();
+    expect(report).toMatchObject({ sent: 1, failed: 1 });
+    const status = await repo.status();
+    expect(status.waiting).toBe(0);
+    expect(status.failed[0]).toMatchObject({ message: "value too long" });
+    expect(status.failed[0]!.summary).toContain("Refused one");
+    await repo.dismissFailed();
+    expect((await repo.status()).failed).toHaveLength(0);
+  });
+
+  it("stops at a connection problem and keeps the rest for later", async () => {
+    const { bank, net, repo } = await setup();
+    net.online = false;
+    await repo.create([tf("First")]);
+    await repo.create([tf("Second")]);
+    net.online = true;
+    const real = bank.create.bind(bank);
+    bank.create = async () => {
+      throw new TypeError("Failed to fetch");
+    };
+    await repo.flushEdits();
+    expect((await repo.status()).waiting).toBe(2);
+    bank.create = real;
+    await repo.flushEdits();
+    expect((await repo.status()).waiting).toBe(0);
+    expect((await bank.exportAll()).map((q) => q.stem)).toEqual(
+      expect.arrayContaining(["First", "Second"]),
+    );
   });
 });

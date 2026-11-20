@@ -88,7 +88,8 @@ export interface QuestionRepo {
   get(id: string): Promise<QuestionRecord | null>;
   /** Several questions at once, in any order. Missing or archived ones are included if they exist. */
   getMany(ids: string[]): Promise<QuestionRecord[]>;
-  create(inputs: QuestionInput[]): Promise<string[]>;
+  /** `ids` lets the caller choose the new ids (offline creates use them, so a retry never duplicates). */
+  create(inputs: QuestionInput[], ids?: string[]): Promise<string[]>;
   update(id: string, input: QuestionInput): Promise<void>;
   bulk(ids: string[], action: BulkAction): Promise<void>;
   versions(id: string): Promise<QuestionVersion[]>;
