@@ -94,10 +94,10 @@ export class MemoryAttempts implements AttemptRepo {
     return rest;
   }
 
-  async list(limit: number): Promise<Attempt[]> {
+  async list(limit: number, offset = 0): Promise<Attempt[]> {
     return [...this.attempts.values()]
       .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
-      .slice(0, limit)
+      .slice(offset, offset + limit)
       .map((a) => {
         const { items: _i, questionIds: _q, ...head } = a;
         void _i;

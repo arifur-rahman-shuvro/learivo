@@ -2,8 +2,15 @@ import { describe, expect, it } from "vitest";
 import { MemoryRepo } from "../../modules/question-bank/data/memoryRepo.ts";
 import { MemoryWorkspace } from "../../modules/workspace/data/memoryWorkspace.ts";
 import { blankQuestion, type QuestionInput } from "../../modules/question-bank/domain/model.ts";
+import { DEFAULT_QUERY } from "../../modules/question-bank/data/repo.ts";
 import { MemoryAttempts } from "../../modules/practice/data/memoryAttempts.ts";
-import { buildBackup, parseBackup, previewRestore, restoreBackup } from "./backupData.ts";
+import {
+  buildBackup,
+  checkIntegrity,
+  parseBackup,
+  previewRestore,
+  restoreBackup,
+} from "./backupData.ts";
 
 function question(stem: string): QuestionInput {
   return {
@@ -151,7 +158,11 @@ describe("backup", () => {
         },
       })),
     });
-    await attempts.patchItem(id, 0, { response: { choices: [1] }, flagged: true });
+    await attempts.patchItem(id, 0, {
+      response: { choices: [1] },
+      flagged: true,
+      confidence: "sure",
+    });
     await attempts.submit(
       id,
       [
@@ -172,7 +183,7 @@ describe("backup", () => {
     await ws.addCards([items[0]!.id]);
 
     const backup = await buildBackup(bank, ws, attempts);
-    expect(backup.version).toBe(2);
+    expect(backup.version).toBe(3);
     expect(backup.attempts).toHaveLength(1);
     expect(backup.exams).toHaveLength(1);
     expect(backup.cards).toHaveLength(1);
@@ -197,6 +208,7 @@ describe("backup", () => {
       flagged: true,
       seconds: 42,
       mistakeReason: "careless",
+      confidence: "sure",
       verdict: "wrong",
     });
     expect(back.examId).toBe((await attempts2.exams())[0]!.id);
@@ -236,5 +248,115 @@ describe("backup", () => {
       [],
       [],
     ]);
+  });
+
+  it("writes a manifest, and a changed or cut-short file fails its check", async () => {
+    const { bank, ws } = await filled();
+    const text = JSON.stringify(await buildBackup(bank, ws), null, 2);
+    expect(await checkIntegrity(text)).toMatchObject({ kind: "ok", counts: { questions: 2 } });
+
+    const edited = text.replace("Remember this", "Remember thus");
+    expect(await checkIntegrity(edited)).toMatchObject({ kind: "damaged" });
+
+    const cut = JSON.parse(text) as { questions: unknown[] };
+    cut.questions.pop();
+    const res = await checkIntegrity(JSON.stringify(cut));
+    expect(res).toMatchObject({ kind: "damaged" });
+    expect((res as { reason: string }).reason).toMatch(/cut short/);
+
+    const noManifest = JSON.parse(text) as Record<string, unknown>;
+    delete noManifest.manifest;
+    expect(await checkIntegrity(JSON.stringify(noManifest))).toMatchObject({ kind: "damaged" });
+    expect(await checkIntegrity('{"format":"learivo-backup","version":2}')).toEqual({
+      kind: "none",
+    });
+  });
+
+  it("carries collections and the Home layout, and restoring twice adds nothing", async () => {
+    const { bank, ws } = await filled();
+    const col = await bank.addCollection("Finals");
+    const first = (await bank.list({ ...DEFAULT_QUERY, limit: 10 })).items[0]!;
+    await bank.bulk([first.id], { kind: "collection", collectionId: col.id, add: true });
+    await ws.setHomeLayout({
+      order: ["recent", "focus", "numbers", "features", "goal", "week", "weak", "exam"],
+      hidden: ["exam"],
+    });
+    const parsed = parseBackup(JSON.stringify(await buildBackup(bank, ws)));
+    if (!parsed.ok) throw new Error(parsed.error);
+    expect(parsed.backup.collections).toEqual([{ name: "Finals", hashes: expect.any(Array) }]);
+
+    const bank2 = new MemoryRepo();
+    const ws2 = new MemoryWorkspace();
+    const r = await restoreBackup(parsed.backup, bank2, ws2);
+    expect(r.collections).toBe(1);
+    const got = (await bank2.collections())[0]!;
+    expect(got).toMatchObject({ name: "Finals", count: 1 });
+    expect((await ws2.homeLayout()).hidden).toEqual(["exam"]);
+    const again = await restoreBackup(parsed.backup, bank2, ws2);
+    expect(again).toMatchObject({ questions: 0, collections: 0, notes: 0, flashcards: 0 });
+    expect((await bank2.collections())[0]!.count).toBe(1);
+  });
+
+  it("backs up a history longer than one page and restores all of it", async () => {
+    const bank = new MemoryRepo();
+    const ws = new MemoryWorkspace();
+    await bank.create([question("Only one?")]);
+    const q = (await bank.list({ ...DEFAULT_QUERY, limit: 5 })).items[0]!;
+    const attempts = new MemoryAttempts("a");
+    const N = 520;
+    for (let i = 0; i < N; i++) {
+      const id = await attempts.create({
+        kind: "practice",
+        examId: null,
+        title: `S${i}`,
+        instantFeedback: true,
+        timeLimitSec: null,
+        marksCorrect: 1,
+        marksWrong: 0,
+        startedAt: new Date(Date.UTC(2026, 0, 1) + i * 60000).toISOString(),
+        items: [
+          {
+            questionId: q.id,
+            snapshot: {
+              qtype: q.qtype,
+              stem: q.stem,
+              explanation: "",
+              answer: q.answer,
+              difficulty: null,
+              path: [],
+            },
+          },
+        ],
+      });
+      await attempts.submit(
+        id,
+        [{ position: 0, verdict: "correct", credit: 1, marks: 1, seconds: 3 }],
+        {
+          score: 1,
+          correct: 1,
+          partial: 0,
+          wrong: 0,
+          unanswered: 0,
+          secondsSpent: 3,
+          submittedAt: new Date(Date.UTC(2026, 0, 1) + i * 60000 + 3000).toISOString(),
+        },
+      );
+    }
+    const backup = await buildBackup(bank, ws, attempts);
+    expect(backup.attempts).toHaveLength(N);
+    const parsed = parseBackup(JSON.stringify(backup));
+    if (!parsed.ok) throw new Error(parsed.error);
+    const attempts2 = new MemoryAttempts("b");
+    const r = await restoreBackup(
+      parsed.backup,
+      new MemoryRepo(),
+      new MemoryWorkspace(),
+      attempts2,
+    );
+    expect(r.attempts).toBe(N);
+    expect(
+      (await restoreBackup(parsed.backup, new MemoryRepo(), new MemoryWorkspace(), attempts2))
+        .attempts,
+    ).toBe(0);
   });
 });

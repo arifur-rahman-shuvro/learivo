@@ -8,13 +8,19 @@ import {
 import type { WorkspaceRepo } from "../../modules/workspace/data/repo.ts";
 import { cleanExamTarget, type ExamTarget } from "../../modules/workspace/domain/examTarget.ts";
 import { LIMITS } from "../../modules/workspace/domain/cards.ts";
-import type { AttemptRepo } from "../../modules/practice/data/repo.ts";
+import type { Attempt, AttemptRepo } from "../../modules/practice/data/repo.ts";
 import type { ExamRule } from "../../modules/practice/domain/session.ts";
 import { validateQuestion } from "../../modules/question-bank/domain/model.ts";
 import type { Response, Snapshot, Verdict } from "../../modules/practice/domain/grading.ts";
 import { nodeIdForName } from "../../modules/practice/ui/start.ts";
 import { REASONS, type Reason } from "../../modules/practice/domain/reasons.ts";
 import type { Card } from "../../modules/workspace/domain/scheduler.ts";
+import { CONFIDENCE, type Confidence } from "../../modules/practice/domain/confidence.ts";
+import {
+  cleanLayout,
+  DEFAULT_HOME_LAYOUT,
+  type HomeLayout,
+} from "../../modules/workspace/domain/homeLayout.ts";
 
 const BACKUP_FORMAT = "learivo-backup";
 const DEFAULT_GOAL = 20;
@@ -27,6 +33,8 @@ interface BackupAttemptItem {
   flagged: boolean;
   seconds: number;
   mistakeReason: Reason | null;
+  /** Version 3 and later. */
+  confidence: Confidence | null;
   verdict: Verdict | null;
   credit: number;
   marks: number;
@@ -63,13 +71,33 @@ interface BackupCard {
   card: Card;
 }
 
-/** The most recent finished sessions that go into a backup. */
-const ATTEMPT_LIMIT = 500;
+/** Sessions are read in pages this size, so a long history never needs one huge request. */
+const PAGE = 500;
+
+/** What a version 3 file says about itself, so damage and truncation can be noticed. */
+export interface Manifest {
+  schema: 3;
+  counts: Record<string, number>;
+  /** SHA-256 (hex) of the file's data, written without this manifest. */
+  sha256: string;
+}
+
+const COUNTED = [
+  "questions",
+  "notes",
+  "bookmarks",
+  "flashcards",
+  "glossary",
+  "cards",
+  "exams",
+  "attempts",
+  "collections",
+] as const;
 
 export interface Backup {
   format: typeof BACKUP_FORMAT;
-  /** 2 adds practice history, exams and revision state. Version 1 files are still read. */
-  version: 1 | 2;
+  /** 2 adds practice history, exams and revision state; 3 adds collections, confidence, the Home layout and a manifest. Older files are still read. */
+  version: 1 | 2 | 3;
   createdAt: string;
   questions: Record<string, unknown>[];
   /** Notes point at a question by its content hash, so they survive a restore into another account. */
@@ -83,6 +111,56 @@ export interface Backup {
   cards: BackupCard[];
   exams: BackupExam[];
   attempts: BackupAttempt[];
+  /** Version 3. Members are named by content hash. */
+  collections: { name: string; hashes: string[] }[];
+  /** Version 3. Null when the Home layout was never changed. */
+  homeLayout: HomeLayout | null;
+  /** Version 3. */
+  manifest?: Manifest;
+}
+
+async function sha256Hex(text: string): Promise<string> {
+  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/** The file's data without its manifest, in the order it was written. */
+const dataOf = (b: object) =>
+  JSON.stringify(Object.fromEntries(Object.entries(b).filter(([k]) => k !== "manifest")));
+
+export type Integrity =
+  | { kind: "none" } // an older file: nothing to check against
+  | { kind: "ok"; counts: Record<string, number> }
+  | { kind: "damaged"; reason: string };
+
+/** Checks a version 3 file against its own manifest: record counts first, then SHA-256. */
+export async function checkIntegrity(text: string): Promise<Integrity> {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(text);
+  } catch {
+    return { kind: "none" }; // parseBackup explains this one
+  }
+  const o = obj(raw);
+  if (o.version !== 3) return { kind: "none" };
+  const m = obj(o.manifest);
+  const counts = obj(m.counts);
+  if (m.schema !== 3 || typeof m.sha256 !== "string") {
+    return { kind: "damaged", reason: "The file has no valid manifest." };
+  }
+  for (const k of COUNTED) {
+    const declared = counts[k];
+    if (typeof declared !== "number" || declared !== list(o[k]).length) {
+      return {
+        kind: "damaged",
+        reason: `The file says it holds ${String(declared)} ${k}, but ${list(o[k]).length} are in it. It may be cut short.`,
+      };
+    }
+  }
+  if ((await sha256Hex(dataOf(o))) !== m.sha256) {
+    return { kind: "damaged", reason: "The file was changed or damaged after it was saved." };
+  }
+  return { kind: "ok", counts: Object.fromEntries(COUNTED.map((k) => [k, counts[k] as number])) };
 }
 
 async function idsAndHashes(repo: QuestionRepo): Promise<Map<string, string>> {
@@ -140,9 +218,12 @@ export async function buildBackup(
       rules: e.rules.map((r) => ({ path: pathOf(r.nodeId), count: r.count })),
     }));
     const examTitle = new Map(saved.map((e) => [e.id, e.title]));
-    const heads = (await attempts.list(ATTEMPT_LIMIT)).filter(
-      (a) => a.status === "submitted" && a.submittedAt,
-    );
+    const heads: Attempt[] = [];
+    for (let offset = 0; ; offset += PAGE) {
+      const page = await attempts.list(PAGE, offset);
+      heads.push(...page.filter((a) => a.status === "submitted" && a.submittedAt));
+      if (page.length < PAGE) break;
+    }
     for (let i = 0; i < heads.length; i += 10) {
       const full = await Promise.all(heads.slice(i, i + 10).map((h) => attempts.get(h.id)));
       for (const a of full) {
@@ -165,6 +246,7 @@ export async function buildBackup(
             flagged: x.flagged,
             seconds: x.seconds,
             mistakeReason: x.mistakeReason,
+            confidence: x.confidence ?? null,
             verdict: x.verdict,
             credit: x.credit ?? 0,
             marks: x.marks ?? 0,
@@ -175,9 +257,25 @@ export async function buildBackup(
     history = history.sort((x, y) => x.startedAt.localeCompare(y.startedAt));
   }
 
-  return {
+  const collections: Backup["collections"] = [];
+  for (const c of await bank.collections()) {
+    const hs: string[] = [];
+    for (let offset = 0; ; offset += 200) {
+      const page = await bank.list({
+        ...DEFAULT_QUERY,
+        collectionId: c.id,
+        offset,
+        limit: 200,
+      });
+      for (const q of page.items) hs.push(contentHash(q.stem, q.qtype));
+      if (page.items.length < 200) break;
+    }
+    collections.push({ name: c.name, hashes: hs });
+  }
+  const layout = await ws.homeLayout().catch(() => DEFAULT_HOME_LAYOUT);
+  const body: Omit<Backup, "manifest"> = {
     format: BACKUP_FORMAT,
-    version: 2,
+    version: 3,
     createdAt: new Date().toISOString(),
     questions: questions.map(questionToRecord),
     notes: notes.map((n) => ({
@@ -199,7 +297,11 @@ export async function buildBackup(
     }),
     exams,
     attempts: history,
+    collections,
+    homeLayout: JSON.stringify(layout) === JSON.stringify(DEFAULT_HOME_LAYOUT) ? null : layout,
   };
+  const counts = Object.fromEntries(COUNTED.map((k) => [k, body[k].length]));
+  return { ...body, manifest: { schema: 3, counts, sha256: await sha256Hex(dataOf(body)) } };
 }
 
 export type ParsedBackup = { ok: true; backup: Backup } | { ok: false; error: string };
@@ -310,6 +412,7 @@ function cleanItem(raw: unknown): BackupAttemptItem | null {
     flagged: x.flagged === true,
     seconds: Math.round(num(x.seconds, 0, 86400, 0)),
     mistakeReason: reason,
+    confidence: CONFIDENCE.find((c) => c.id === x.confidence)?.id ?? null,
     verdict,
     credit: num(x.credit, 0, 1, 0),
     marks: num(x.marks, -100, 100, 0),
@@ -351,7 +454,7 @@ export function parseBackup(text: string): ParsedBackup {
   }
   const o = obj(raw);
   if (o.format !== BACKUP_FORMAT) return { ok: false, error: "This file is not a Learivo backup." };
-  if (o.version !== 1 && o.version !== 2)
+  if (o.version !== 1 && o.version !== 2 && o.version !== 3)
     return { ok: false, error: "This backup was made by a newer version." };
   const flashcards = list(o.flashcards).flatMap((c) => {
     const x = obj(c);
@@ -395,7 +498,7 @@ export function parseBackup(text: string): ParsedBackup {
     ok: true,
     backup: {
       format: BACKUP_FORMAT,
-      version: 2,
+      version: 3,
       createdAt: typeof o.createdAt === "string" ? o.createdAt : "",
       questions: list(o.questions).map(obj),
       notes,
@@ -407,6 +510,13 @@ export function parseBackup(text: string): ParsedBackup {
       cards,
       exams,
       attempts,
+      collections: list(o.collections).flatMap((c) => {
+        const x = obj(c);
+        const name = str(x.name, 80);
+        const hashes = list(x.hashes).filter((h): h is string => typeof h === "string");
+        return name ? [{ name, hashes }] : [];
+      }),
+      homeLayout: o.homeLayout ? cleanLayout(o.homeLayout) : null,
     },
   };
 }
@@ -425,6 +535,8 @@ export interface RestoreResult {
   exams: number;
   /** Finished practice and exam sessions restored. */
   attempts: number;
+  /** Collections created or filled. */
+  collections: number;
   failure?: string;
 }
 
@@ -466,6 +578,7 @@ export async function restoreBackup(
     cards: 0,
     exams: 0,
     attempts: 0,
+    collections: 0,
   };
   try {
     const have = new Set((await idsAndHashes(bank)).values());
@@ -540,11 +653,46 @@ export async function restoreBackup(
       r.cards += 1;
     }
 
+    await restoreCollections(backup, bank, idByHash, r);
+    if (backup.homeLayout) {
+      const cur = await ws.homeLayout().catch(() => DEFAULT_HOME_LAYOUT);
+      if (JSON.stringify(cur) === JSON.stringify(DEFAULT_HOME_LAYOUT)) {
+        await ws.setHomeLayout(backup.homeLayout);
+        r.settings += 1;
+      }
+    }
+
     if (attempts) await restoreHistory(backup, bank, attempts, idByHash, r);
   } catch (e) {
     r.failure = e instanceof Error ? e.message : "Something went wrong.";
   }
   return r;
+}
+
+/** Collections by name; members are matched by content hash. Adding a member twice changes nothing. */
+async function restoreCollections(
+  backup: Backup,
+  bank: QuestionRepo,
+  idByHash: Map<string, string>,
+  r: RestoreResult,
+) {
+  const existing = new Map((await bank.collections()).map((c) => [c.name.toLowerCase(), c.id]));
+  for (const c of backup.collections) {
+    let id = existing.get(c.name.toLowerCase());
+    if (!id) {
+      id = (await bank.addCollection(c.name)).id;
+      existing.set(c.name.toLowerCase(), id);
+      r.collections += 1;
+    }
+    const members = c.hashes.flatMap((h) => (idByHash.has(h) ? [idByHash.get(h)!] : []));
+    for (let i = 0; i < members.length; i += 200) {
+      await bank.bulk(members.slice(i, i + 200), {
+        kind: "collection",
+        collectionId: id,
+        add: true,
+      });
+    }
+  }
 }
 
 const attemptKey = (startedAt: string, title: string) =>
@@ -583,7 +731,12 @@ async function restoreHistory(
     r.exams += 1;
   }
 
-  const have = new Set((await attempts.list(100000)).map((a) => attemptKey(a.startedAt, a.title)));
+  const have = new Set<string>();
+  for (let offset = 0; ; offset += PAGE) {
+    const page = await attempts.list(PAGE, offset);
+    for (const a of page) have.add(attemptKey(a.startedAt, a.title));
+    if (page.length < PAGE) break;
+  }
   for (const a of backup.attempts) {
     const key = attemptKey(a.startedAt, a.title);
     if (have.has(key)) continue;
@@ -603,13 +756,17 @@ async function restoreHistory(
     });
     for (let i = 0; i < a.items.length; i += 10) {
       await Promise.all(
-        a.items
-          .slice(i, i + 10)
-          .flatMap((x, k) =>
-            x.response || x.flagged
-              ? [attempts.patchItem(id, i + k, { response: x.response, flagged: x.flagged })]
-              : [],
-          ),
+        a.items.slice(i, i + 10).flatMap((x, k) =>
+          x.response || x.flagged || x.confidence
+            ? [
+                attempts.patchItem(id, i + k, {
+                  response: x.response,
+                  flagged: x.flagged,
+                  ...(x.confidence ? { confidence: x.confidence } : {}),
+                }),
+              ]
+            : [],
+        ),
       );
     }
     const count = (v: Verdict) => a.items.filter((x) => x.verdict === v).length;

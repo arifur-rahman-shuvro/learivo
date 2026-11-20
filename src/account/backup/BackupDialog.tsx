@@ -5,6 +5,7 @@ import { usePractice } from "../../modules/practice/ui/practice.tsx";
 import { useWorkspace } from "../../modules/workspace/ui/workspace.tsx";
 import {
   buildBackup,
+  checkIntegrity,
   parseBackup,
   previewRestore,
   restoreBackup,
@@ -38,6 +39,8 @@ function save(name: string, content: string) {
 
 interface Preview {
   backup: Backup;
+  /** The file passed its record-count and SHA-256 check. */
+  checked: boolean;
   newQuestions: number;
   existing: number;
   invalid: number;
@@ -140,12 +143,21 @@ export default function BackupDialog() {
   };
 
   const openText = async (text: string) => {
+    const integrity = await checkIntegrity(text);
+    if (integrity.kind === "damaged") {
+      setError(`This backup failed its check. ${integrity.reason} Nothing was restored.`);
+      return;
+    }
     const parsed = parseBackup(text);
     if (!parsed.ok) {
       setError(parsed.error);
       return;
     }
-    setPreview({ backup: parsed.backup, ...(await previewRestore(parsed.backup, bank)) });
+    setPreview({
+      backup: parsed.backup,
+      checked: integrity.kind === "ok",
+      ...(await previewRestore(parsed.backup, bank)),
+    });
   };
 
   const restore = async () => {
@@ -249,6 +261,9 @@ export default function BackupDialog() {
             aria-label="Restore preview"
             className="flex flex-col gap-2 rounded-control border border-line p-3"
           >
+            {preview.checked && (
+              <p className="m-0 text-sm text-muted">Checked: the file is complete and unchanged.</p>
+            )}
             <p className="m-0 text-sm font-semibold">This backup would add:</p>
             <ul className="m-0 pl-5 text-sm">
               <li>{plural(preview.newQuestions, "new question")}</li>
@@ -267,6 +282,11 @@ export default function BackupDialog() {
               )}
               {preview.backup.exams.length > 0 && (
                 <li>{plural(preview.backup.exams.length, "saved exam")}</li>
+              )}
+              {preview.backup.collections.length > 0 && (
+                <li>
+                  {plural(preview.backup.collections.length, "collection")} with their questions
+                </li>
               )}
               {preview.backup.cards.length > 0 && (
                 <li>{plural(preview.backup.cards.length, "revision card")} with their schedule</li>

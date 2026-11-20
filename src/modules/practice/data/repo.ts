@@ -110,7 +110,8 @@ export interface AttemptRepo {
   create(input: NewAttempt): Promise<string>;
   get(id: string): Promise<AttemptWithItems | null>;
   /** Newest first. */
-  list(limit: number): Promise<Attempt[]>;
+  /** Newest first. `offset` pages through long histories. */
+  list(limit: number, offset?: number): Promise<Attempt[]>;
   patchItem(attemptId: string, position: number, patch: ItemPatch): Promise<void>;
   /** Writes the grades and totals and marks the attempt as submitted. */
   submit(attemptId: string, graded: Graded[], totals: Totals): Promise<void>;

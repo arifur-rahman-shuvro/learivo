@@ -208,13 +208,14 @@ export class SupabaseAttempts implements AttemptRepo {
     return { ...toAttempt(head), items };
   }
 
-  async list(limit: number) {
+  async list(limit: number, offset = 0) {
     const rows = ok(
       await this.db
         .from("attempts")
         .select(ATTEMPT_COLUMNS)
         .order("started_at", { ascending: false })
-        .limit(limit),
+        .order("id")
+        .range(offset, offset + limit - 1),
     ) as AttemptRow[];
     return rows.map(toAttempt);
   }

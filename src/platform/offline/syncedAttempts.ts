@@ -208,18 +208,18 @@ export class SyncedAttempts implements AttemptRepo {
     return this.remote.get(this.remoteIdOf(id));
   }
 
-  async list(limit: number): Promise<Attempt[]> {
+  async list(limit: number, offset = 0): Promise<Attempt[]> {
     await this.ready();
-    const mine = await this.local.list(limit);
+    // Sessions still waiting on this device belong to the newest page only.
+    const mine = offset === 0 ? await this.local.list(limit) : [];
     let theirs: Attempt[] = [];
     try {
-      theirs = await this.remote.list(limit);
+      theirs = await this.remote.list(limit, offset);
     } catch (e) {
       if (mine.length === 0) throw e;
     }
-    return [...mine, ...theirs]
-      .sort((a, b) => b.startedAt.localeCompare(a.startedAt))
-      .slice(0, limit);
+    const all = [...mine, ...theirs].sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+    return offset === 0 ? all.slice(0, limit) : all;
   }
 
   async patchItem(attemptId: string, position: number, patch: ItemPatch) {
