@@ -151,6 +151,93 @@ try {
     throw new Error(`Exam result was not 3 of 4 with 1 wrong: ${exam.slice(0, 200)}`);
   }
   await page.getByRole("button", { name: "Practice missed questions" }).waitFor();
+
+  step = "offline: download a copy, then edit and add with no connection";
+  const ctx2 = await browser.newContext({ viewport: { width: 390, height: 800 } });
+  const off = await ctx2.newPage();
+  off.setDefaultTimeout(8000);
+  off.on("pageerror", (e) => problems.push(`offline page error: ${e.message}`));
+  const OFFLINE = `http://localhost:${PORT}/e2e/offline.html`;
+  const seen = async (text, scope = "main") => {
+    await off.locator(scope).getByText(text).first().waitFor();
+  };
+  const dbHolds = (stem) =>
+    off.evaluate(async (t) => {
+      const r = await window.__bank.list({
+        search: "",
+        status: "active",
+        nodeId: null,
+        unclassified: false,
+        qtypes: [],
+        difficulties: [],
+        tagId: null,
+        collectionId: null,
+        sort: "updated",
+        offset: 0,
+        limit: 50,
+      });
+      return r.items.some((q) => q.stem === t);
+    }, stem);
+  await off.goto(`${OFFLINE}#/questions`, { waitUntil: "networkidle" });
+  await off.getByRole("button", { name: "Add question" }).first().click();
+  await off.getByRole("button", { name: /Paste what AI gave you/ }).click();
+  const recs = [1, 2, 3].map((n) => ({
+    type: "sba",
+    stem: `Offline source ${n}`,
+    options: [{ text: "Right", correct: true }, { text: "Wrong A" }, { text: "Wrong B" }],
+    subject: "Anatomy",
+  }));
+  await off
+    .locator("textarea")
+    .first()
+    .fill(JSON.stringify({ questions: recs }));
+  await off.getByRole("button", { name: "Check questions" }).click();
+  await off.getByRole("button", { name: "Import 3 questions" }).click();
+  await seen("3 questions");
+  await off.keyboard.press("Escape");
+  await off
+    .getByRole("button", { name: /^Saved/ })
+    .first()
+    .click();
+  await off.getByRole("button", { name: "Update copy" }).click();
+  await seen("3 questions, updated", "body");
+  await off.keyboard.press("Escape");
+
+  step = "offline: edit one question and add one";
+  await ctx2.setOffline(true);
+  await off.getByText("Offline source 2").first().click();
+  await off.locator("#q-stem").fill("Edited while offline");
+  await off.getByRole("button", { name: "Save question" }).click();
+  await seen("Edited while offline");
+  await off.getByRole("button", { name: "Add question" }).first().click();
+  await off.getByRole("button", { name: /Write one question/ }).click();
+  await off.locator("#q-stem").fill("Added while offline");
+  for (const i of [1, 2, 3, 4, 5]) {
+    await off.getByLabel(`Option ${i} text`).fill(i === 1 ? "Right" : `Wrong ${i}`);
+  }
+  await off.getByLabel("Option 1 is correct").check();
+  await off.getByRole("button", { name: "Save question" }).click();
+  await seen("Added while offline");
+  await seen("4 questions");
+  await off.getByRole("button", { name: /2 waiting to sync/ }).waitFor();
+  if (await dbHolds("Added while offline"))
+    throw new Error("Offline changes reached the database while offline");
+
+  step = "offline: changes are sent when the connection returns";
+  await ctx2.setOffline(false);
+  await off
+    .getByRole("button", { name: /^Saved/ })
+    .first()
+    .waitFor();
+  for (let i = 0; i < 40 && !(await dbHolds("Added while offline")); i++)
+    await off.waitForTimeout(250);
+  if (!(await dbHolds("Added while offline")))
+    throw new Error("The added question never reached the database");
+  if (!(await dbHolds("Edited while offline")))
+    throw new Error("The edit never reached the database");
+  if (await dbHolds("Offline source 2"))
+    throw new Error("The old wording is still in the database");
+  await ctx2.close();
 } catch (e) {
   problems.push(`${step}: ${e.message}`);
   try {
@@ -168,5 +255,5 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  "End-to-end flows passed: add, edit, practice, results, insights, archive, restore, import, exam",
+  "End-to-end flows passed: add, edit, practice, results, insights, archive, restore, import, exam, offline edit and sync",
 );

@@ -28,6 +28,11 @@ export interface Repos {
   makeAttempts?: (userId: string) => AttemptRepo;
   makeWorkspace?: (userId: string) => WorkspaceRepo;
   makeProfile?: (userId: string) => ProfileRepo;
+  /** Test seam: stands in for the database, so the real offline layer runs on top of it. */
+  makeLive?: (userId: string) => {
+    bank: QuestionRepo;
+    attempts: AttemptRepo;
+  };
 }
 
 /** Builds the profile store once per student, so the menu does not reload it on every render. */
@@ -60,6 +65,7 @@ export default function AppShell({
   makeAttempts,
   makeWorkspace,
   makeProfile,
+  makeLive,
 }: Repos = {}) {
   const [hash, go] = useHash();
   const { status, user } = useAuth();
@@ -78,11 +84,13 @@ export default function AppShell({
           bank: makeRepo?.(user.id),
           attempts: makeAttempts?.(user.id),
         }}
-        live={() => ({
-          bank: new SupabaseRepo(supabase, user.id),
-          attempts: new SupabaseAttempts(supabase, user.id),
-          data: new SupabaseData(supabase, user.id),
-        })}
+        live={() =>
+          makeLive?.(user.id) ?? {
+            bank: new SupabaseRepo(supabase, user.id),
+            attempts: new SupabaseAttempts(supabase, user.id),
+            data: new SupabaseData(supabase, user.id),
+          }
+        }
       >
         {node}
       </OfflineProvider>
