@@ -2,7 +2,8 @@ import { showToast } from "../../../core/toast.ts";
 import { QuestionRow } from "./QuestionRow.tsx";
 import { DuplicatesDialog } from "./DuplicatesDialog.tsx";
 import AddHub, { type AddChoice } from "./AddHub.tsx";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { colorCss } from "../domain/colors.ts";
 import { BulkBar } from "./parts/BulkBar.tsx";
 import { FilterBar } from "./parts/FilterBar.tsx";
 import { useQuestionPages } from "./parts/useQuestionPages.ts";
@@ -104,6 +105,14 @@ export default function QuestionsScreen({ onNavigate }: { onNavigate: (route: st
   const tags = useLoad((r) => r.tags());
   const collections = useLoad((r) => r.collections());
   const nodes = useMemo(() => taxonomy.data ?? [], [taxonomy.data]);
+  const subjectColor = useCallback(
+    (nodeId: string | null) => {
+      let n = nodes.find((x) => x.id === nodeId);
+      while (n?.parentId) n = nodes.find((x) => x.id === n!.parentId);
+      return colorCss(n?.color);
+    },
+    [nodes],
+  );
   const options = useMemo(() => subjectOptions(nodes), [nodes]);
 
   const effective: QuestionQuery = useMemo(
@@ -350,6 +359,8 @@ export default function QuestionsScreen({ onNavigate }: { onNavigate: (route: st
                 key={q.id}
                 q={q}
                 path={pathOf(q.nodeId, nodes)}
+                color={subjectColor(q.nodeId)}
+
                 selected={selected.has(q.id)}
                 bookmarked={marks.has(q.id)}
                 archive={archive}

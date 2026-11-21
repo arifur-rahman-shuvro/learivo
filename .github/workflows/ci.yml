@@ -65,7 +65,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Apply stub and foundation migration (plain Postgres, stand-in for Supabase auth)
-        run: psql -v ON_ERROR_STOP=1 -q -f supabase/tests/local_stub.sql -f supabase/migrations/20261112000000_foundation.sql -f supabase/migrations/20261112010000_question_bank.sql -f supabase/migrations/20261113000000_practice_exams.sql -f supabase/migrations/20261113100000_workspace.sql -f supabase/migrations/20261114000000_home_layout.sql -f supabase/migrations/20261114100000_history_speed.sql -f supabase/migrations/20261115000000_five_options_marking.sql -f supabase/migrations/20261115100000_fk_indexes.sql -f supabase/migrations/20261115200000_exam_target.sql -f supabase/migrations/20261116000000_flashcards_glossary.sql -f supabase/migrations/20261116100000_profile_avatar.sql -f supabase/migrations/20261116200000_flexible_options.sql -f supabase/migrations/20261116300000_mistake_reason.sql -f supabase/migrations/20261117000000_item_seconds.sql -f supabase/migrations/20261119000000_delete_account.sql -f supabase/migrations/20261119100000_item_confidence.sql
+        run: psql -v ON_ERROR_STOP=1 -q -f supabase/tests/local_stub.sql -f supabase/migrations/20261112000000_foundation.sql -f supabase/migrations/20261112010000_question_bank.sql -f supabase/migrations/20261113000000_practice_exams.sql -f supabase/migrations/20261113100000_workspace.sql -f supabase/migrations/20261114000000_home_layout.sql -f supabase/migrations/20261114100000_history_speed.sql -f supabase/migrations/20261115000000_five_options_marking.sql -f supabase/migrations/20261115100000_fk_indexes.sql -f supabase/migrations/20261115200000_exam_target.sql -f supabase/migrations/20261116000000_flashcards_glossary.sql -f supabase/migrations/20261116100000_profile_avatar.sql -f supabase/migrations/20261116200000_flexible_options.sql -f supabase/migrations/20261116300000_mistake_reason.sql -f supabase/migrations/20261117000000_item_seconds.sql -f supabase/migrations/20261119000000_delete_account.sql -f supabase/migrations/20261119100000_item_confidence.sql -f supabase/migrations/20261122000000_subject_color.sql
       - name: Row-level-security checks
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/rls_check.sql
       - name: Question bank checks
@@ -84,6 +84,8 @@ jobs:
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/confidence_check.sql
       - name: Account deletion check
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/delete_account_check.sql
+      - name: Subject colour checks
+        run: psql -v ON_ERROR_STOP=1 -f supabase/tests/subject_color_check.sql
       - name: Schema security audit
         run: psql -v ON_ERROR_STOP=1 -f supabase/tests/schema_audit_check.sql
       - name: Answer spec checks

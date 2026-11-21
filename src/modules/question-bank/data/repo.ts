@@ -6,6 +6,8 @@ export interface TaxonomyNode {
   kind: TaxonomyKind;
   name: string;
   position: number;
+  /** A colour name for a subject (see colors.ts). Missing or null means none. */
+  color?: string | null;
 }
 
 export interface Tag {
@@ -102,6 +104,8 @@ export interface QuestionRepo {
   taxonomy(): Promise<TaxonomyNode[]>;
   addNode(parentId: string | null, name: string): Promise<TaxonomyNode>;
   renameNode(id: string, name: string): Promise<void>;
+  /** Sets or clears (null) the colour of a subject. */
+  setNodeColor(id: string, color: string | null): Promise<void>;
   deleteNode(id: string): Promise<void>;
 
   // Tags

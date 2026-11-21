@@ -1,6 +1,7 @@
 import { useState, Fragment } from "react";
 import { Button, Dialog, Spinner, Picker, type PickerOption } from "../../../ui-kit/index.ts";
 import { showToast } from "../../../core/toast.ts";
+import { SUBJECT_COLORS } from "../domain/colors.ts";
 import { KIND_BY_DEPTH, type TaxonomyNode } from "../data/repo.ts";
 import { errorText, useBank, useLoad } from "./bank.tsx";
 
@@ -162,6 +163,43 @@ function NameRow({
   );
 }
 
+/** A row of colour dots for a subject. Tapping the chosen one again clears it. */
+function ColorPick({
+  name,
+  value,
+  onPick,
+}: {
+  name: string;
+  value: string | null;
+  onPick: (color: string | null) => Promise<void>;
+}) {
+  return (
+    <div role="radiogroup" aria-label={`Colour for ${name}`} className="flex flex-wrap gap-1">
+      {SUBJECT_COLORS.map((c) => (
+        <button
+          key={c.id}
+          type="button"
+          role="radio"
+          aria-checked={value === c.id}
+          aria-label={c.label}
+          title={c.label}
+          onClick={() => void onPick(value === c.id ? null : c.id)}
+          className="grid size-8 place-items-center rounded-full border-0 bg-transparent p-0"
+        >
+          <span
+            className="block size-5 rounded-full"
+            style={{
+              background: c.css,
+              outline: value === c.id ? "2px solid var(--lv-text, currentColor)" : "none",
+              outlineOffset: 2,
+            }}
+          />
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function SubjectsTab() {
   const { repo, refresh } = useBank();
   const { data, loading } = useLoad((r) => r.taxonomy());
@@ -219,6 +257,13 @@ function SubjectsTab() {
                 onRename={(name) => attempt(() => repo.renameNode(n.id, name))}
                 onDelete={() => attempt(() => repo.deleteNode(n.id))}
               >
+                {depthOf(n) === 0 && (
+                  <ColorPick
+                    name={n.name}
+                    value={n.color ?? null}
+                    onPick={(c) => attempt(() => repo.setNodeColor(n.id, c))}
+                  />
+                )}
                 {depthOf(n) < 3 && (
                   <Button
                     variant="ghost"

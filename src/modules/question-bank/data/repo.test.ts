@@ -154,6 +154,16 @@ describe("MemoryRepo behaves like the database", () => {
     expect((await repo.taxonomy()).length).toBe(0);
   });
 
+  it("gives a subject a colour, and clears it again", async () => {
+    await repo.create([tf("a", { path: ["Anatomy"] })]);
+    const subject = (await repo.taxonomy()).find((n) => n.kind === "subject")!;
+    expect(subject.color ?? null).toBeNull();
+    await repo.setNodeColor(subject.id, "teal");
+    expect((await repo.taxonomy())[0]!.color).toBe("teal");
+    await repo.setNodeColor(subject.id, null);
+    expect((await repo.taxonomy())[0]!.color).toBeNull();
+  });
+
   it("deleting a tag or collection keeps the questions", async () => {
     const [id] = await repo.create([tf("a", { tags: ["x"] })]);
     const [tag] = await repo.tags();

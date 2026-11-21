@@ -48,6 +48,31 @@ async function pick(field: string, option: string) {
 }
 
 describe("QuestionsScreen", () => {
+  it("a subject colour set in Organize shows as a dot on its questions, and can be cleared", async () => {
+    const repo = new MemoryRepo();
+    await repo.create([{ ...tf("Colour me"), path: ["Anatomy"] }]);
+    const { container } = renderScreen(repo);
+    await screen.findByText("Colour me");
+    expect(container.querySelector('li span[aria-hidden="true"][style*="background"]')).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Organize" }));
+    const dialog = await screen.findByRole("dialog");
+    const group = await within(dialog).findByRole("radiogroup", { name: "Colour for Anatomy" });
+    fireEvent.click(within(group).getByRole("radio", { name: "Teal" }));
+    await waitFor(() =>
+      expect(within(group).getByRole("radio", { name: "Teal" }).getAttribute("aria-checked")).toBe(
+        "true",
+      ),
+    );
+    expect((await repo.taxonomy())[0]!.color).toBe("teal");
+    await waitFor(() =>
+      expect(
+        container.querySelector('li span[aria-hidden="true"][style*="background"]'),
+      ).not.toBeNull(),
+    );
+    fireEvent.click(within(group).getByRole("radio", { name: "Teal" })); // tap again clears
+    await waitFor(async () => expect((await repo.taxonomy())[0]!.color).toBeNull());
+  });
+
   it("deletes selected questions straight from the list, after typing DELETE", async () => {
     const repo = new MemoryRepo();
     await repo.create([tf("Delete me"), tf("Keep me")]);

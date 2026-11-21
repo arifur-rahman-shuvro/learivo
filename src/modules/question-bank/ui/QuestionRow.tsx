@@ -7,6 +7,8 @@ import { DifficultyDots } from "./DifficultyDots.tsx";
 interface Props {
   q: QuestionRecord;
   path: string[];
+  /** Colour of the question's subject, if it has one. */
+  color?: string;
   selected: boolean;
   bookmarked: boolean;
   archive: boolean;
@@ -23,6 +25,7 @@ interface Props {
 export const QuestionRow = memo(function QuestionRow({
   q,
   path,
+  color,
   selected,
   bookmarked,
   archive,
@@ -53,7 +56,18 @@ export const QuestionRow = memo(function QuestionRow({
         <span className="line-clamp-2 font-semibold">{q.stem}</span>
         <span className="flex flex-wrap items-center gap-1.5 text-xs text-muted">
           <Badge>{TYPE_LABELS[q.qtype]}</Badge>
-          {path.length > 0 && <span>{path.join(" › ")}</span>}
+          {path.length > 0 && (
+            <span className="inline-flex items-center gap-1.5">
+              {color && (
+                <span
+                  aria-hidden="true"
+                  className="inline-block size-2.5 shrink-0 rounded-full"
+                  style={{ background: color }}
+                />
+              )}
+              {path.join(" › ")}
+            </span>
+          )}
           {q.difficulty !== null && <DifficultyDots level={q.difficulty} />}
           {q.tags.slice(0, 3).map((t) => (
             <Badge key={t} tone="accent">

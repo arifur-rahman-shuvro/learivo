@@ -263,6 +263,10 @@ export class MemoryRepo implements QuestionRepo {
     const n = this.nodes.find((x) => x.id === id);
     if (n) n.name = name;
   }
+  async setNodeColor(id: string, color: string | null) {
+    const n = this.nodes.find((x) => x.id === id);
+    if (n) n.color = color;
+  }
   async deleteNode(id: string) {
     const gone = new Set(subtreeIds(id, this.nodes));
     this.nodes = this.nodes.filter((n) => !gone.has(n.id));

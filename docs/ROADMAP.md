@@ -341,3 +341,5 @@ Progress, row actions (2026-11-19): every question row has a "more" button (thre
 - Security: schema audit in CI (RLS, policies, function hardening), source and header guard tests, hostile-text rendering tests.
 
 - Performance: offline copy no longer stops at 20,000 questions; offline edits save only the waiting list; large-bank guard tests.
+
+- 2026-11-22: Checked the open list against the code. Already built, docs were stale: options 1 to 9 shortcuts in practice, tap a weak subject to practise (Insights), Mistakes grouped by reason, revision forecast, skeleton loading, sticky filters on phones. New: **subject colours** (M14, applied to production 2026-11-22; Organize > pick a dot on a subject; a dot shows on its questions). Rollback: `alter table public.taxonomy_nodes drop column color;`.

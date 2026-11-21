@@ -142,6 +142,7 @@ export class PackRepo implements QuestionRepo {
   bulk = async () => this.refuse();
   addNode = async () => this.refuse();
   renameNode = async () => this.refuse();
+  setNodeColor = async () => this.refuse();
   deleteNode = async () => this.refuse();
   addTag = async () => this.refuse();
   renameTag = async () => this.refuse();
@@ -597,6 +598,8 @@ export class OfflineAwareRepo implements QuestionRepo {
 
   addNode: QuestionRepo["addNode"] = (p, n) => this.write(() => this.remote.addNode(p, n));
   renameNode = (id: string, n: string) => this.write(() => this.remote.renameNode(id, n));
+  setNodeColor = (id: string, c: string | null) =>
+    this.write(() => this.remote.setNodeColor(id, c));
   deleteNode = (id: string) => this.write(() => this.remote.deleteNode(id));
   addTag = (n: string) => this.write(() => this.remote.addTag(n));
   renameTag = (id: string, n: string) => this.write(() => this.remote.renameTag(id, n));

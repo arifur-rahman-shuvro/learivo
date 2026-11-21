@@ -82,6 +82,7 @@ const NODE_ROW: RowSpec = {
   kind: "string",
   name: "string",
   position: "number",
+  color: opt("string"),
 };
 const TAG_ROW: RowSpec = { id: "string", name: "string" };
 
@@ -463,7 +464,7 @@ export class SupabaseRepo implements QuestionRepo {
     const rows = (ok(
       await this.db
         .from("taxonomy_nodes")
-        .select("id, parent_id, kind, name, position")
+        .select("id, parent_id, kind, name, position, color")
         .order("position")
         .order("name"),
     ) ?? []) as {
@@ -472,6 +473,7 @@ export class SupabaseRepo implements QuestionRepo {
       kind: TaxonomyNode["kind"];
       name: string;
       position: number;
+      color: string | null;
     }[];
     checkRows("taxonomy_nodes", rows, NODE_ROW);
     this.nodeCache = rows.map((r) => ({
@@ -480,6 +482,7 @@ export class SupabaseRepo implements QuestionRepo {
       kind: r.kind,
       name: r.name,
       position: r.position,
+      color: r.color,
     }));
     return this.nodeCache;
   }
@@ -515,6 +518,11 @@ export class SupabaseRepo implements QuestionRepo {
 
   async renameNode(id: string, name: string) {
     ok(await this.db.from("taxonomy_nodes").update({ name }).eq("id", id));
+    this.nodeCache = null;
+  }
+
+  async setNodeColor(id: string, color: string | null) {
+    ok(await this.db.from("taxonomy_nodes").update({ color }).eq("id", id));
     this.nodeCache = null;
   }
 
