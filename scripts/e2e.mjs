@@ -103,6 +103,54 @@ try {
   await page.getByRole("menuitem", { name: "Restore" }).click();
   await page.getByRole("tab", { name: "Questions" }).click();
   await expectText("3 questions");
+
+  step = "import questions from pasted JSON";
+  const records = [1, 2, 3, 4].map((n) => ({
+    type: "sba",
+    stem: `Imported question ${n}`,
+    options: [{ text: "Right", correct: true }, { text: "Wrong A" }, { text: "Wrong B" }],
+    subject: "Anatomy",
+    tags: ["e2e"],
+  }));
+  await page.getByRole("button", { name: "Add question" }).first().click();
+  await page.getByRole("button", { name: /Paste what AI gave you/ }).click();
+  await page
+    .locator("textarea")
+    .first()
+    .fill(JSON.stringify({ questions: records }));
+  await page.getByRole("button", { name: "Check questions" }).click();
+  await expectText("Preview (4 of 4)", "body");
+  await page.getByRole("button", { name: "Import 4 questions" }).click();
+  await expectText("7 questions");
+
+  step = "build and sit an exam";
+  await page.goto(`${BASE}#/practice`);
+  await page.getByRole("button", { name: "Create an exam" }).click();
+  await page.getByLabel("Title").fill("E2E exam");
+  await page.getByLabel("Number of questions for rule 1").fill("4");
+  await page.getByRole("button", { name: "Save exam" }).click();
+  await expectText("E2E exam");
+  await page.getByRole("button", { name: "Start exam" }).click();
+  await expectText("Question 1 of 4");
+  for (let n = 1; n <= 4; n++) {
+    await expectText(`Question ${n} of 4`);
+    // Answer the last question wrongly on purpose, so the score is 3 of 4.
+    const pick =
+      n === 4 ? page.getByText(/^Wrong/).first() : page.getByText("Right", { exact: true });
+    await pick.click();
+    if (n < 4) await page.getByRole("button", { name: "Next" }).click();
+  }
+  await page
+    .getByRole("button", { name: /Finish|Submit/ })
+    .first()
+    .click();
+  await page.getByRole("button", { name: "Submit", exact: true }).click();
+  await expectText("Accuracy");
+  const exam = await page.locator("main").innerText();
+  if (!/75%\s+Score\s+3 \/ 4/.test(exam) || !/Wrong\s+1\b/.test(exam)) {
+    throw new Error(`Exam result was not 3 of 4 with 1 wrong: ${exam.slice(0, 200)}`);
+  }
+  await page.getByRole("button", { name: "Practice missed questions" }).waitFor();
 } catch (e) {
   problems.push(`${step}: ${e.message}`);
   try {
@@ -119,4 +167,6 @@ if (problems.length) {
   console.error(problems.join("\n"));
   process.exit(1);
 }
-console.log("End-to-end flows passed: add, edit, practice, results, insights, archive, restore");
+console.log(
+  "End-to-end flows passed: add, edit, practice, results, insights, archive, restore, import, exam",
+);
