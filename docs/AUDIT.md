@@ -33,4 +33,12 @@ Findings 1 to 5 are fixed and tested (448 tests, build and phone-width smoke tes
 
 ## Not verified
 
-Real AI provider calls, real account deletion, behaviour on a real phone, and offline editing on a real device (tested with simulated connection loss only).
+Status as of 2026-11-21. These were not run by the assistant (it has no phone, no second account and no AI key). The owner reports having run them and that they passed:
+
+- Network loss on a real phone (offline editing and sync on a real device)
+- Deleting a throwaway account
+- Two accounts that cannot see each other's data
+- A real AI call with the owner's own key (BYOK)
+- Firefox and Safari
+
+"Reported passed by the owner" is the evidence; no logs, screenshots or timings were supplied. Still not verified by anyone: a timed restore from Supabase's own database backup, many students on one database, a real reset email arriving, and 100k questions on a low-end phone.

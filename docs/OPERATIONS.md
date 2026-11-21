@@ -40,7 +40,7 @@ Needs in Supabase (Dashboard > Authentication > URL Configuration): Site URL `ht
 
 **Signing out.** Waiting changes are sent first. If some cannot be sent (offline), the student can save them as a file, stay signed in, or discard them. The copy on the device is wiped at sign-out for privacy.
 
-**Limits.** A new question's subject or tags that do not exist yet are linked only after sending. **Not verified:** behaviour with two real devices editing at once, and very long offline periods.
+**Limits.** A new question's subject or tags that do not exist yet are linked only after sending. The owner reports network loss on a real phone passed (2026-11-21, not run by the assistant). **Not verified:** two real devices editing at once, and very long offline periods.
 
 ## 3. Security summary
 
@@ -48,7 +48,7 @@ Needs in Supabase (Dashboard > Authentication > URL Configuration): Site URL `ht
 - Functions pin their search path. Only `delete_my_account` runs with owner rights and is callable by a student (it re-checks the password in the app first).
 - Page headers: scripts only from this site, no eval, no embedding, HTTPS-only named connections, HSTS, no sniffing. A test checks the header file; the live site's headers were **not verified from the sandbox**.
 - Student text is never rendered as HTML; tests fail the build if code that could do so is added.
-- AI keys stay on the device only and are removed at sign-out. **Not verified** with real providers.
+- AI keys stay on the device only and are removed at sign-out. The owner reports a real call with their own key passed (2026-11-21, not run by the assistant); other providers are untested.
 - Dependencies are audited in CI.
 - **Owner switches (Supabase dashboard):** Authentication > leaked-password protection.
 
