@@ -14,7 +14,8 @@ import {
 } from "../../../ui-kit/index.ts";
 import { clock } from "../../practice/ui/practice.tsx";
 import { useInsightsData } from "./useInsightsData.ts";
-import { ConfidenceBars, FlameIcon, Heatmap, ReasonBars } from "./InsightsParts.tsx";
+import { ConfidenceBars, FlameIcon, Heatmap, ReadinessCard, ReasonBars } from "./InsightsParts.tsx";
+import { allocate, readiness } from "../domain/readiness.ts";
 import {
   accuracyByDay,
   activeDaySet,
@@ -63,6 +64,7 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
       streak: streak(days, today),
       trend: accuracyByDay(facts, today, 30),
       areas: byArea(facts, depth),
+      readiness: readiness(facts, today, depth),
       exams: examHistory(sessions),
       time: studyTimeByDay(sessions, today, 14),
       totalSeconds: sessions.reduce((n, s) => n + s.secondsSpent, 0),
@@ -165,6 +167,8 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
                   </p>
                 </div>
               </section>
+
+              <ReadinessCard readiness={view.readiness} plan={allocate(view.readiness, 20)} />
 
               {view.extremes.best && view.extremes.worst && (
                 <section

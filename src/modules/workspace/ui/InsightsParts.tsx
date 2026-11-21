@@ -2,6 +2,7 @@ import { useGrown } from "../../../motion/index.ts";
 import type { ActivityDay, ConfidenceRow, ReasonRow } from "../domain/insights.ts";
 import { confidenceLabel, type CalibrationCounts } from "../../practice/domain/confidence.ts";
 import { REASONS, reasonLabel } from "../../practice/domain/reasons.ts";
+import { MIN_ANSWERS, type Allocation, type Readiness } from "../domain/readiness.ts";
 
 export function FlameIcon({ size = 20 }: { size?: number }) {
   return (
@@ -274,5 +275,55 @@ export function ConfidenceBars({
         {overconfident && <li>{overconfident}</li>}
       </ul>
     </div>
+  );
+}
+
+const pct = (n: number) => `${Math.round(n * 100)}%`;
+
+/** Readiness estimate with its range, and a split of the next practice across areas, with reasons. */
+export function ReadinessCard({ readiness, plan }: { readiness: Readiness; plan: Allocation[] }) {
+  return (
+    <section aria-label="Readiness" className="lv-card flex flex-col gap-3 p-5">
+      <h2 className="m-0 text-lg font-semibold">Readiness</h2>
+      {readiness.estimate === null ? (
+        <p className="m-0 text-sm text-muted">
+          Not enough answers yet for an estimate. You have {readiness.answers} so far; it appears
+          after {MIN_ANSWERS}.
+        </p>
+      ) : (
+        <>
+          <p className="m-0 text-3xl font-bold tabular-nums">
+            {pct(readiness.estimate)}
+            <span className="ml-2 text-sm font-normal text-muted">
+              likely range {pct(readiness.low ?? 0)} to {pct(readiness.high ?? 1)}
+            </span>
+          </p>
+          <p className="m-0 text-sm text-muted">
+            How likely you are to get a question from your own bank right today, worked out from{" "}
+            {readiness.answers} answers, with recent ones counting more.
+            {readiness.level === "early" &&
+              " It is an early estimate and will settle as you answer more."}{" "}
+            It is not a prediction of your exam mark.
+          </p>
+        </>
+      )}
+      {plan.length > 0 && (
+        <>
+          <h3 className="m-0 mt-2 text-base font-semibold">
+            Where to spend your next {plan.reduce((s, p) => s + p.questions, 0)} questions
+          </h3>
+          <ul className="m-0 flex list-none flex-col gap-3 p-0">
+            {plan.map((p) => (
+              <li key={p.name} className="flex flex-col gap-0.5">
+                <span className="font-semibold">
+                  {p.name} <span className="font-normal text-muted">· {p.questions} questions</span>
+                </span>
+                <span className="text-sm text-muted">{p.why.join(" ")}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+    </section>
   );
 }

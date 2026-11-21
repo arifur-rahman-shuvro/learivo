@@ -251,6 +251,40 @@ describe("Insights", () => {
     expect(handoff.attemptId).not.toBeNull();
   });
 
+  it("says there are too few answers for a readiness estimate, and still suggests where to practise", async () => {
+    await setup(
+      (n) => <InsightsScreen onNavigate={n} />,
+      async ({ bank, attempts }) => {
+        const [a, c] = await bank.create([tf("A1"), tf("P1")]);
+        await finished(attempts, [
+          { id: a!, stem: "A1", path: ["Anatomy"], right: false },
+          { id: c!, stem: "P1", path: ["Physiology"], right: true },
+        ]);
+      },
+    );
+    const card = await screen.findByRole("region", { name: "Readiness" });
+    expect(within(card).getByText(/Not enough answers yet for an estimate/)).toBeTruthy();
+    expect(within(card).getByText(/Where to spend your next 20 questions/)).toBeTruthy();
+    expect(within(card).getAllByText(/Only 1 answer so far/).length).toBe(2);
+  });
+
+  it("shows a readiness estimate with its range once there are enough answers", async () => {
+    await setup(
+      (n) => <InsightsScreen onNavigate={n} />,
+      async ({ bank, attempts }) => {
+        const ids = await bank.create(Array.from({ length: 24 }, (_, i) => tf(`Q${i}`)));
+        await finished(
+          attempts,
+          ids.map((id, i) => ({ id, stem: `Q${i}`, path: ["Anatomy"], right: i % 4 !== 0 })),
+        );
+      },
+    );
+    const card = await screen.findByRole("region", { name: "Readiness" });
+    expect(within(card).getByText(/likely range/)).toBeTruthy();
+    expect(within(card).getByText(/not a prediction of your exam mark/)).toBeTruthy();
+    expect(within(card).getAllByText(/24 answers/).length).toBeGreaterThan(0);
+  });
+
   it("shows totals, weakest subject first, and exam scores", async () => {
     await setup(
       (n) => <InsightsScreen onNavigate={n} />,
