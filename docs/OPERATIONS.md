@@ -24,6 +24,16 @@ Sign in screen > **Forgot password?** > email > **Send reset link**. The screen 
 
 Needs in Supabase (Dashboard > Authentication > URL Configuration): Site URL `https://learivo.pages.dev`, and the same address in Redirect URLs, or the link will not bring the student back to the app. Supabase's built-in email sender is limited to a few emails an hour; for many students set up your own sender (Authentication > SMTP Settings). **Not verified:** a real email being delivered and the link opened on a phone (needs the owner's real email); the screens and the link handling are covered by tests, the email itself is not.
 
+## 1c. Google sign-in and sending email from your own Gmail
+
+**Google sign-in.** The sign-in and create-account screens show **Continue with Google** only when Supabase says the Google provider is on (the app asks `/auth/v1/settings`), so nothing breaks before it is set up and nothing needs rebuilding after. An email account and a Google account with the same verified email become one account in Supabase. An account made with Google has no password: Account > **Add a password** lets it add one, and deleting it asks for the email address instead of a password.
+
+Set up (owner, once): Google Cloud Console > create a project > APIs & Services > OAuth consent screen (External, app name Learivo, your support email) > Credentials > Create credentials > OAuth client ID > Web application > Authorized redirect URI `https://vmtbqoqyplsfmxyjcoiy.supabase.co/auth/v1/callback`. Then Supabase > Authentication > Sign In / Providers > Google > paste the client ID and secret there (never in chat) > Save. Publish the consent screen ("In production") or only listed test users can sign in.
+
+**Email from your own Gmail (instead of Supabase's sender).** Dashboard only, no code change: Supabase > Authentication > Emails > SMTP Settings > enable custom SMTP: host `smtp.gmail.com`, port 465, username the Gmail address, password a Google **App Password** (Google Account > Security > 2-Step Verification on > App passwords), sender email the same Gmail address, sender name Learivo. Limits: Gmail allows roughly 500 messages a day and may mark mass mail as spam; Google may refuse the sender address if it differs from the login. For a real launch a sender on your own domain (Resend, Brevo) is more reliable. The app code does not change either way.
+
+**Not verified:** a real Google sign-in round trip and a real email from Gmail (needs the owner's Google project and Gmail). Covered by tests: the button appears only when Google is on, signing in, the Google-only account rules, the screens in all themes.
+
 ## 2. Offline use and sync
 
 **Needs** the copy of the bank on the device (it downloads when online; status under Saved).

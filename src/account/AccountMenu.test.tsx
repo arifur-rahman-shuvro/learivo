@@ -10,8 +10,15 @@ import { MemoryWorkspace } from "../modules/workspace/data/memoryWorkspace.ts";
 import { MemoryProfile } from "../modules/profile/data/memoryProfile.ts";
 import type { ProfileRepo } from "../modules/profile/data/repo.ts";
 
-function shell(profile: ProfileRepo = new MemoryProfile()) {
-  const client = fakeAuth({ id: "u1", email: "sara@example.test" });
+function shell(
+  profile: ProfileRepo = new MemoryProfile(),
+  user = { id: "u1", email: "sara@example.test" } as {
+    id: string;
+    email: string;
+    hasPassword?: boolean;
+  },
+) {
+  const client = fakeAuth(user);
   render(
     <ThemeProvider>
       <AuthProvider client={client}>
@@ -204,5 +211,54 @@ describe("account menu", () => {
     await openMenu();
     fireEvent.click(screen.getByRole("menuitem", { name: "Sign out" }));
     expect(await screen.findByRole("heading", { name: "Sign in to Learivo" })).toBeTruthy();
+  });
+});
+
+describe("an account made with Google", () => {
+  const google = { id: "g1", email: "student@gmail.com", hasPassword: false };
+
+  it("can add a password without a current one", async () => {
+    const { client } = shell(new MemoryProfile(), google);
+    await openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Account" }));
+    const account = await screen.findByRole("dialog", { name: "Account" });
+    const form = within(account).getByRole("form", { name: "Add a password" });
+    expect(within(form).queryByLabelText("Current password")).toBeNull();
+    fireEvent.change(within(form).getByLabelText("New password"), {
+      target: { value: "a-good-password" },
+    });
+    fireEvent.change(within(form).getByLabelText("New password again"), {
+      target: { value: "a-good-password" },
+    });
+    fireEvent.click(within(form).getByRole("button", { name: "Add password" }));
+    expect((await within(form).findByRole("status")).textContent).toBe("Password added.");
+    expect(client.calls).toContain("setNewPassword:a-good-password");
+  });
+
+  it("confirms account deletion with its email address instead of a password", async () => {
+    const { client } = shell(new MemoryProfile(), google);
+    await openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Account" }));
+    const account = await screen.findByRole("dialog", { name: "Account" });
+    fireEvent.click(within(account).getByRole("button", { name: "Delete account" }));
+    const confirm = await screen.findByRole("dialog", { name: "Delete your account?" });
+    expect(within(confirm).queryByLabelText("Your password")).toBeNull();
+    fireEvent.change(within(confirm).getByLabelText("Your email address"), {
+      target: { value: "someone@else.com" },
+    });
+    fireEvent.change(within(confirm).getByLabelText("Type DELETE to confirm"), {
+      target: { value: "DELETE" },
+    });
+    const go = within(confirm).getByRole("button", { name: "Delete my account" });
+    fireEvent.click(go);
+    expect((await within(confirm).findByRole("alert")).textContent).toBe(
+      "That is not the email on this account.",
+    );
+    fireEvent.change(within(confirm).getByLabelText("Your email address"), {
+      target: { value: "student@gmail.com" },
+    });
+    fireEvent.click(go);
+    expect(await screen.findByRole("heading", { name: "Sign in to Learivo" })).toBeTruthy();
+    expect(client.calls).toContain("deleteAccount:student@gmail.com");
   });
 });

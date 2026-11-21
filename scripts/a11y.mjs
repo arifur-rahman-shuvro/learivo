@@ -63,9 +63,18 @@ try {
       },
       [theme, mode],
     );
+    // The project settings answer says Google sign-in is on, so its button is on screen and checked too.
+    await ctx.route("**/auth/v1/settings", (r) =>
+      r.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ external: { google: true, email: true } }),
+      }),
+    );
     const page = await ctx.newPage();
     await page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
     await page.waitForSelector("h1, h2");
+    await page.getByRole("button", { name: "Continue with Google" }).waitFor();
     await checkScreen(page, `${theme}/${mode} sign-in`);
     await page.getByRole("button", { name: "Forgot password?" }).click();
     await page.getByRole("heading", { name: "Reset your password" }).waitFor();

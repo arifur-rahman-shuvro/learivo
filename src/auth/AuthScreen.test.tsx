@@ -224,3 +224,46 @@ describe("forgot password", () => {
     expect(await screen.findByText(/link has expired/)).toBeTruthy();
   });
 });
+
+describe("Google sign-in", () => {
+  it("shows no Google button until the project has Google switched on", async () => {
+    renderApp(fakeAuth(null));
+    await screen.findByRole("heading", { name: "Sign in to Learivo" });
+    await act(async () => {});
+    expect(screen.queryByRole("button", { name: /Continue with Google/ })).toBeNull();
+  });
+
+  it("signs in with Google when it is switched on, on both the sign-in and create-account screens", async () => {
+    const client = fakeAuth(null);
+    client.enableGoogle();
+    renderApp(client);
+    fireEvent.click(await screen.findByRole("button", { name: "Create an account" }));
+    expect(await screen.findByRole("button", { name: /Continue with Google/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /^Sign in$/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Continue with Google/ }));
+    expect(await screen.findByRole("navigation", { name: "Primary" })).toBeTruthy();
+    expect(client.calls).toContain("signInWithGoogle");
+  });
+
+  it("does not offer Google on the reset-password screen", async () => {
+    const client = fakeAuth(null);
+    client.enableGoogle();
+    renderApp(client);
+    await screen.findByRole("button", { name: /Continue with Google/ });
+    fireEvent.click(screen.getByRole("button", { name: "Forgot password?" }));
+    await screen.findByRole("heading", { name: "Reset your password" });
+    expect(screen.queryByRole("button", { name: /Continue with Google/ })).toBeNull();
+  });
+
+  it("shows the refusal when Google sign-in cannot start", async () => {
+    const client = fakeAuth(null);
+    client.enableGoogle();
+    client.signInWithGoogle = async () => ({
+      ok: false,
+      message: "Something went wrong. Check your connection and try again.",
+    });
+    renderApp(client);
+    fireEvent.click(await screen.findByRole("button", { name: /Continue with Google/ }));
+    expect((await screen.findByRole("alert")).textContent).toMatch(/Something went wrong/);
+  });
+});

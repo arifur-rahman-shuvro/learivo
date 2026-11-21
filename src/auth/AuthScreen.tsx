@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Button, Field, LogoWordmark, ThemeBackground } from "../ui-kit/index.ts";
 import AppearanceMenu from "../ui-kit/themes/AppearanceMenu.tsx";
 import { useAuth } from "./AuthProvider.tsx";
@@ -15,6 +15,28 @@ export default function AuthScreen() {
   const [error, setError] = useState<string>();
   const [sentTo, setSentTo] = useState<string>();
   const [resetSentTo, setResetSentTo] = useState<string>();
+  const [google, setGoogle] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    void client.googleAvailable().then(
+      (on) => alive && setGoogle(on),
+      () => undefined,
+    );
+    return () => {
+      alive = false;
+    };
+  }, [client]);
+
+  async function withGoogle() {
+    setBusy(true);
+    setError(undefined);
+    const r = await client.signInWithGoogle();
+    if (!r.ok) {
+      setError(r.message);
+      setBusy(false);
+    }
+    // On success the browser is on its way to Google.
+  }
 
   const emailError =
     email.length > 0 && !/^\S+@\S+\.\S+$/.test(email) ? "Enter a valid email address." : undefined;
@@ -139,6 +161,23 @@ export default function AuthScreen() {
                   {error}
                 </p>
               )}
+              {google && mode !== "forgot" && (
+                <>
+                  <p aria-hidden className="m-0 text-center text-xs text-muted">
+                    or
+                  </p>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="lg"
+                    disabled={busy}
+                    onClick={() => void withGoogle()}
+                  >
+                    <GoogleMark />
+                    Continue with Google
+                  </Button>
+                </>
+              )}
               <Button type="submit" size="lg" loading={busy} disabled={!ready}>
                 {mode === "sign-in"
                   ? "Sign in"
@@ -161,5 +200,28 @@ export default function AuthScreen() {
         </main>
       </div>
     </>
+  );
+}
+
+function GoogleMark() {
+  return (
+    <svg aria-hidden viewBox="0 0 18 18" width="18" height="18" className="shrink-0">
+      <path
+        fill="#4285F4"
+        d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"
+      />
+      <path
+        fill="#34A853"
+        d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.34 0-4.33-1.58-5.04-3.71H.96v2.33A9 9 0 0 0 9 18z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M3.96 10.71A5.41 5.41 0 0 1 3.68 9c0-.6.1-1.17.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.82.96 4.04l3-2.33z"
+      />
+      <path
+        fill="#EA4335"
+        d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 0 0 .96 4.96l3 2.33C4.67 5.16 6.66 3.58 9 3.58z"
+      />
+    </svg>
   );
 }

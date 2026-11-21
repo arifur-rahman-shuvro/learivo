@@ -1,9 +1,15 @@
 import type { Session } from "@supabase/supabase-js";
+import { config } from "../core/config.ts";
 import { supabase } from "../core/supabase.ts";
 import type { AuthClient, AuthUser } from "./types.ts";
 
-const toUser = (s: Session | null): AuthUser | null =>
-  s?.user ? { id: s.user.id, email: s.user.email ?? "" } : null;
+/** An account made with Google has no password until the student adds one. */
+const toUser = (s: Session | null): AuthUser | null => {
+  if (!s?.user) return null;
+  const providers = s.user.app_metadata?.providers;
+  const hasPassword = !Array.isArray(providers) || providers.includes("email");
+  return { id: s.user.id, email: s.user.email ?? "", hasPassword };
+};
 
 /** Turn provider error text into plain guidance, without leaking whether an account exists. */
 function friendly(message: string): string {
@@ -21,9 +27,12 @@ function friendly(message: string): string {
 export function readLink(hash = window.location.hash, search = window.location.search) {
   const raw = `${hash.replace(/^#\/?/, "")}&${search.replace(/^\?/, "")}`;
   const p = new URLSearchParams(raw);
+  const expired = p.get("error_code") === "otp_expired";
   return {
     recovery: p.get("type") === "recovery",
-    expired: p.get("error_code") === "otp_expired" || p.get("error") === "access_denied",
+    expired,
+    /** Coming back from Google without signing in (cancelled, or the provider refused). */
+    failed: !expired && (p.get("error") !== null || p.get("error_code") !== null),
   };
 }
 
@@ -33,7 +42,29 @@ export function createSupabaseAuth(): AuthClient {
     startedInRecovery: link.recovery,
     startupNotice: link.expired
       ? "That link has expired or was already used. Choose Forgot password and ask for a new one."
-      : undefined,
+      : link.failed
+        ? "Sign in did not finish. Try again, or use your email and password."
+        : undefined,
+    async googleAvailable() {
+      try {
+        const res = await fetch(`${config.supabaseUrl}/auth/v1/settings`, {
+          headers: { apikey: config.supabasePublishableKey },
+          signal: AbortSignal.timeout(4000),
+        });
+        if (!res.ok) return false;
+        const body = (await res.json()) as { external?: { google?: boolean } };
+        return body.external?.google === true;
+      } catch {
+        return false; // no connection: the email form still works
+      }
+    },
+    async signInWithGoogle() {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.origin },
+      });
+      return error ? { ok: false, message: friendly(error.message) } : { ok: true };
+    },
     onRecovery(listener) {
       const { data } = supabase.auth.onAuthStateChange((event) => {
         if (event === "PASSWORD_RECOVERY") listener();
@@ -108,15 +139,22 @@ export function createSupabaseAuth(): AuthClient {
       const { data } = await supabase.auth.getSession();
       const email = data.session?.user.email;
       if (!email) return { ok: false, message: "Your session has ended. Sign in again." };
-      // Ask for the password again, so someone holding an open phone cannot delete the account.
-      const check = await supabase.auth.signInWithPassword({ email, password });
-      if (check.error) {
-        return {
-          ok: false,
-          message: check.error.message.toLowerCase().includes("invalid login")
-            ? "That password is not correct."
-            : friendly(check.error.message),
-        };
+      const providers = data.session?.user.app_metadata?.providers;
+      if (Array.isArray(providers) && !providers.includes("email")) {
+        // A Google-only account has no password: the student types their email instead.
+        if (password.trim().toLowerCase() !== email.toLowerCase())
+          return { ok: false, message: "That is not the email on this account." };
+      } else {
+        // Ask for the password again, so someone holding an open phone cannot delete the account.
+        const check = await supabase.auth.signInWithPassword({ email, password });
+        if (check.error) {
+          return {
+            ok: false,
+            message: check.error.message.toLowerCase().includes("invalid login")
+              ? "That password is not correct."
+              : friendly(check.error.message),
+          };
+        }
       }
       const { error } = await supabase.rpc("delete_my_account");
       if (error) return { ok: false, message: friendly(error.message) };

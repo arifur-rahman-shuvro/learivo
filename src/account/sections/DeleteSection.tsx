@@ -3,9 +3,11 @@ import { Button, Dialog } from "../../ui-kit/index.ts";
 import { useAuth } from "../../auth/AuthProvider.tsx";
 import { useClearDeviceData } from "../clearDeviceData.ts";
 
-/** Permanent account deletion. Needs the password and the word DELETE, so it cannot happen by accident. */
+/** Permanent account deletion. Needs the password (or the email, for a Google account) and the word DELETE, so it cannot happen by accident. */
 export function DeleteSection() {
-  const { client } = useAuth();
+  const { client, user } = useAuth();
+  // A Google-only account has no password, so it confirms with its email address instead.
+  const googleOnly = user?.hasPassword === false;
   const clearDevice = useClearDeviceData();
   const [open, setOpen] = useState(false);
   const [password, setPassword] = useState("");
@@ -72,11 +74,11 @@ export function DeleteSection() {
             copy is cleared too.
           </p>
           <label className="flex flex-col gap-1.5 text-sm font-semibold">
-            Your password
+            {googleOnly ? "Your email address" : "Your password"}
             <input
-              type="password"
+              type={googleOnly ? "email" : "password"}
               className="lv-input"
-              autoComplete="current-password"
+              autoComplete={googleOnly ? "email" : "current-password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />

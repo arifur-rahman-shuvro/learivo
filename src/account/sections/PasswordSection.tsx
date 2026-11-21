@@ -5,7 +5,9 @@ import { useAuth } from "../../auth/AuthProvider.tsx";
 const MIN_PASSWORD = 8;
 
 export function PasswordSection() {
-  const { client } = useAuth();
+  const { client, user } = useAuth();
+  // An account made with Google has no password to check: it can add one without a current password.
+  const googleOnly = user?.hasPassword === false;
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [again, setAgain] = useState("");
@@ -15,7 +17,11 @@ export function PasswordSection() {
 
   const tooShort = next.length > 0 && next.length < MIN_PASSWORD;
   const mismatch = again.length > 0 && again !== next;
-  const ready = current !== "" && next.length >= MIN_PASSWORD && again === next && next !== current;
+  const ready =
+    (googleOnly || current !== "") &&
+    next.length >= MIN_PASSWORD &&
+    again === next &&
+    next !== current;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -23,7 +29,9 @@ export function PasswordSection() {
     setBusy(true);
     setError(undefined);
     setDone(false);
-    const r = await client.changePassword(current, next);
+    const r = googleOnly
+      ? await client.setNewPassword(next)
+      : await client.changePassword(current, next);
     setBusy(false);
     if (r.ok) {
       setDone(true);
@@ -73,10 +81,18 @@ export function PasswordSection() {
     <form
       onSubmit={(e) => void submit(e)}
       className="flex flex-col gap-3"
-      aria-label="Change password"
+      aria-label={googleOnly ? "Add a password" : "Change password"}
     >
-      <h3 className="m-0 text-base font-semibold">Change password</h3>
-      {field("pw-current", "Current password", current, setCurrent, "current-password")}
+      <h3 className="m-0 text-base font-semibold">
+        {googleOnly ? "Add a password" : "Change password"}
+      </h3>
+      {googleOnly ? (
+        <p className="m-0 text-sm text-muted">
+          You sign in with Google. You can also add a password to sign in with your email.
+        </p>
+      ) : (
+        field("pw-current", "Current password", current, setCurrent, "current-password")
+      )}
       {field(
         "pw-new",
         "New password",
@@ -107,12 +123,12 @@ export function PasswordSection() {
       )}
       {done && (
         <p role="status" className="m-0 text-sm font-semibold">
-          Password changed.
+          {googleOnly ? "Password added." : "Password changed."}
         </p>
       )}
       <div>
         <Button type="submit" size="sm" loading={busy} disabled={!ready}>
-          Change password
+          {googleOnly ? "Add password" : "Change password"}
         </Button>
       </div>
     </form>

@@ -1,6 +1,8 @@
 export interface AuthUser {
   id: string;
   email: string;
+  /** False when the account only signs in with Google (no password set). Missing means it has one. */
+  hasPassword?: boolean;
 }
 
 export type SignUpResult =
@@ -25,6 +27,10 @@ export interface AuthClient {
   requestPasswordReset(email: string): Promise<ResetResult>;
   /** After the emailed link has been opened: sets the new password for that session. */
   setNewPassword(next: string): Promise<ResetResult>;
+  /** True when Google sign-in is switched on for this project (so the button is only shown when it works). */
+  googleAvailable(): Promise<boolean>;
+  /** Sends the student to Google; they come back signed in. */
+  signInWithGoogle(): Promise<SignInResult>;
   /** Called when the emailed reset link has just been opened. */
   onRecovery(listener: () => void): () => void;
   /** True when this page load came from a reset link (known before anything else has loaded). */

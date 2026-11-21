@@ -10,14 +10,31 @@ import type {
 export function fakeAuth(
   initial: AuthUser | null = null,
   over: Partial<Pick<AuthClient, "signIn" | "signUp" | "changePassword" | "deleteAccount">> = {},
-): AuthClient & { calls: string[]; expire: () => void; openResetLink: (email: string) => void } {
+): AuthClient & {
+  calls: string[];
+  expire: () => void;
+  openResetLink: (email: string) => void;
+  enableGoogle: () => void;
+} {
   let user = initial;
   const listeners = new Set<(u: AuthUser | null) => void>();
   const emit = () => listeners.forEach((l) => l(user));
   const calls: string[] = [];
   const recoveryListeners = new Set<() => void>();
+  let google = false;
   return {
     calls,
+    /** Switches Google sign-in on, as the owner does in the dashboard. */
+    enableGoogle: () => {
+      google = true;
+    },
+    googleAvailable: async () => google,
+    signInWithGoogle: async (): Promise<SignInResult> => {
+      calls.push("signInWithGoogle");
+      user = { id: "g1", email: "student@gmail.com", hasPassword: false };
+      emit();
+      return { ok: true };
+    },
     /** The student opens the emailed reset link: a session starts and the recovery event fires. */
     openResetLink: (email) => {
       user = { id: "u1", email };
@@ -74,6 +91,8 @@ export function fakeAuth(
       over.deleteAccount ??
       (async (password) => {
         calls.push(`deleteAccount:${password}`);
+        if (user?.hasPassword === false && password !== user.email)
+          return { ok: false as const, message: "That is not the email on this account." };
         if (password === "wrong-password")
           return { ok: false as const, message: "That password is not correct." };
         user = null;
