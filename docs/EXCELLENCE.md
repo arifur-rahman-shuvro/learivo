@@ -89,3 +89,11 @@ Todo: real-database query timing (Needs you or a test project: the sandbox canno
 3. Phase 3: session expiry, security tests
 4. Phase 5 error boundaries, then Phase 7 tests
 5. P1 performance and AI, then P2
+
+## Exam paper (PDF) design
+
+- The printable paper has a cover band (title, question/marks/time chips), name/roll/date boxes, instructions, a marks table, section banners with directions, question cards with OMR-style bubbles, a rough-work box, and a page footer with the title and page numbers.
+- The answer key is on its own page (a grid, grouped by section); explanations are on a further page. Without a key, the file holds no answers at all.
+- On screen the page is interactive: tap options, jump to a section, "Check my answers", "Clear".
+- `pnpm paper` renders it in Chromium, tests the taps, and prints a real PDF to prove the key starts on a page after the last question. Checked by breaking the page break on purpose: it fails.
+- Not verified: how it looks in Android Chrome's "Save as PDF". Page numbers use CSS page margin boxes, which Firefox ignores.
