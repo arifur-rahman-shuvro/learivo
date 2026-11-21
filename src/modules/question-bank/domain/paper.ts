@@ -67,7 +67,7 @@ function body(q: QuestionInput, grouped: boolean, withKey: boolean): string {
   const hint =
     q.qtype === "multi_select" && !grouped ? '<p class="hint">Choose all that apply.</p>' : "";
   return (
-    `<p class="stem">${stem}</p>${hint}<ol class="opts${o.every((x) => x.text.length <= 22 && !x.text.includes("\n")) ? " short" : ""}">` +
+    `<p class="stem">${stem}</p>${hint}<ol class="opts">` +
     o
       .map(
         (x, i) =>
@@ -111,7 +111,7 @@ const STYLE = `
 :root { --ink: #16243f; --gold: #b7791f; --tint: #eef1f7; --rule: #c4cbdb; --soft: #5b667d; }
 @page { size: A4; margin: 18mm 14mm 20mm; @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 9pt system-ui, sans-serif; color: #5b667d; } @bottom-left { content: var(--foot); font: 9pt system-ui, sans-serif; color: #5b667d; } }
 * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-body { font-family: Georgia, "Times New Roman", serif; color: #111827; background: #fff; font-size: 11.5pt; line-height: 1.45; margin: 0; padding: 0 14px 24px; }
+body { font-family: Georgia, "Times New Roman", serif; color: #111827; background: #fff; font-size: 12pt; line-height: 1.45; margin: 0; padding: 0 14px 24px; }
 .sans, .bar, .chips, .box, .sec, .bub, .cell, .num, .grade { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
 .bar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; background: #fff; border-bottom: 1px solid var(--rule); padding: 8px 0; margin: 0 0 10px; font-size: 13px; }
 .bar a, .bar button { font: inherit; color: var(--ink); background: var(--tint); border: 1px solid var(--rule); border-radius: 999px; padding: 4px 12px; text-decoration: none; cursor: pointer; min-height: 32px; }
@@ -126,27 +126,27 @@ body { font-family: Georgia, "Times New Roman", serif; color: #111827; backgroun
 .info { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin: 12px 0; break-inside: avoid; }
 .box { border: 1.5px solid var(--ink); border-radius: 5px; padding: 4px 9px 18px; font-size: 8.5pt; color: var(--soft); min-height: 44px; }
 .box.score { border-style: dashed; }
-.instr { border-left: 5px solid var(--gold); background: var(--tint); padding: 8px 14px; margin: 0 0 14px; font-size: 10.5pt; white-space: pre-wrap; break-inside: avoid; }
+.instr { border-left: 5px solid var(--gold); background: var(--tint); padding: 8px 14px; margin: 0 0 14px; font-size: 12pt; white-space: pre-wrap; break-inside: avoid; }
 .instr h2 { font: 700 10.5pt system-ui, sans-serif; margin: 0 0 3px; }
 .scheme { width: 100%; border-collapse: collapse; margin: 0 0 14px; font: 10pt system-ui, sans-serif; break-inside: avoid; }
 .scheme td { border: 1px solid var(--rule); padding: 5px 10px; }
 .scheme td:first-child { background: var(--tint); font-weight: 600; width: 34%; }
 .sec { display: flex; align-items: center; gap: 12px; margin: 20px 0 10px; padding: 7px 12px; background: var(--tint); border-left: 6px solid var(--ink); border-radius: 0 5px 5px 0; break-after: avoid; break-inside: avoid; }
 .sec .ltr { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: #fff; font-weight: 700; display: grid; place-items: center; }
-.sec h3 { margin: 0; font: 700 12pt system-ui, sans-serif; }
-.sec p { margin: 0; font: 9.5pt system-ui, sans-serif; color: var(--soft); }
+.sec h3 { margin: 0; font: 700 13pt system-ui, sans-serif; }
+.sec p { margin: 0; font: 10.5pt system-ui, sans-serif; color: var(--soft); }
 .sec .pts { margin-left: auto; text-align: right; font: 700 10pt system-ui, sans-serif; white-space: nowrap; }
-.q { display: flex; gap: 10px; break-inside: avoid; margin: 0 0 14px; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; }
-.q .num { flex: none; min-width: 28px; height: 28px; padding: 0 5px; border-radius: 6px; background: var(--ink); color: #fff; font-weight: 700; font-size: 10.5pt; display: grid; place-items: center; }
+.cols { column-count: 2; column-gap: 12mm; column-rule: 1.5px solid var(--rule); }
+.q { display: flex; gap: 9px; break-inside: avoid; margin: 0 0 4px; padding: 7px 0 9px; border-bottom: 1px dotted var(--rule); }
+.q .num { flex: none; min-width: 28px; height: 28px; padding: 0 5px; border-radius: 6px; background: var(--ink); color: #fff; font-weight: 700; font-size: 11pt; display: grid; place-items: center; }
 .qb { flex: 1; min-width: 0; }
 .stem { margin: 2px 0 6px; white-space: pre-wrap; }
-.hint { margin: 0 0 6px; font: italic 10pt Georgia, serif; color: var(--soft); }
+.hint { margin: 0 0 6px; font: italic 11pt Georgia, serif; color: var(--soft); }
 .opts { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
 .opts li { display: flex; gap: 9px; align-items: flex-start; padding: 2px 4px; border-radius: 5px; }
 .opts .ot { white-space: pre-wrap; padding-top: 1px; flex: 1; }
-.bub { flex: none; width: 22px; height: 22px; border: 1.5px solid var(--ink); border-radius: 50%; display: grid; place-items: center; font-size: 9.5pt; font-weight: 600; color: var(--ink); background: #fff; }
-.opts .tl { flex: none; width: 16px; font: 600 10pt system-ui, sans-serif; color: var(--soft); }
-.opts.short { grid-template-columns: 1fr 1fr; column-gap: 14px; }
+.bub { flex: none; width: 24px; height: 24px; border: 1.5px solid var(--ink); border-radius: 50%; display: grid; place-items: center; font-size: 10.5pt; font-weight: 600; color: var(--ink); background: #fff; }
+.opts .tl { flex: none; width: 16px; font: 600 11pt system-ui, sans-serif; color: var(--soft); }
 .tfs { display: flex; gap: 6px; }
 .on .bub, li.on > .bub, .bub.on { background: var(--ink); color: #fff; }
 .wait li, .wait .bub { cursor: pointer; }
@@ -160,16 +160,17 @@ li.wrong > .bub, .bub.wrong { background: #c53030 !important; border-color: #c53
 .keypage .cover h1 { font-size: 19pt; }
 .keypage h3 { margin: 18px 0 8px; font: 700 11.5pt system-ui, sans-serif; color: var(--ink); border-bottom: 2px solid var(--gold); padding-bottom: 3px; break-after: avoid; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(34mm, 1fr)); gap: 6px; }
-.cell { display: flex; align-items: center; gap: 8px; border: 1px solid var(--rule); border-radius: 5px; padding: 4px 8px; break-inside: avoid; font-size: 10.5pt; }
+.cell { display: flex; align-items: center; gap: 8px; border: 1px solid var(--rule); border-radius: 5px; padding: 4px 8px; break-inside: avoid; font-size: 12pt; }
 .cell.wide { grid-column: span 2; }
 .cell b { flex: none; min-width: 24px; height: 24px; display: grid; place-items: center; border-radius: 5px; background: var(--ink); color: #fff; font-size: 9.5pt; }
 .cell span { font-weight: 700; }
 .whypage { break-before: page; }
 .whypage li { margin: 0 0 8px; break-inside: avoid; }
 .whypage .ans { font: 700 10pt system-ui, sans-serif; color: var(--ink); }
-.why { display: block; white-space: pre-wrap; font-size: 10.5pt; color: #374151; }
+.why { display: block; white-space: pre-wrap; font-size: 12pt; color: #374151; }
 @media screen { body { max-width: 820px; margin: 0 auto; background: #f3f4f8; padding: 0 14px 40px; } .page { background: #fff; padding: 4px 4px 8px; } .keypage, .whypage { margin-top: 28px; padding-top: 14px; border-top: 3px dashed var(--rule); } .q.live:hover { border-color: var(--ink); } }
 @media print { .bar, .noprint { display: none !important; } body { background: #fff; padding: 0; max-width: none; } }
+@media screen and (max-width: 640px) { .cols { column-count: 1; column-rule: 0; } }
 @media (max-width: 520px) { .info { grid-template-columns: 1fr; } .cover h1 { font-size: 18pt; } .sec { flex-wrap: wrap; } }
 `;
 
@@ -277,7 +278,7 @@ export function paperHtml(questions: readonly QuestionInput[], opts: PaperOption
   const marksEach = opts.exam ? marks(opts.exam.marksCorrect) : "";
   const items = secs
     .map((s, i) => {
-      const qs = s.questions.map((q) => item(q, s.type !== null)).join("\n");
+      const qs = `<div class="cols">${s.questions.map((q) => item(q, s.type !== null)).join("\n")}</div>`;
       if (s.type === null) return qs;
       return (
         `<div class="sec" id="s${i}"><span class="ltr">${letter(i)}</span><div><h3>Section ${letter(i)}: ${esc(TYPE_LABELS[s.type])}</h3>` +

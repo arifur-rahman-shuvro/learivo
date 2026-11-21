@@ -62,6 +62,19 @@ ok(errors.length === 0, "no script errors: " + errors.join(";"));
 
 const pdf = join(dir, "paper.pdf");
 await p.emulateMedia({ media: "print" });
+const lefts = await p.$$eval(
+  "#q1, #q2, #q3, #q4, #q5, #q6, #q7, #q8, #q9, #q10, #q11, #q12",
+  (els) => els.map((e) => Math.round(e.getBoundingClientRect().left)),
+);
+ok(
+  new Set(lefts).size === 2,
+  "questions sit in two columns, saw lefts " + [...new Set(lefts)].join(","),
+);
+ok(
+  await p.$eval(".cols", (e) => getComputedStyle(e).columnRuleStyle === "solid"),
+  "a divider line sits between the columns",
+);
+ok(await p.$eval(".stem", (e) => getComputedStyle(e).fontSize === "16px"), "question text is 12pt");
 await p.pdf({ path: pdf, format: "A4", preferCSSPageSize: true, printBackground: true });
 await b.close();
 
