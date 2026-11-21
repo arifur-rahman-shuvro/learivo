@@ -35,13 +35,16 @@ export const QuestionRow = memo(function QuestionRow({
 }: Props) {
   return (
     <li className="lv-card flex items-start gap-3 p-3.5">
-      <input
-        type="checkbox"
-        aria-label={`Select: ${q.stem.slice(0, 60)}`}
-        checked={selected}
-        onChange={() => onToggle(q.id)}
-        className="mt-1 size-4 shrink-0 accent-[var(--lv-accent)]"
-      />
+      {/* The label is the tap target: 40px square around the small checkbox. */}
+      <label className="-m-2 grid size-10 shrink-0 cursor-pointer place-items-center">
+        <input
+          type="checkbox"
+          aria-label={`Select: ${q.stem.slice(0, 60)}`}
+          checked={selected}
+          onChange={() => onToggle(q.id)}
+          className="size-4 accent-[var(--lv-accent)]"
+        />
+      </label>
       <button
         type="button"
         onClick={() => onOpen(q.id)}
@@ -65,7 +68,7 @@ export const QuestionRow = memo(function QuestionRow({
           type="button"
           aria-label={`${bookmarked ? "Bookmarked" : "Bookmark"}: ${q.stem.slice(0, 40)}`}
           onClick={() => onBookmark(q.id)}
-          className={`shrink-0 rounded-control border px-2.5 py-1 text-xs font-semibold ${
+          className={`min-h-10 shrink-0 rounded-control border px-2.5 py-1 text-xs font-semibold ${
             bookmarked ? "border-accent bg-surface-2" : "border-line text-muted"
           }`}
         >

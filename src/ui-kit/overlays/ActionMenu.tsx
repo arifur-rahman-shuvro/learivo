@@ -82,7 +82,7 @@ export function ActionMenu({ label, items }: Props) {
         aria-expanded={open}
         aria-controls={open ? id : undefined}
         onClick={toggle}
-        className="grid size-9 shrink-0 place-items-center rounded-control border border-line text-muted hover:bg-surface-2"
+        className="grid size-10 shrink-0 place-items-center rounded-control border border-line text-muted hover:bg-surface-2"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <circle cx="12" cy="5" r="1.8" />

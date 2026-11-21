@@ -74,7 +74,7 @@ Todo: real-database query timing (Needs you or a test project: the sandbox canno
 
 ## Phase 9: Design system [P2]
 
-29 to 31 — Partial. Tokens, themes, motion and a component kit exist. Todo: contrast verification per theme, touch-target audit, focus restoration and scroll preservation checks, low-end Android check (Needs you).
+29 to 31 — Partial (2026-11-21). Tokens, themes, motion and a component kit exist; theme colours are unit-tested against WCAG AA. Added `pnpm design` (CI): a real Chromium at 360 px, with 8 imported questions and a finished session, in 5 theme/mode combinations, checks Home, Questions, Practice, Review, Insights (and its tabs), the results screen and the Add questions, Export, Organize and New exam dialogs for colour contrast and other axe rules, tap targets of 40px or more, no sideways scroll, focus returning to the button that opened a dialog, and focus staying in a field while typing. It found and fixed small question-row controls (select box, Bookmark, Actions). A deliberately broken focus-return was caught. Not covered: other dialogs and flows (Practice session screen, flashcards, glossary, settings), scroll-position preservation across screens, Firefox and Safari, a low-end Android check (Needs you: use the app on the slowest phone you have and tell me what feels slow).
 
 ## Phase 10: Operations [P1]
 
