@@ -43,7 +43,7 @@ Todo: the sign-out dialog itself is not covered by a screen test; a stored-data 
 ## Phase 4: AI [P1]
 
 11. Provider reliability — Partial. Done: timeout, cancel, retry with limits for 429 and 5xx, network recovery. Todo: real-provider tests (Needs your keys on your device), token-limit and partial-answer handling.
-12. AI question quality — Partial. Schema validation and duplicate detection exist through import. Todo: answer-key and option checks, negation and ambiguity warnings, hallucination-risk notes, human review step, quality summary.
+12. AI question quality — Partial (2026-11-21). Schema validation and duplicate detection existed. Added src/modules/question-bank/domain/review.ts: checks for a missing or doubled answer key, an explanation that names another option but not the key, two-option questions, an option inside another, absolute words in the key, negative wording without NOT/EXCEPT in capitals, an empty blank, and a note that figures, dates or sources need checking (possible invented facts). They show in the editor and in the import preview ("Check this" for likely mistakes, tips for the rest), with a "need a look" count; import is blocked until the student ticks that they looked at the flagged ones (a human review step). 11 logic tests and a screen test. Not verified: these are rules of thumb on wording and structure; they cannot tell whether a fact is true, and they have not been measured against real AI output (false alarms and misses are likely). Todo: tune on real AI output, a second-opinion AI check (needs your key).
 13. AI connection — Partial. Done: per-provider settings, key clearing. Todo: key validation call, connection diagnostics, usage visibility, privacy text.
 
 ## Phase 5: Frontend architecture [P1]

@@ -19,6 +19,8 @@ import {
 import { PromptMaker } from "./PromptMaker.tsx";
 import { errorText, useBank } from "./bank.tsx";
 import { contentHash } from "../domain/hash.ts";
+import { qualityHints } from "../domain/quality.ts";
+import { allHints, summarise } from "../domain/review.ts";
 import { QuestionPreview } from "./QuestionPreview.tsx";
 
 import {
@@ -51,6 +53,8 @@ export function ImportDialog({
   const [report, setReport] = useState<ImportReport | null>(null);
   const [policy, setPolicy] = useState<"skip" | "keep" | "replace">("skip");
   const [skipSimilar, setSkipSimilar] = useState(true);
+  // The report the student has confirmed they looked at; a new check starts unconfirmed.
+  const [lookedAt, setLookedAt] = useState<ImportReport | null>(null);
   const [progress, setProgress] = useState(0);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [shown, setShown] = useState(5);
@@ -136,6 +140,9 @@ export function ImportDialog({
   const toImport = rows.filter((r) =>
     policy === "keep" ? true : r.duplicate === null && (!skipSimilar || r.similar === null),
   );
+  const hintsOf = new Map(rows.map((r) => [r.row, allHints(r.input, qualityHints(r.input))]));
+  const quality = summarise(toImport.map((r) => hintsOf.get(r.row) ?? []));
+  const mustLook = quality.needLook > 0 && lookedAt !== report;
   const toReplace = policy === "replace" ? rows.filter((r) => r.duplicate === "bank") : [];
   const total = toImport.length + toReplace.length;
   const inBank = rows.filter((r) => r.duplicate === "bank").length;
@@ -194,7 +201,7 @@ export function ImportDialog({
         <Button variant="secondary" onClick={() => setStage("choose")}>
           Back
         </Button>
-        <Button disabled={total === 0} onClick={() => void run()}>
+        <Button disabled={total === 0 || mustLook} onClick={() => void run()}>
           {`Import ${total} question${total === 1 ? "" : "s"}`}
         </Button>
       </>
@@ -449,12 +456,33 @@ export function ImportDialog({
             <Tile value={report.rows.length} label="valid" />
             <Tile value={duplicates} label="duplicates" tone="warning" />
             <Tile value={similar.length} label="look similar" tone="warning" />
+            <Tile value={quality.needLook} label="need a look" tone="warning" />
             <Tile value={report.errors.length} label="invalid" tone="danger" />
           </ul>
           {error && (
             <p role="alert" className="m-0 text-sm text-danger">
               {error}
             </p>
+          )}
+          {quality.needLook > 0 && (
+            <label className="flex items-start gap-2 rounded-control border border-line bg-surface-2 p-3 text-sm">
+              <input
+                type="checkbox"
+                className="mt-0.5 size-4 shrink-0 accent-[var(--lv-accent)]"
+                checked={lookedAt === report}
+                onChange={(e) => setLookedAt(e.target.checked ? report : null)}
+              />
+              <span>
+                {quality.needLook} question{quality.needLook === 1 ? " is" : "s are"} marked
+                &ldquo;Check this&rdquo; below, for example a missing answer key or an explanation
+                that argues for another option. I have looked at{" "}
+                {quality.needLook === 1 ? "it" : "them"}.
+                <span className="block text-muted">
+                  These are rules of thumb. They cannot tell whether a fact is true, so check the
+                  facts yourself.
+                </span>
+              </span>
+            </label>
           )}
           {similar.length > 0 && policy !== "keep" && (
             <label className="flex items-start gap-2 text-sm">
@@ -563,6 +591,9 @@ export function ImportDialog({
                           : "Looks like an earlier one in this file"}
                       </Badge>
                     )}
+                    {(hintsOf.get(r.row) ?? []).some((h) => h.level === "check") && (
+                      <Badge tone="danger">Check this</Badge>
+                    )}
                     {r.duplicate && (
                       <Badge tone="warning">
                         {r.duplicate === "bank"
@@ -572,6 +603,21 @@ export function ImportDialog({
                     )}
                   </div>
                   <QuestionPreview question={r.input} />
+                  {(hintsOf.get(r.row) ?? []).length > 0 && (
+                    <ul className="m-0 mt-2 flex list-none flex-col gap-1 p-0 text-xs">
+                      {(hintsOf.get(r.row) ?? []).map((h) => (
+                        <li
+                          key={h.id}
+                          className={
+                            h.level === "check" ? "font-semibold text-danger" : "text-muted"
+                          }
+                        >
+                          {h.level === "check" ? "Check: " : "Tip: "}
+                          {h.message}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   {r.similar && r.duplicate === null && (
                     <p className="m-0 mt-2 rounded-control bg-surface-2 p-2 text-xs">
                       {r.similar.why} Resembles: “{r.similar.stem.slice(0, 140)}”

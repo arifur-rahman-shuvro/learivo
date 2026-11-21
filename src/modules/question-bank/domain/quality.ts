@@ -4,6 +4,8 @@ import { isOptionType, type QuestionInput } from "./model.ts";
 export interface Hint {
   id: string;
   message: string;
+  /** "check": likely a mistake, look before saving. "tip" (default): could be better. */
+  level?: "check" | "tip";
 }
 
 const norm = (s: string) =>

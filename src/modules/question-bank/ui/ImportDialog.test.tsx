@@ -59,6 +59,33 @@ describe("Smart import", () => {
     expect((await repo.list({ ...(await import("../data/repo.ts")).DEFAULT_QUERY })).total).toBe(2);
   });
 
+  it("asks the student to look at questions marked Check this before importing them", async () => {
+    const repo = open();
+    const suspect = {
+      type: "sba",
+      stem: "Which nerve supplies the deltoid muscle?",
+      explanation: "The radial nerve wraps around the humerus and supplies the deltoid.",
+      options: [
+        { text: "Axillary nerve", correct: true },
+        { text: "Radial nerve", correct: false },
+        { text: "Ulnar nerve", correct: false },
+      ],
+    };
+    paste(JSON.stringify([suspect, q("A fine one")]));
+    check();
+    const preview = await screen.findByRole("region", { name: "Preview" });
+    expect(within(preview).getByText("Check this")).toBeTruthy();
+    expect(within(preview).getByText(/Is the answer key right\?/)).toBeTruthy();
+    expect(screen.getByText("need a look")).toBeTruthy();
+    const go = screen.getByRole("button", { name: "Import 2 questions" }) as HTMLButtonElement;
+    expect(go.disabled).toBe(true);
+    fireEvent.click(screen.getByRole("checkbox", { name: /I have looked at it/ }));
+    expect(go.disabled).toBe(false);
+    fireEvent.click(go);
+    expect(await screen.findByText("Imported 2 questions.")).toBeTruthy();
+    expect((await repo.list({ ...(await import("../data/repo.ts")).DEFAULT_QUERY })).total).toBe(2);
+  });
+
   it("shows a clear syntax error with the place and keeps the pasted text", async () => {
     open();
     const bad = '[\n {"type": "true_false",\n "stem": "x" "answer": true}\n]';

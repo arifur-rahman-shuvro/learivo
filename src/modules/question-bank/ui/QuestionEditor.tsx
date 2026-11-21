@@ -1,4 +1,5 @@
 import { qualityHints } from "../domain/quality.ts";
+import { allHints } from "../domain/review.ts";
 import { findSimilarInBank } from "./similar.ts";
 import { useEffect, useMemo, useState } from "react";
 import { Badge, Button, Dialog, Field, Spinner, Picker } from "../../../ui-kit/index.ts";
@@ -169,7 +170,7 @@ export function QuestionEditor({ id, onClose, onManage }: Props) {
     };
   }, [draft?.stem, draft?.qtype, original, repo]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const hints = useMemo(() => (draft ? qualityHints(draft) : []), [draft]);
+  const hints = useMemo(() => (draft ? allHints(draft, qualityHints(draft)) : []), [draft]);
   const chain = useMemo(() => (draft ? nodeChain(draft.path, nodes) : []), [draft, nodes]);
 
   if (failure && !draft) {
