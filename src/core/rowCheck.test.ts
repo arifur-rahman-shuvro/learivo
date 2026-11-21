@@ -36,7 +36,8 @@ describe("checkRow", () => {
   });
 
   it("rejects a missing field, a wrong kind and a value outside the allowed list", () => {
-    const { id: _id, ...noId } = good;
+    const noId: Record<string, unknown> = { ...good };
+    delete noId.id;
     expect(() => checkRow("questions", noId, spec)).toThrow(UnexpectedDataError);
     expect(() => checkRow("questions", { ...good, version: "2" }, spec)).toThrow();
     expect(() => checkRow("questions", { ...good, status: "deleted" }, spec)).toThrow();

@@ -232,7 +232,8 @@ describe("checkedQuestionRow", () => {
 
   it("accepts a row shaped like the database's, with links missing or present", () => {
     expect(checkedQuestionRow(row as never)).toBe(row);
-    const { question_tags: _t, ...bare } = row;
+    const bare: Record<string, unknown> = { ...row };
+    delete bare.question_tags;
     expect(checkedQuestionRow(bare as never)).toBe(bare);
   });
 
