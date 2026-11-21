@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { QUESTION_TYPES } from "../domain/model.ts";
 import type { AnswerSpec, QuestionInput, QuestionType } from "../domain/model.ts";
+import { checkRow, opt, UnexpectedDataError, type RowSpec } from "../../../core/rowCheck.ts";
 import {
   KIND_BY_DEPTH,
   pathOf,
@@ -37,6 +39,35 @@ interface QuestionRow {
   updated_at: string;
   question_tags?: { tag_id: string }[];
   collection_questions?: { collection_id: string }[];
+}
+
+const QUESTION_ROW: RowSpec = {
+  id: "string",
+  qtype: QUESTION_TYPES,
+  stem: "string",
+  explanation: "string",
+  answer_spec: "object",
+  difficulty: opt("number"),
+  taxonomy_node_id: opt("string"),
+  source: "string",
+  institution: "string",
+  exam_name: "string",
+  exam_year: opt("number"),
+  status: ["active", "archived"],
+  version: "number",
+  created_at: "string",
+  updated_at: "string",
+  question_tags: opt("array"),
+  collection_questions: opt("array"),
+};
+
+/** The row fits its type, and its answer has the list the question type needs. */
+export function checkedQuestionRow(raw: QuestionRow): QuestionRow {
+  const row = checkRow<QuestionRow>("questions", raw, QUESTION_ROW);
+  const spec = row.answer_spec as unknown as Record<string, unknown>;
+  const need = row.qtype === "fill_blank" ? "blanks" : "options";
+  if (!Array.isArray(spec[need])) throw new UnexpectedDataError("questions", `answer_spec.${need}`);
+  return row;
 }
 
 interface Failure {
@@ -98,7 +129,8 @@ export class SupabaseRepo implements QuestionRepo {
     return this.tagCache;
   }
 
-  private async toRecord(row: QuestionRow): Promise<QuestionRecord> {
+  private async toRecord(unchecked: QuestionRow): Promise<QuestionRecord> {
+    const row = checkedQuestionRow(unchecked);
     const [nodes, tags] = await Promise.all([this.nodes(), this.tagNames()]);
     const tagIds = (row.question_tags ?? []).map((t) => t.tag_id);
     return {

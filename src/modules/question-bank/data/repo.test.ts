@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { contentHash } from "../domain/hash.ts";
 import { blankQuestion, type QuestionInput } from "../domain/model.ts";
 import { TF_ANSWER } from "../../../testing/fixtures.ts";
-import { toTsQuery } from "./supabaseRepo.ts";
+import { checkedQuestionRow, toTsQuery } from "./supabaseRepo.ts";
+import { UnexpectedDataError } from "../../../core/rowCheck.ts";
 import { MemoryRepo } from "./memoryRepo.ts";
 import { DEFAULT_QUERY, pathOf, subtreeIds, type QuestionQuery } from "./repo.ts";
 
@@ -206,5 +207,47 @@ describe("merging", () => {
     const after = await repo.collections();
     expect(after.map((c) => c.name)).toEqual(["Into"]);
     expect(after[0]!.count).toBe(2);
+  });
+});
+
+describe("checkedQuestionRow", () => {
+  const row = {
+    id: "q1",
+    qtype: "sba",
+    stem: "Which nerve supplies the deltoid?",
+    explanation: "",
+    answer_spec: { options: [{ text: "Axillary", correct: true }] },
+    difficulty: null,
+    taxonomy_node_id: null,
+    source: "",
+    institution: "",
+    exam_name: "",
+    exam_year: null,
+    status: "active",
+    version: 1,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+    question_tags: [{ tag_id: "t1" }],
+  };
+
+  it("accepts a row shaped like the database's, with links missing or present", () => {
+    expect(checkedQuestionRow(row as never)).toBe(row);
+    const { question_tags: _t, ...bare } = row;
+    expect(checkedQuestionRow(bare as never)).toBe(bare);
+  });
+
+  it("accepts a fill-in-the-blank answer that has blanks instead of options", () => {
+    const blank = { ...row, qtype: "fill_blank", answer_spec: { blanks: [{ accepted: ["x"] }] } };
+    expect(checkedQuestionRow(blank as never)).toBe(blank);
+  });
+
+  it("stops on a row the app could not show: no stem, unknown type, or no options", () => {
+    expect(() => checkedQuestionRow({ ...row, stem: null } as never)).toThrow(UnexpectedDataError);
+    expect(() => checkedQuestionRow({ ...row, qtype: "essay" } as never)).toThrow(
+      UnexpectedDataError,
+    );
+    expect(() => checkedQuestionRow({ ...row, answer_spec: {} } as never)).toThrow(
+      /does not understand/,
+    );
   });
 });

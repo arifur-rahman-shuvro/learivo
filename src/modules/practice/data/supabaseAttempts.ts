@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { checkRow, checkRows, opt, type RowSpec } from "../../../core/rowCheck.ts";
 import { isAnswered, type Response, type Snapshot, type Verdict } from "../domain/grading.ts";
 import type { Confidence } from "../domain/confidence.ts";
 import type { Reason } from "../domain/reasons.ts";
@@ -64,6 +65,44 @@ interface ExamRow {
   rules: ExamRule[];
   updated_at: string;
 }
+
+const ATTEMPT_ROW: RowSpec = {
+  id: "string",
+  kind: ["practice", "exam"],
+  title: "string",
+  status: ["in_progress", "submitted"],
+  instant_feedback: "boolean",
+  marks_correct: "numeric",
+  marks_wrong: "numeric",
+  question_count: "number",
+  score: opt("numeric"),
+  seconds_spent: "number",
+  started_at: "string",
+  submitted_at: opt("string"),
+  time_limit_sec: opt("number"),
+};
+const ITEM_ROW: RowSpec = {
+  position: "number",
+  question_id: opt("string"),
+  snapshot: "object",
+  response: opt("object"),
+  flagged: "boolean",
+  seconds: opt("number"),
+  is_correct: opt("boolean"),
+  credit: opt("numeric"),
+  marks: opt("numeric"),
+};
+const EXAM_ROW: RowSpec = {
+  id: "string",
+  title: "string",
+  instructions: "string",
+  time_limit_sec: opt("number"),
+  marks_correct: "numeric",
+  marks_wrong: "numeric",
+  randomize: "boolean",
+  rules: "array",
+  updated_at: "string",
+};
 
 interface Failure {
   code?: string;
@@ -182,6 +221,7 @@ export class SupabaseAttempts implements AttemptRepo {
       await this.db.from("attempts").select(ATTEMPT_COLUMNS).eq("id", id).maybeSingle(),
     ) as AttemptRow | null;
     if (!head) return null;
+    checkRow("attempts", head, ATTEMPT_ROW);
     const rows = ok(
       await this.db
         .from("attempt_items")
@@ -192,6 +232,7 @@ export class SupabaseAttempts implements AttemptRepo {
         .order("position")
         .range(0, 999),
     ) as ItemRow[];
+    checkRows("attempt_items", rows, ITEM_ROW);
     const items: AttemptItem[] = rows.map((r) => ({
       position: r.position,
       questionId: r.question_id,
@@ -217,6 +258,7 @@ export class SupabaseAttempts implements AttemptRepo {
         .order("id")
         .range(offset, offset + limit - 1),
     ) as AttemptRow[];
+    checkRows("attempts", rows, ATTEMPT_ROW);
     return rows.map(toAttempt);
   }
 
@@ -349,6 +391,7 @@ export class SupabaseAttempts implements AttemptRepo {
         )
         .order("updated_at", { ascending: false }),
     ) as ExamRow[];
+    checkRows("exams", rows, EXAM_ROW);
     return rows.map(toExam);
   }
 
