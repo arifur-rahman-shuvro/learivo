@@ -84,6 +84,19 @@ const NODE_ROW: RowSpec = {
   position: "number",
   color: opt("string"),
 };
+const VERSION_ROW: RowSpec = { version: "number", created_at: "string", snapshot: "object" };
+const SNAPSHOT_ROW: RowSpec = {
+  qtype: QUESTION_TYPES,
+  stem: "string",
+  answer_spec: "object",
+  explanation: opt("string"),
+  difficulty: opt("number"),
+  source: opt("string"),
+  institution: opt("string"),
+  exam_name: opt("string"),
+  exam_year: opt("number"),
+  taxonomy_node_id: opt("string"),
+};
 const TAG_ROW: RowSpec = { id: "string", name: "string" };
 
 interface Failure {
@@ -390,22 +403,24 @@ export class SupabaseRepo implements QuestionRepo {
         .eq("question_id", id)
         .order("version", { ascending: false }),
     ) ?? []) as { version: number; created_at: string; snapshot: Record<string, unknown> }[];
+    checkRows("question_versions", rows, VERSION_ROW);
     return rows.map((r) => {
-      const s = r.snapshot as unknown as QuestionRow;
+      // Older snapshots may lack later columns, so only what a version needs to show is required.
+      const s = checkRow<QuestionRow>("question_versions.snapshot", r.snapshot, SNAPSHOT_ROW);
       return {
         version: r.version,
         savedAt: r.created_at,
         question: {
           qtype: s.qtype,
           stem: s.stem,
-          explanation: s.explanation,
+          explanation: s.explanation ?? "",
           answer: s.answer_spec,
-          difficulty: s.difficulty,
-          source: s.source,
-          institution: s.institution,
-          examName: s.exam_name,
-          examYear: s.exam_year,
-          path: pathOf(s.taxonomy_node_id, nodes),
+          difficulty: s.difficulty ?? null,
+          source: s.source ?? "",
+          institution: s.institution ?? "",
+          examName: s.exam_name ?? "",
+          examYear: s.exam_year ?? null,
+          path: pathOf(s.taxonomy_node_id ?? null, nodes),
           tags: [],
         },
       };
@@ -583,6 +598,7 @@ export class SupabaseRepo implements QuestionRepo {
         .order("position")
         .order("name"),
     ) ?? []) as { id: string; name: string; collection_questions: { count: number }[] }[];
+    checkRows("collections", rows, { ...TAG_ROW, collection_questions: "array" });
     return rows.map((r) => ({
       id: r.id,
       name: r.name,

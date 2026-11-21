@@ -97,3 +97,9 @@ Todo: real-database query timing (Needs you or a test project: the sandbox canno
 - On screen the page is interactive: tap options, jump to a section, "Check my answers", "Clear".
 - `pnpm paper` renders it in Chromium, tests the taps, and prints a real PDF to prove the key starts on a page after the last question. Checked by breaking the page break on purpose: it fails.
 - Not verified: how it looks in Android Chrome's "Save as PDF". Page numbers use CSS page margin boxes, which Firefox ignores.
+
+## Data safety (2026-11-22)
+
+- Runtime row checks now also cover collections and question version history (old snapshots missing later columns still show, with blanks). Tests: `supabaseRepo.test.ts`.
+- `docs/MIGRATIONS.md`: what each migration added and the SQL to undo it, plus rules for new ones.
+- Question version history already existed (editor > versions). The data-export reader already validates through its own checks.
