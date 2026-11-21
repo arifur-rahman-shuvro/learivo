@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Fact } from "./insights.ts";
-import { allocate, explain, readiness, MIN_ANSWERS } from "./readiness.ts";
+import { allocate, explain, planSize, readiness, MIN_ANSWERS } from "./readiness.ts";
 
 const NOW = new Date("2026-11-21T09:00:00Z");
 const daysAgo = (d: number) => new Date(NOW.getTime() - d * 86_400_000).toISOString();
@@ -98,5 +98,29 @@ describe("explain", () => {
     const text = explain(a).join(" ");
     expect(text).toContain("Only 2 answers");
     expect(text).toContain("30 days");
+  });
+});
+
+describe("planSize", () => {
+  it("uses the daily goal when there is no exam date or it is far away or past", () => {
+    expect(planSize(20, null)).toEqual({ questions: 20, note: null });
+    expect(planSize(20, 31)).toEqual({ questions: 20, note: null });
+    expect(planSize(20, -2)).toEqual({ questions: 20, note: null });
+  });
+
+  it("raises it a quarter inside 30 days and by half inside 7, and says why", () => {
+    const month = planSize(20, 20);
+    expect(month.questions).toBe(25);
+    expect(month.note).toContain("20 days");
+    const week = planSize(20, 7);
+    expect(week.questions).toBe(30);
+    expect(week.note).toContain("half more");
+    expect(planSize(20, 1).note).toContain("1 day,");
+  });
+
+  it("is capped at 100 and keeps a sensible minimum", () => {
+    expect(planSize(90, 3).questions).toBe(100);
+    expect(planSize(1, null).questions).toBe(5);
+    expect(planSize(500, null).questions).toBe(100);
   });
 });

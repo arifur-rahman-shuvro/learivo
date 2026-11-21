@@ -1,7 +1,7 @@
 import { shortTime } from "../../practice/domain/pace.ts";
 import PractiseArea from "./PractiseArea.tsx";
 import { useIntent } from "../../../core/intents.ts";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { achievements } from "../domain/achievements.ts";
 import {
   Badge,
@@ -15,7 +15,10 @@ import {
 import { clock } from "../../practice/ui/practice.tsx";
 import { useInsightsData } from "./useInsightsData.ts";
 import { ConfidenceBars, FlameIcon, Heatmap, ReadinessCard, ReasonBars } from "./InsightsParts.tsx";
-import { allocate, readiness } from "../domain/readiness.ts";
+import { allocate, planSize, readiness } from "../domain/readiness.ts";
+import { DEFAULT_GOAL } from "../data/repo.ts";
+import { daysUntil, NO_EXAM } from "../domain/examTarget.ts";
+import { useWorkspace } from "./workspace.tsx";
 import {
   accuracyByDay,
   activeDaySet,
@@ -54,6 +57,24 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
   });
   const [depth, setDepth] = useState<1 | 2>(1);
   const today = useMemo(() => new Date(), []);
+  const ws = useWorkspace().repo;
+  const [goal, setGoal] = useState(DEFAULT_GOAL);
+  const [examDays, setExamDays] = useState<number | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void Promise.all([ws.dailyGoal(), ws.examTarget().catch(() => NO_EXAM)]).then(
+      ([g, ex]) => {
+        if (!alive) return;
+        setGoal(g);
+        setExamDays(ex.date ? daysUntil(ex.date, new Date()) : null);
+      },
+      () => undefined, // the plan falls back to the default goal
+    );
+    return () => {
+      alive = false;
+    };
+  }, [ws]);
+  const size = planSize(goal, examDays);
 
   const view = useMemo(() => {
     if (!data) return null;
@@ -168,7 +189,12 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
                 </div>
               </section>
 
-              <ReadinessCard readiness={view.readiness} plan={allocate(view.readiness, 20)} />
+              <ReadinessCard
+                readiness={view.readiness}
+                plan={allocate(view.readiness, size.questions)}
+                note={size.note}
+                onNavigate={onNavigate}
+              />
 
               {view.extremes.best && view.extremes.worst && (
                 <section

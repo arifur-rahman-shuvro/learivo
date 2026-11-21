@@ -2,6 +2,7 @@ import { useGrown } from "../../../motion/index.ts";
 import type { ActivityDay, ConfidenceRow, ReasonRow } from "../domain/insights.ts";
 import { confidenceLabel, type CalibrationCounts } from "../../practice/domain/confidence.ts";
 import { REASONS, reasonLabel } from "../../practice/domain/reasons.ts";
+import PractiseArea from "./PractiseArea.tsx";
 import { MIN_ANSWERS, type Allocation, type Readiness } from "../domain/readiness.ts";
 
 export function FlameIcon({ size = 20 }: { size?: number }) {
@@ -281,7 +282,17 @@ export function ConfidenceBars({
 const pct = (n: number) => `${Math.round(n * 100)}%`;
 
 /** Readiness estimate with its range, and a split of the next practice across areas, with reasons. */
-export function ReadinessCard({ readiness, plan }: { readiness: Readiness; plan: Allocation[] }) {
+export function ReadinessCard({
+  readiness,
+  plan,
+  note,
+  onNavigate,
+}: {
+  readiness: Readiness;
+  plan: Allocation[];
+  note?: string | null;
+  onNavigate: (route: string) => void;
+}) {
   return (
     <section aria-label="Readiness" className="lv-card flex flex-col gap-3 p-5">
       <h2 className="m-0 text-lg font-semibold">Readiness</h2>
@@ -312,13 +323,18 @@ export function ReadinessCard({ readiness, plan }: { readiness: Readiness; plan:
           <h3 className="m-0 mt-2 text-base font-semibold">
             Where to spend your next {plan.reduce((s, p) => s + p.questions, 0)} questions
           </h3>
+          {note && <p className="m-0 text-sm text-muted">{note}</p>}
           <ul className="m-0 flex list-none flex-col gap-3 p-0">
             {plan.map((p) => (
-              <li key={p.name} className="flex flex-col gap-0.5">
-                <span className="font-semibold">
-                  {p.name} <span className="font-normal text-muted">· {p.questions} questions</span>
-                </span>
-                <span className="text-sm text-muted">{p.why.join(" ")}</span>
+              <li key={p.name} className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="font-semibold">
+                    {p.name}{" "}
+                    <span className="font-normal text-muted">· {p.questions} questions</span>
+                  </span>
+                  <span className="text-sm text-muted">{p.why.join(" ")}</span>
+                </div>
+                <PractiseArea area={p.name} onNavigate={onNavigate} />
               </li>
             ))}
           </ul>

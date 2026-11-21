@@ -268,6 +268,45 @@ describe("Insights", () => {
     expect(within(card).getAllByText(/Only 1 answer so far/).length).toBe(2);
   });
 
+  it("starts practice for an area straight from the plan", async () => {
+    const { nav } = await setup(
+      (n) => <InsightsScreen onNavigate={n} />,
+      async ({ bank, attempts }) => {
+        const [a, b] = await bank.create([
+          { ...tf("A1"), path: ["Anatomy"] },
+          { ...tf("A2"), path: ["Anatomy"] },
+        ]);
+        await finished(attempts, [
+          { id: a!, stem: "A1", path: ["Anatomy"], right: false },
+          { id: b!, stem: "A2", path: ["Anatomy"], right: false },
+        ]);
+      },
+    );
+    const card = await screen.findByRole("region", { name: "Readiness" });
+    fireEvent.click(within(card).getByRole("button", { name: "Practise Anatomy" }));
+    await waitFor(() => expect(nav).toHaveBeenCalledWith("#/practice"));
+  });
+
+  it("sizes the plan from the daily goal and raises it when the exam is close", async () => {
+    const soon = new Date(Date.now() + 5 * 86_400_000);
+    const date = `${soon.getFullYear()}-${String(soon.getMonth() + 1).padStart(2, "0")}-${String(soon.getDate()).padStart(2, "0")}`;
+    await setup(
+      (n) => <InsightsScreen onNavigate={n} />,
+      async ({ bank, attempts, workspace }) => {
+        await workspace.setDailyGoal(20);
+        await workspace.setExamTarget({ title: "Finals", date });
+        const [a, c] = await bank.create([tf("A1"), tf("P1")]);
+        await finished(attempts, [
+          { id: a!, stem: "A1", path: ["Anatomy"], right: false },
+          { id: c!, stem: "P1", path: ["Physiology"], right: true },
+        ]);
+      },
+    );
+    const card = await screen.findByRole("region", { name: "Readiness" });
+    expect(await within(card).findByText(/Where to spend your next 30 questions/)).toBeTruthy();
+    expect(within(card).getByText(/half more than your daily goal of 20/)).toBeTruthy();
+  });
+
   it("shows a readiness estimate with its range once there are enough answers", async () => {
     await setup(
       (n) => <InsightsScreen onNavigate={n} />,

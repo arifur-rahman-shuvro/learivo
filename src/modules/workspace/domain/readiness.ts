@@ -161,3 +161,27 @@ export function allocate(r: Readiness, questions: number, maxAreas = 4): Allocat
     .map((x, i) => ({ name: x.a.name, questions: base[i]!, why: explain(x.a) }))
     .sort((a, b) => b.questions - a.questions);
 }
+
+/**
+ * How many questions the plan covers: the student's own daily goal, raised a little as the exam
+ * gets close (a quarter more inside 30 days, half more inside 7). A rule of thumb, shown to the
+ * student with its reason; it is capped at 100 and never lowers the goal.
+ */
+export function planSize(
+  goal: number,
+  daysToExam: number | null,
+): { questions: number; note: string | null } {
+  const base = Math.max(5, Math.min(100, Math.round(goal)));
+  if (daysToExam === null || daysToExam < 0 || daysToExam > 30)
+    return { questions: base, note: null };
+  if (daysToExam <= 7) {
+    return {
+      questions: Math.min(100, Math.ceil(base * 1.5)),
+      note: `Your exam is in ${daysToExam} day${daysToExam === 1 ? "" : "s"}, so this is half more than your daily goal of ${base}.`,
+    };
+  }
+  return {
+    questions: Math.min(100, Math.ceil(base * 1.25)),
+    note: `Your exam is in ${daysToExam} days, so this is a quarter more than your daily goal of ${base}.`,
+  };
+}
