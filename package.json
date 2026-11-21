@@ -16,7 +16,9 @@
     "cycles": "madge --circular src",
     "a11y": "node scripts/a11y.mjs",
     "e2e": "node scripts/e2e.mjs",
-    "design": "node scripts/design.mjs"
+    "design": "node scripts/design.mjs",
+    "envcheck": "node scripts/envcheck.mjs",
+    "livecheck": "node scripts/livecheck.mjs"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.3.0",

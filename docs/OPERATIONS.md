@@ -64,3 +64,18 @@ Written from what is built, not from plans. Anything not yet proven is marked **
 4. Open https://learivo.pages.dev on a phone after Cloudflare finishes; sign in; check Home, Questions, Practice, Saved.
 5. Download a backup and open it with "Choose backup file" (look for "Checked").
 6. If something is wrong: in Cloudflare Pages > Deployments choose the last good deployment and Rollback. Database changes are not rolled back automatically: write a reverse migration.
+
+## 6. Monitoring and alerts
+
+- **Build check** (`pnpm envcheck`, in CI): the built site has the headers file with the CSP, HSTS and nosniff rules, mentions only our own database project, and contains no secret key, token, connection string or AI key. A planted fake key and a wrong project were both caught when tried.
+- **Live site check** (`.github/workflows/live-check.yml`, `scripts/livecheck.mjs`): every 6 hours, and after each successful CI run, GitHub's runner opens the real site and checks it answers, has the security headers, serves the service worker uncached, and that the database sign-in service is up and refuses a signed-out reader. A red run means something is wrong; GitHub emails the repository owner (Settings > Notifications must allow Actions emails).
+- **Weekly database backup** (`backup.yml`): red until the owner adds the two secrets described in RUNBOOK.md.
+- **Crash and failure reports:** go to Sentry only when a DSN is set at build time (it is not set yet). Reported: unexpected screen crashes, unhandled failures, a refused offline change (only its kind), unreadable saved changes, a backup that could not be created, a restore that stopped part way. Never reported: question text, notes, the database's message, the student's identity.
+- **Not monitored:** how long syncs take, how many students have waiting changes (nothing is collected from devices), database size and load (see the Supabase dashboard), email alerts from Sentry (needs a DSN and an alert rule).
+
+## 7. Rollback in detail
+
+1. Site: Cloudflare Pages > the learivo project > Deployments > pick the last deployment that worked > Rollback. Takes about a minute. Students get the older version after their next reload (the service worker checks for updates).
+2. Code: `git revert <commit>` and push; CI deploys the revert.
+3. Database: migrations are not undone automatically. Write a new migration that reverses the change, apply it, and run the SQL checks and advisors. Take a backup before any risky migration.
+4. Data lost by a mistake: restore a student's backup file (section 1), or the Supabase database backup (plan dependent, drill not yet done).

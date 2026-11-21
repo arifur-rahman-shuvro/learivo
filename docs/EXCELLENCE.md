@@ -78,8 +78,8 @@ Todo: real-database query timing (Needs you or a test project: the sandbox canno
 
 ## Phase 10: Operations [P1]
 
-32. Observability — Partial (error monitoring hook exists). Todo: sync and backup monitoring, alerts.
-33. CI/CD — Partial. CI runs format, lint, audit, typecheck, SQL checks, tests, build, smoke. Todo: branch protection (Needs you, GitHub settings), rollback procedure, environment checks.
+32. Observability — Partial (2026-11-21). Failures of sync (a refused offline change, unreadable saved changes) and backup (creating one, a restore that stopped) are now reported to monitoring with no student text; a live-site check workflow runs every 6 hours and after each deploy and turns red on a problem. Needs you: set a Sentry DSN to receive crash and failure reports; allow GitHub Actions emails. Not monitored: sync duration, waiting-change counts, database load.
+33. CI/CD — Partial. CI runs format, lint, audit, typecheck, SQL checks, tests, build, smoke. Done 2026-11-21: `pnpm envcheck` in CI (headers, one database project, no secrets in the build), rollback procedure written (docs/OPERATIONS.md section 7). Todo: branch protection (Needs you, GitHub settings), a staging environment, automatic rollback.
 34. Documentation — Partial. README, STRUCTURE, ROADMAP, AUDIT exist. Done 2026-11-20: docs/OPERATIONS.md holds the backup and restore runbook, offline and sync behaviour, security summary, failure guide and release checklist. Todo: an architecture decision log, a restore drill record, an on-call style incident checklist.
 
 ## Working order

@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { reportError } from "../../core/monitoring.ts";
 import { MemoryRepo } from "../../modules/question-bank/data/memoryRepo.ts";
 import { DEFAULT_QUERY } from "../../modules/question-bank/data/repo.ts";
 import { blankQuestion, type QuestionInput } from "../../modules/question-bank/domain/model.ts";
@@ -17,6 +18,8 @@ import { inputOf } from "./merge.ts";
 import { analyzeImport } from "../../modules/question-bank/domain/importExport.ts";
 import { SyncedAttempts } from "./syncedAttempts.ts";
 import { TF_ANSWER } from "../../testing/fixtures.ts";
+
+vi.mock("../../core/monitoring.ts", () => ({ reportError: vi.fn() }));
 
 const tf = (stem: string, path: string[] = [], tags: string[] = []): QuestionInput => ({
   ...blankQuestion("true_false"),
@@ -526,6 +529,10 @@ describe("offline edits", () => {
     expect(status.waiting).toBe(0);
     expect(status.failed[0]).toMatchObject({ message: "value too long" });
     expect(status.failed[0]!.summary).toContain("Refused one");
+    // Monitoring hears about it, but only the kind of change: no text, no database message.
+    const sent = vi.mocked(reportError).mock.calls.map((c) => String((c[0] as Error).message));
+    expect(sent).toContain("Offline change refused (create)");
+    expect(sent.join(" ")).not.toMatch(/Refused one|value too long/);
     await repo.dismissFailed();
     expect((await repo.status()).failed).toHaveLength(0);
   });

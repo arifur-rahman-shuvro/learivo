@@ -1,3 +1,4 @@
+import { reportError } from "../../core/monitoring.ts";
 import { useRef, useState } from "react";
 import { Button, Dialog } from "../../ui-kit/index.ts";
 import { useBank, errorText } from "../../modules/question-bank/ui/bank.tsx";
@@ -88,6 +89,7 @@ export default function BackupDialog() {
       );
     } catch (e) {
       setError(errorText(e));
+      reportError(new Error("Backup could not be created"));
     } finally {
       setBusy(false);
     }
@@ -158,6 +160,8 @@ export default function BackupDialog() {
     setBusy(false);
     setPreview(null);
     setResult(r);
+    // Counts only: never the file's content or the student's text.
+    if (r.failure) reportError(new Error("Backup restore stopped part way"));
     refreshBank();
     refreshWs();
     refreshPractice();

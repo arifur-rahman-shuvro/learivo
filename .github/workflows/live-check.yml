@@ -1,0 +1,29 @@
+name: Live site check
+
+# Looks at the real site and database from outside every 6 hours, and after each deploy has had
+# time to finish. A red run means something is wrong; GitHub emails the repository owner.
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  live:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Wait for the deploy to go live
+        if: github.event_name == 'workflow_run'
+        run: sleep 150
+      - run: node scripts/livecheck.mjs

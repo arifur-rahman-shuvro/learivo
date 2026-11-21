@@ -1,3 +1,4 @@
+import { reportError } from "../../core/monitoring.ts";
 import { contentHash } from "../../modules/question-bank/domain/hash.ts";
 import type { QuestionInput } from "../../modules/question-bank/domain/model.ts";
 import {
@@ -245,6 +246,7 @@ export class OfflineAwareRepo implements QuestionRepo {
       });
       await this.store.set(editsKey(this.userId), this.queue);
       await this.store.set(failedKey(this.userId), this.failed);
+      reportError(new Error("Saved offline changes could not be read"));
     }
     this.loaded = true;
   }
@@ -461,6 +463,8 @@ export class OfflineAwareRepo implements QuestionRepo {
           message: e instanceof Error ? e.message : "The database refused this change.",
         });
         report.failed += 1;
+        // Only the kind of change is reported, never its text or the database's message.
+        reportError(new Error(`Offline change refused (${op.kind})`));
       }
       touched = true;
       this.queue.shift();
