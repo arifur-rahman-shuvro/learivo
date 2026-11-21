@@ -1,7 +1,7 @@
 import { Profiler } from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { OfflineProvider } from "../../platform/offline/OfflineProvider.tsx";
+import { OfflineProvider, useServices } from "../../platform/offline/OfflineProvider.tsx";
 import { MemoryRepo } from "../../modules/question-bank/data/memoryRepo.ts";
 import { blankQuestion } from "../../modules/question-bank/domain/model.ts";
 import { MemoryAttempts } from "../../modules/practice/data/memoryAttempts.ts";
@@ -47,6 +47,33 @@ describe("SyncIndicator", () => {
     expect(await screen.findByText("No copy is kept on this device.")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Download copy" }));
     await waitFor(() => expect(screen.getByText(/1 question, updated/)).toBeTruthy());
+  });
+
+  it("lists each change made offline, and clears the list once it is sent", async () => {
+    let tag: (name: string) => Promise<unknown> = async () => undefined;
+    function Probe() {
+      const { bank } = useServices();
+      tag = (n) => bank.addTag(n);
+      return null;
+    }
+    const bank = new MemoryRepo();
+    render(
+      <OfflineProvider userId="u1" live={() => ({ bank, attempts: new MemoryAttempts() })}>
+        <Probe />
+        <SyncIndicator />
+      </OfflineProvider>,
+    );
+    fireEvent.click(await screen.findByRole("button", { name: /Saved/ }));
+    await screen.findByText(/0 questions, updated/);
+    act(() => setOnline(false));
+    await act(async () => {
+      await tag("later");
+    });
+    const list = await screen.findByRole("list", { name: "Waiting changes" });
+    expect(list.textContent).toBe("Add tag: later");
+    act(() => setOnline(true));
+    await waitFor(() => expect(screen.queryByRole("list", { name: "Waiting changes" })).toBeNull());
+    expect((await bank.tags()).map((t) => t.name)).toEqual(["later"]);
   });
 
   it("disables downloading while offline", async () => {

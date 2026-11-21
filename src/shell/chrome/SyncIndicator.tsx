@@ -7,6 +7,7 @@ import { showToast } from "../../core/toast.ts";
 import ConflictsPanel from "./ConflictsPanel.tsx";
 
 const IDLE = { waiting: 0, syncing: false, problem: null };
+const NO_RETRY = { attempt: 0, nextAt: null };
 
 type Tone = "ok" | "busy" | "warn";
 
@@ -29,16 +30,25 @@ export default function SyncIndicator() {
   const [pack, setPack] = useState<PackStatus | null>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const [lines, setLines] = useState<string[]>([]);
 
   const subscribe = useCallback(
     (fn: () => void) => (controls ? controls.sync.subscribe(fn) : () => undefined),
     [controls],
   );
   const state = useSyncExternalStore(subscribe, () => controls?.sync.getState() ?? IDLE);
+  const subscribeRetry = useCallback(
+    (fn: () => void) => (controls?.retry ? controls.retry.subscribe(fn) : () => undefined),
+    [controls],
+  );
+  const retry = useSyncExternalStore(subscribeRetry, () => controls?.retry?.getState() ?? NO_RETRY);
 
   useEffect(() => {
     if (!controls) return;
-    const load = () => void controls.pack.status().then(setPack);
+    const load = () => {
+      void controls.pack.status().then(setPack);
+      void controls.pack.pendingSummaries().then(setLines);
+    };
     load();
     return controls.pack.subscribe(load);
   }, [controls]);
@@ -147,6 +157,24 @@ export default function SyncIndicator() {
               <p className="m-0 text-sm font-medium">
                 {pack!.waiting} change{pack!.waiting === 1 ? "" : "s"} made offline will be sent
                 when you are online.
+              </p>
+            )}
+            {(pack?.waiting ?? 0) > 0 && lines.length > 0 && (
+              <ul aria-label="Waiting changes" className="m-0 pl-5 text-sm text-muted">
+                {lines.map((l, i) => (
+                  <li key={i}>{l}</li>
+                ))}
+              </ul>
+            )}
+            {(pack?.waiting ?? 0) > 0 && retry.nextAt !== null && (
+              <p className="m-0 flex flex-wrap items-center gap-2 text-sm">
+                <span role="status">
+                  Could not send yet. Trying again in about{" "}
+                  {Math.max(1, Math.round((retry.nextAt - Date.now()) / 1000))} seconds.
+                </span>
+                <Button size="sm" variant="ghost" onClick={() => controls.retry?.kick()}>
+                  Try now
+                </Button>
               </p>
             )}
             {(pack?.failed.length ?? 0) > 0 && (

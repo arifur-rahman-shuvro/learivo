@@ -5,6 +5,7 @@ import type { AttemptRepo } from "../../modules/practice/data/repo.ts";
 import { OfflineAwareRepo } from "./pack.ts";
 import { SyncedAttempts } from "./syncedAttempts.ts";
 import { deviceStore } from "./store.ts";
+import { createRetrier, type Retrier } from "./retry.ts";
 
 export interface Services {
   bank: QuestionRepo;
@@ -12,6 +13,8 @@ export interface Services {
   /** Present only in the real app. Tests inject plain in-memory repositories. */
   pack: OfflineAwareRepo | null;
   sync: SyncedAttempts | null;
+  /** Sends waiting changes again, a little less often each time, after a failed try. Null in tests. */
+  retry: Retrier | null;
   /** Clearing data. Null when there is no real account behind the app (tests). */
   data: DataRepo | null;
 }
@@ -34,8 +37,9 @@ export function useOfflineControls() {
   const v = useContext(Ctx);
   const pack = v?.pack ?? null;
   const sync = v?.sync ?? null;
+  const retry = v?.retry ?? null;
   // One stable object: a new one on every render made the header re-load forever.
-  return useMemo(() => (pack && sync ? { pack, sync } : null), [pack, sync]);
+  return useMemo(() => (pack && sync ? { pack, sync, retry } : null), [pack, sync, retry]);
 }
 
 interface Props {
@@ -57,11 +61,23 @@ export function OfflineProvider({ userId, live, injected, children }: Props) {
     const real = injected?.bank && injected?.attempts ? null : live();
     const pack = injected?.bank ? null : new OfflineAwareRepo(real!.bank, store, userId);
     const sync = injected?.attempts ? null : new SyncedAttempts(real!.attempts, store, userId);
+    const retry =
+      pack && sync
+        ? createRetrier(
+            async () => {
+              await sync.sync().catch(() => undefined);
+              await pack.refresh().catch(() => undefined); // sends offline changes first, then updates the copy
+              return (await pack.status()).waiting + sync.getState().waiting === 0;
+            },
+            () => navigator.onLine,
+          )
+        : null;
     return {
       bank: injected?.bank ?? pack!,
       attempts: injected?.attempts ?? sync!,
       pack,
       sync,
+      retry,
       data: injected?.data ?? real?.data ?? null,
     };
     // `live` and `injected` are stable per user in practice; rebuilding on them would drop state.
@@ -69,17 +85,15 @@ export function OfflineProvider({ userId, live, injected, children }: Props) {
   }, [userId]);
 
   useEffect(() => {
-    const { pack, sync } = services;
-    if (!pack || !sync) return;
-    const run = () => {
-      void sync.sync();
-      void pack.refresh().catch(() => undefined); // sends offline changes first, then updates the copy
-    };
+    const { retry } = services;
+    if (!retry) return;
+    const run = () => retry.kick();
     run();
     const onVisible = () => document.visibilityState === "visible" && run();
     window.addEventListener("online", run);
     document.addEventListener("visibilitychange", onVisible);
     return () => {
+      retry.stop();
       window.removeEventListener("online", run);
       document.removeEventListener("visibilitychange", onVisible);
     };

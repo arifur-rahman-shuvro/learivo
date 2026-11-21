@@ -110,3 +110,9 @@ Todo: real-database query timing (Needs you or a test project: the sandbox canno
 - A change the account refuses (for example, a subject deleted elsewhere) is listed under refused changes and the rest carry on.
 - Tested with a broken id-swap and a missing id-save: both make a test fail.
 - Still online-only: notes, bookmarks, flashcards, glossary and revision (workspace data).
+
+## Sync retry and per-change status (2026-11-22)
+
+- After a failed send, waiting changes are retried by `retry.ts` with growing pauses (2, 4, 8 ... capped at 5 minutes), reset when the connection returns or the app is opened. No polling while offline.
+- The Saved dialog lists every waiting change ("Add tag: later"), says when the next try is, and has Try now.
+- Not verified on a real phone with a flaky connection; the timing is tested with a hand-moved clock.
