@@ -56,7 +56,7 @@ export class MemoryWorkspace implements WorkspaceRepo {
         : input.questionId !== null
           ? [...this.noteMap.values()].find((n) => n.questionId === input.questionId)
           : undefined;
-    const id = existing?.id ?? `note-${++this.seq}`;
+    const id = existing?.id ?? input.newId ?? `note-${++this.seq}`;
     const note: Note = {
       id,
       questionId: input.questionId,
@@ -106,7 +106,7 @@ export class MemoryWorkspace implements WorkspaceRepo {
     const clean = cleanFlashcard(input);
     const existing = clean.id ? this.cardsMap.get(clean.id) : undefined;
     if (clean.id && !existing) throw new Error("That card no longer exists.");
-    const id = existing?.id ?? `flash-${++this.seq}`;
+    const id = existing?.id ?? clean.newId ?? `flash-${++this.seq}`;
     const card: Flashcard = existing
       ? { ...existing, front: clean.front, back: clean.back }
       : { id, front: clean.front, back: clean.back, ...newCard(new Date()) };
@@ -131,7 +131,7 @@ export class MemoryWorkspace implements WorkspaceRepo {
       (t) => t.id !== clean.id && t.term.toLowerCase() === clean.term.toLowerCase(),
     );
     if (clash) throw new Error("You already have a term with that name.");
-    const id = clean.id ?? `term-${++this.seq}`;
+    const id = clean.id ?? clean.newId ?? `term-${++this.seq}`;
     if (clean.id && !this.termMap.has(clean.id)) throw new Error("That term no longer exists.");
     const term: GlossaryTerm = { id, term: clean.term, definition: clean.definition };
     this.termMap.set(id, term);

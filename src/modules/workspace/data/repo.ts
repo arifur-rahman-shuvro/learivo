@@ -11,6 +11,8 @@ export interface Note {
 
 export interface NoteInput {
   id: string | null;
+  /** For a new note: the id to give it, made on the device so a note written offline keeps one id. */
+  newId?: string;
   questionId: string | null;
   title: string;
   body: string;

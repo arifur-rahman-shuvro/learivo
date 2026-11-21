@@ -42,3 +42,5 @@ Status as of 2026-11-21. These were not run by the assistant (it has no phone, n
 - Firefox and Safari
 
 "Reported passed by the owner" is the evidence; no logs, screenshots or timings were supplied. Still not verified by anyone: a timed restore from Supabase's own database backup, many students on one database, a real reset email arriving, and 100k questions on a low-end phone.
+
+2026-11-22: notes, bookmarks, revision, flashcards, glossary, goal, exam date and Home layout also work offline (last change wins).

@@ -9,6 +9,8 @@ export interface Flashcard extends Card {
 
 export interface FlashcardInput {
   id: string | null;
+  /** For a new card: the id to give it (made on the device when written offline). */
+  newId?: string;
   front: string;
   back: string;
 }
@@ -21,6 +23,8 @@ export interface GlossaryTerm {
 
 export interface TermInput {
   id: string | null;
+  /** For a new term: the id to give it (made on the device when written offline). */
+  newId?: string;
   term: string;
   definition: string;
 }
@@ -34,7 +38,7 @@ export function cleanFlashcard(input: FlashcardInput): FlashcardInput {
   if (back === "") throw new Error("Write the back of the card.");
   if (front.length > LIMITS.front) throw new Error("The front is too long.");
   if (back.length > LIMITS.back) throw new Error("The back is too long.");
-  return { id: input.id, front, back };
+  return { id: input.id, front, back, ...(input.newId ? { newId: input.newId } : {}) };
 }
 
 export function cleanTerm(input: TermInput): TermInput {
@@ -44,7 +48,7 @@ export function cleanTerm(input: TermInput): TermInput {
   if (definition === "") throw new Error("Write what the term means.");
   if (term.length > LIMITS.term) throw new Error("The term is too long.");
   if (definition.length > LIMITS.definition) throw new Error("The definition is too long.");
-  return { id: input.id, term, definition };
+  return { id: input.id, term, definition, ...(input.newId ? { newId: input.newId } : {}) };
 }
 
 /** Terms sorted for display, ignoring case. */

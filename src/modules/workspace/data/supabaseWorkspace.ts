@@ -188,7 +188,12 @@ export class SupabaseWorkspace implements WorkspaceRepo {
           await this.db
             .from("notes")
             .upsert(
-              { user_id: this.userId, question_id: input.questionId, ...fields },
+              {
+                ...(input.newId ? { id: input.newId } : {}),
+                user_id: this.userId,
+                question_id: input.questionId,
+                ...fields,
+              },
               { onConflict: "user_id,question_id" },
             )
             .select(cols)
@@ -200,7 +205,15 @@ export class SupabaseWorkspace implements WorkspaceRepo {
       ok(
         await this.db
           .from("notes")
-          .insert({ user_id: this.userId, question_id: null, ...fields })
+          .upsert(
+            {
+              ...(input.newId ? { id: input.newId } : {}),
+              user_id: this.userId,
+              question_id: null,
+              ...fields,
+            },
+            { onConflict: "id" },
+          )
           .select(cols)
           .single(),
       ) as NoteRow,
@@ -314,7 +327,15 @@ export class SupabaseWorkspace implements WorkspaceRepo {
       ok(
         await this.db
           .from("flashcards")
-          .insert({ user_id: this.userId, front: clean.front, back: clean.back })
+          .upsert(
+            {
+              ...(clean.newId ? { id: clean.newId } : {}),
+              user_id: this.userId,
+              front: clean.front,
+              back: clean.back,
+            },
+            { onConflict: "id" },
+          )
           .select(cols)
           .single(),
       ) as FlashRow,
@@ -361,7 +382,10 @@ export class SupabaseWorkspace implements WorkspaceRepo {
           .single()
       : await this.db
           .from("glossary_terms")
-          .insert({ user_id: this.userId, ...fields })
+          .upsert(
+            { ...(clean.newId ? { id: clean.newId } : {}), user_id: this.userId, ...fields },
+            { onConflict: "id" },
+          )
           .select("id, term, definition")
           .single();
     if (res.error?.code === "23505") throw new Error("You already have a term with that name.");

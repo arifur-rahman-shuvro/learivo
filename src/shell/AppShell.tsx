@@ -22,6 +22,7 @@ import type { QuestionRepo } from "../modules/question-bank/data/repo.ts";
 import { SupabaseData } from "../modules/data/data/supabaseData.ts";
 import { SupabaseAttempts } from "../modules/practice/data/supabaseAttempts.ts";
 import type { AttemptRepo } from "../modules/practice/data/repo.ts";
+import { SupabaseWorkspace } from "../modules/workspace/data/supabaseWorkspace.ts";
 import type { WorkspaceRepo } from "../modules/workspace/data/repo.ts";
 
 export interface Repos {
@@ -91,6 +92,7 @@ export default function AppShell({
             bank: new SupabaseRepo(supabase, user.id),
             attempts: new SupabaseAttempts(supabase, user.id),
             data: new SupabaseData(supabase, user.id),
+            workspace: new SupabaseWorkspace(supabase, user.id),
           }
         }
       >

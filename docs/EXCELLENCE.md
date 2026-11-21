@@ -116,3 +116,11 @@ Todo: real-database query timing (Needs you or a test project: the sandbox canno
 - After a failed send, waiting changes are retried by `retry.ts` with growing pauses (2, 4, 8 ... capped at 5 minutes), reset when the connection returns or the app is opened. No polling while offline.
 - The Saved dialog lists every waiting change ("Add tag: later"), says when the next try is, and has Try now.
 - Not verified on a real phone with a flaky connection; the timing is tested with a hand-moved clock.
+
+## Offline workspace (2026-11-22)
+
+- Notes, bookmarks, revision cards, flashcards, glossary, daily goal, exam date and Home layout now work offline (`src/platform/offline/workspace.ts`). Lists are copied to the device when opened online; changes are shown at once, kept in order, and sent when back online. Last change to the same thing wins (no merge of two versions of a note).
+- New notes, flashcards and terms get an id made on the device (`newId`), and the database creates them with that id, so a resend never makes a copy.
+- Signing out or clearing data sends waiting changes first and asks before discarding them; deleting data clears the copy.
+- The Saved dialog counts and lists these changes with the question changes.
+- Not verified on a real phone. A list never opened online cannot be read offline (it says so).

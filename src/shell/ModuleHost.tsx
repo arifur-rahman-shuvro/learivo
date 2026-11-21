@@ -31,10 +31,10 @@ export default function ModuleHost({
   module: ModuleId;
   onNavigate: (route: string) => void;
 }) {
-  const { bank: repo, attempts } = useServices();
+  const { bank: repo, attempts, ws } = useServices();
   const workspace = useMemo(
-    () => (makeWorkspace ? makeWorkspace(userId) : new SupabaseWorkspace(supabase, userId)),
-    [userId, makeWorkspace],
+    () => (makeWorkspace ? makeWorkspace(userId) : (ws ?? new SupabaseWorkspace(supabase, userId))),
+    [userId, makeWorkspace, ws],
   );
   return (
     <BankProvider repo={repo}>

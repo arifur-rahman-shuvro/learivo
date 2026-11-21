@@ -31,6 +31,7 @@ export default function SyncIndicator() {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [lines, setLines] = useState<string[]>([]);
+  const [wsWaiting, setWsWaiting] = useState(0);
 
   const subscribe = useCallback(
     (fn: () => void) => (controls ? controls.sync.subscribe(fn) : () => undefined),
@@ -47,10 +48,17 @@ export default function SyncIndicator() {
     if (!controls) return;
     const load = () => {
       void controls.pack.status().then(setPack);
-      void controls.pack.pendingSummaries().then(setLines);
+      void Promise.all([
+        controls.pack.pendingSummaries(),
+        controls.ws?.pendingSummaries() ?? Promise.resolve([] as string[]),
+      ]).then(([a, b]) => {
+        setLines([...a, ...b]);
+        setWsWaiting(b.length);
+      });
     };
     load();
-    return controls.pack.subscribe(load);
+    const off = [controls.pack.subscribe(load), controls.ws?.subscribe(load)];
+    return () => off.forEach((f) => f?.());
   }, [controls]);
 
   const clashes = pack?.conflicts.length ?? 0;
@@ -69,8 +77,8 @@ export default function SyncIndicator() {
   if (state.problem) [label, tone] = ["Needs attention", "warn"];
   else if (clashes > 0) [label, tone] = [`${clashes} to decide`, "warn"];
   else if (state.syncing) [label, tone] = ["Syncing", "busy"];
-  else if (state.waiting + (pack?.waiting ?? 0) > 0) {
-    [label, tone] = [`${state.waiting + (pack?.waiting ?? 0)} waiting to sync`, "busy"];
+  else if (state.waiting + (pack?.waiting ?? 0) + wsWaiting > 0) {
+    [label, tone] = [`${state.waiting + (pack?.waiting ?? 0) + wsWaiting} waiting to sync`, "busy"];
   } else if ((pack?.failed.length ?? 0) > 0) [label, tone] = ["Needs attention", "warn"];
   else if (!online) [label, tone] = ["Offline", "warn"];
 
@@ -153,20 +161,21 @@ export default function SyncIndicator() {
                 ? "With this copy you can read, practise and add, edit, archive, tag and move questions offline. Changes are sent when you are back online. Subjects, tags and collections can be added, renamed, merged and deleted offline too."
                 : "Download the copy to use your questions, and edit them, without a connection."}
             </p>
-            {(pack?.waiting ?? 0) > 0 && (
+            {(pack?.waiting ?? 0) + wsWaiting > 0 && (
               <p className="m-0 text-sm font-medium">
-                {pack!.waiting} change{pack!.waiting === 1 ? "" : "s"} made offline will be sent
-                when you are online.
+                {(pack?.waiting ?? 0) + wsWaiting} change
+                {(pack?.waiting ?? 0) + wsWaiting === 1 ? "" : "s"} made offline will be sent when
+                you are online.
               </p>
             )}
-            {(pack?.waiting ?? 0) > 0 && lines.length > 0 && (
+            {(pack?.waiting ?? 0) + wsWaiting > 0 && lines.length > 0 && (
               <ul aria-label="Waiting changes" className="m-0 pl-5 text-sm text-muted">
                 {lines.map((l, i) => (
                   <li key={i}>{l}</li>
                 ))}
               </ul>
             )}
-            {(pack?.waiting ?? 0) > 0 && retry.nextAt !== null && (
+            {(pack?.waiting ?? 0) + wsWaiting > 0 && retry.nextAt !== null && (
               <p className="m-0 flex flex-wrap items-center gap-2 text-sm">
                 <span role="status">
                   Could not send yet. Trying again in about{" "}

@@ -55,3 +55,60 @@ describe("SupabaseWorkspace rows", () => {
     ).rejects.toMatchObject({ table: "glossary_terms", field: "definition" });
   });
 });
+
+describe("SupabaseWorkspace new items written offline", () => {
+  /** Records what is sent to the database, and answers with a row built from it. */
+  function recorder() {
+    const sent: { table: string; row: Record<string, unknown>; opts: unknown }[] = [];
+    let table = "";
+    const chain: Record<string, unknown> = {};
+    for (const m of ["select", "eq", "order"]) chain[m] = () => chain;
+    chain.from = (t: string) => {
+      table = t;
+      return chain;
+    };
+    chain.upsert = (row: Record<string, unknown>, opts: unknown) => {
+      sent.push({ table, row, opts });
+      chain.then = (resolve: (v: unknown) => void) =>
+        resolve({
+          data: {
+            id: row.id ?? "server-id",
+            question_id: null,
+            title: "",
+            body: "",
+            front: "",
+            back: "",
+            term: "",
+            definition: "",
+            state: "new",
+            due: "2026-01-01T00:00:00Z",
+            stability: 0,
+            difficulty: 0,
+            reps: 0,
+            lapses: 0,
+            last_review: null,
+            ...row,
+            updated_at: "2026-01-01T00:00:00Z",
+          },
+          error: null,
+        });
+      chain.single = () => chain;
+      return chain;
+    };
+    return { db: chain as unknown as SupabaseClient, sent };
+  }
+
+  it("creates a note, a card and a term with the id the device made, so a resend never duplicates", async () => {
+    const { db, sent } = recorder();
+    const ws = new SupabaseWorkspace(db, "u");
+    await ws.saveNote({ id: null, newId: "n-1", questionId: null, title: "", body: "B" });
+    await ws.saveFlashcard({ id: null, newId: "f-1", front: "F", back: "B" });
+    await ws.saveTerm({ id: null, newId: "t-1", term: "T", definition: "D" });
+    expect(sent.map((s) => [s.table, s.row.id])).toEqual([
+      ["notes", "n-1"],
+      ["flashcards", "f-1"],
+      ["glossary_terms", "t-1"],
+    ]);
+    expect(sent.every((s) => (s.opts as { onConflict: string }).onConflict === "id")).toBe(true);
+  });
+});

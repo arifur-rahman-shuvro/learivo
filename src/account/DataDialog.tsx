@@ -83,6 +83,7 @@ export default function DataDialog({ open, onClose, onCleared = () => location.r
     try {
       await data.clear(pick.scope, (label) => setProgress((p) => [...p, label]));
       // The copy on this device would otherwise still show what was just deleted.
+      await offline?.ws?.clear(); // its copy of notes, cards and the rest is out of date now
       if (pick.scope !== "practice") await offline?.pack.clear({ discardUnsent: true }); // the data was just deleted on purpose
       if (pick.scope !== "questions") await offline?.sync.discardLocal();
       setDone(true);
