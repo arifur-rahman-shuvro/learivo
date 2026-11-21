@@ -10,6 +10,7 @@ import {
 import { cleanExamTarget, type ExamTarget } from "../domain/examTarget.ts";
 import { cleanLayout, type HomeLayout } from "../domain/homeLayout.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { checkRow, checkRows, opt, type RowSpec } from "../../../core/rowCheck.ts";
 import type { Card } from "../domain/scheduler.ts";
 import {
   DEFAULT_GOAL,
@@ -63,37 +64,66 @@ interface FlashRow extends Omit<CardRow, "question_id"> {
   back: string;
 }
 
-const toFlashcard = (r: FlashRow): Flashcard => ({
-  id: r.id,
-  front: r.front,
-  back: r.back,
-  state: r.state,
-  due: r.due,
-  stability: Number(r.stability),
-  difficulty: Number(r.difficulty),
-  reps: r.reps,
-  lapses: r.lapses,
-  lastReview: r.last_review,
-});
+const CARD_FIELDS: RowSpec = {
+  state: ["new", "review"],
+  due: "string",
+  stability: "numeric",
+  difficulty: "numeric",
+  reps: "number",
+  lapses: "number",
+  last_review: opt("string"),
+};
+const NOTE_ROW: RowSpec = {
+  id: "string",
+  question_id: opt("string"),
+  title: "string",
+  body: "string",
+  updated_at: "string",
+};
+const CARD_ROW: RowSpec = { question_id: "string", ...CARD_FIELDS };
+const FLASH_ROW: RowSpec = { id: "string", front: "string", back: "string", ...CARD_FIELDS };
+const TERM_ROW: RowSpec = { id: "string", term: "string", definition: "string" };
 
-const toNote = (r: NoteRow): Note => ({
-  id: r.id,
-  questionId: r.question_id,
-  title: r.title,
-  body: r.body,
-  updatedAt: r.updated_at,
-});
+const toFlashcard = (r0: FlashRow): Flashcard => {
+  const r = checkRow<FlashRow>("flashcards", r0, FLASH_ROW);
+  return {
+    id: r.id,
+    front: r.front,
+    back: r.back,
+    state: r.state,
+    due: r.due,
+    stability: Number(r.stability),
+    difficulty: Number(r.difficulty),
+    reps: r.reps,
+    lapses: r.lapses,
+    lastReview: r.last_review,
+  };
+};
 
-const toCard = (r: CardRow): CardRecord => ({
-  questionId: r.question_id,
-  state: r.state,
-  due: r.due,
-  stability: Number(r.stability),
-  difficulty: Number(r.difficulty),
-  reps: r.reps,
-  lapses: r.lapses,
-  lastReview: r.last_review,
-});
+const toNote = (r0: NoteRow): Note => {
+  const r = checkRow<NoteRow>("notes", r0, NOTE_ROW);
+  return {
+    id: r.id,
+    questionId: r.question_id,
+    title: r.title,
+    body: r.body,
+    updatedAt: r.updated_at,
+  };
+};
+
+const toCard = (r0: CardRow): CardRecord => {
+  const r = checkRow<CardRow>("review_cards", r0, CARD_ROW);
+  return {
+    questionId: r.question_id,
+    state: r.state,
+    due: r.due,
+    stability: Number(r.stability),
+    difficulty: Number(r.difficulty),
+    reps: r.reps,
+    lapses: r.lapses,
+    lastReview: r.last_review,
+  };
+};
 
 export class SupabaseWorkspace implements WorkspaceRepo {
   constructor(
@@ -316,7 +346,7 @@ export class SupabaseWorkspace implements WorkspaceRepo {
     const rows = ok(
       await this.db.from("glossary_terms").select("id, term, definition").order("term").limit(5000),
     ) as GlossaryTerm[];
-    return sortTerms(rows);
+    return sortTerms(checkRows<GlossaryTerm>("glossary_terms", rows, TERM_ROW));
   }
 
   async saveTerm(input: TermInput) {
@@ -335,7 +365,7 @@ export class SupabaseWorkspace implements WorkspaceRepo {
           .select("id, term, definition")
           .single();
     if (res.error?.code === "23505") throw new Error("You already have a term with that name.");
-    return ok(res) as GlossaryTerm;
+    return checkRow<GlossaryTerm>("glossary_terms", ok(res), TERM_ROW);
   }
 
   async deleteTerm(id: string) {
