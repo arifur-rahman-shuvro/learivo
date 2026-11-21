@@ -1,6 +1,7 @@
 import { Button, Dialog } from "../ui-kit/index.ts";
 import type { Profile } from "../modules/profile/domain/profile.ts";
 import { DetailsSection } from "./sections/DetailsSection.tsx";
+import { EmailSection } from "./sections/EmailSection.tsx";
 import { PasswordSection } from "./sections/PasswordSection.tsx";
 import { DeleteSection } from "./sections/DeleteSection.tsx";
 
@@ -31,6 +32,7 @@ export function AccountDialog({
     >
       <div className="flex flex-col gap-7">
         <DetailsSection email={email} profile={profile} onSave={onSave} />
+        <EmailSection />
         <PasswordSection />
         <DeleteSection />
       </div>

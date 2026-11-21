@@ -10,6 +10,7 @@ export type SignUpResult =
 export type SignInResult = { ok: true } | { ok: false; message: string };
 export type DeleteAccountResult = { ok: true } | { ok: false; message: string };
 type ChangePasswordResult = { ok: true } | { ok: false; message: string };
+export type ChangeEmailResult = { ok: true } | { ok: false; message: string };
 export type ResetResult = { ok: true } | { ok: false; message: string };
 
 /** The small surface of authentication the app needs. Tests use a fake; production uses Supabase. */
@@ -20,6 +21,8 @@ export interface AuthClient {
   signIn(email: string, password: string): Promise<SignInResult>;
   /** Checks the current password, then sets the new one. */
   changePassword(current: string, next: string): Promise<ChangePasswordResult>;
+  /** Checks the password, then emails confirmation links. The address only changes after they are opened. */
+  changeEmail(password: string, newEmail: string): Promise<ChangeEmailResult>;
   /** Checks the password, then permanently deletes the account and everything stored under it. */
   deleteAccount(password: string): Promise<DeleteAccountResult>;
   signOut(): Promise<void>;

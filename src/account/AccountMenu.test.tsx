@@ -160,6 +160,45 @@ describe("account menu", () => {
     expect((within(form).getByLabelText("New password") as HTMLInputElement).value).toBe("");
   });
 
+  it("changes the email only with the password, and says to confirm from the inbox", async () => {
+    const { client } = shell();
+    await openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Account" }));
+    const dialog = await screen.findByRole("dialog", { name: "Account" });
+    const form = within(dialog).getByRole("form", { name: "Change email" });
+    const send = within(form).getByRole("button", {
+      name: "Send confirmation",
+    }) as HTMLButtonElement;
+    const type = (label: string, v: string) =>
+      fireEvent.change(within(form).getByLabelText(label), { target: { value: v } });
+    expect(send.disabled).toBe(true);
+    type("New email address", "not-an-email");
+    expect(within(form).getByText("Enter a valid email address.")).toBeTruthy();
+    type("New email address", "SARA@example.test");
+    expect(within(form).getByText("That is already your email.")).toBeTruthy();
+    type("Your password", "pw");
+    expect(send.disabled).toBe(true);
+    type("Your password", "");
+    type("New email address", "new@example.test");
+    expect(send.disabled).toBe(true); // a good address still needs the password
+    type("Your password", "pw");
+    type("New email address", "taken@example.test");
+    fireEvent.click(send);
+    expect((await within(form).findByRole("alert")).textContent).toContain("cannot be used");
+    type("New email address", "new@example.test");
+    type("Your password", "wrong-password");
+    fireEvent.click(send);
+    expect((await within(form).findByRole("alert")).textContent).toBe(
+      "That password is not correct.",
+    );
+    type("Your password", "right-password");
+    fireEvent.click(send);
+    expect((await within(form).findByRole("status")).textContent).toContain("new@example.test");
+    expect(client.calls).toContain("changeEmail:right-password:new@example.test");
+    // The address on screen has not changed: it changes only after the link is opened.
+    expect(within(dialog).getByText(/Your sign-in email is sara@example.test/)).toBeTruthy();
+  });
+
   it("Settings has one Account section that opens the Account dialog, with no password form of its own", async () => {
     shell();
     await openMenu();
@@ -233,6 +272,15 @@ describe("an account made with Google", () => {
     fireEvent.click(within(form).getByRole("button", { name: "Add password" }));
     expect((await within(form).findByRole("status")).textContent).toBe("Password added.");
     expect(client.calls).toContain("setNewPassword:a-good-password");
+  });
+
+  it("shows no email form, because Google manages that email", async () => {
+    shell(new MemoryProfile(), google);
+    await openMenu();
+    fireEvent.click(screen.getByRole("menuitem", { name: "Account" }));
+    const account = await screen.findByRole("dialog", { name: "Account" });
+    expect(within(account).queryByRole("form", { name: "Change email" })).toBeNull();
+    expect(within(account).getByText(/managed by Google/)).toBeTruthy();
   });
 
   it("confirms account deletion with its email address instead of a password", async () => {

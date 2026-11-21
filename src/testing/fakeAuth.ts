@@ -9,7 +9,9 @@ import type {
 /** In-memory authentication for tests. */
 export function fakeAuth(
   initial: AuthUser | null = null,
-  over: Partial<Pick<AuthClient, "signIn" | "signUp" | "changePassword" | "deleteAccount">> = {},
+  over: Partial<
+    Pick<AuthClient, "signIn" | "signUp" | "changePassword" | "changeEmail" | "deleteAccount">
+  > = {},
 ): AuthClient & {
   calls: string[];
   expire: () => void;
@@ -86,6 +88,19 @@ export function fakeAuth(
         return current === "wrong-password"
           ? { ok: false as const, message: "Your current password is incorrect." }
           : { ok: true as const };
+      }),
+    changeEmail:
+      over.changeEmail ??
+      (async (password, newEmail) => {
+        calls.push(`changeEmail:${password}:${newEmail}`);
+        if (password === "wrong-password")
+          return { ok: false as const, message: "That password is not correct." };
+        if (newEmail === "taken@example.test")
+          return {
+            ok: false as const,
+            message: "That email cannot be used. Try a different address.",
+          };
+        return { ok: true as const };
       }),
     deleteAccount:
       over.deleteAccount ??

@@ -36,6 +36,17 @@ export function readLink(hash = window.location.hash, search = window.location.s
   };
 }
 
+/** Plain wording for why an email change was refused. Never says whether the address belongs to someone. */
+export function emailChangeMessage(raw: string): string {
+  const m = raw.toLowerCase();
+  if (m.includes("rate limit") || m.includes("too many") || m.includes("seconds"))
+    return "Too many requests. Wait a few minutes and try again.";
+  if (m.includes("invalid") && m.includes("email")) return "Enter a valid email address.";
+  if (m.includes("already") || m.includes("registered") || m.includes("exists"))
+    return "That email cannot be used. Try a different address.";
+  return friendly(raw);
+}
+
 export function createSupabaseAuth(): AuthClient {
   const link = readLink();
   return {
@@ -134,6 +145,32 @@ export function createSupabaseAuth(): AuthClient {
       if (m.includes("different") || m.includes("same"))
         return { ok: false, message: "Choose a password you have not used on this account." };
       return { ok: false, message: friendly(error.message) };
+    },
+    async changeEmail(password, newEmail) {
+      const { data } = await supabase.auth.getSession();
+      const email = data.session?.user.email;
+      if (!email) return { ok: false, message: "Your session has ended. Sign in again." };
+      const providers = data.session?.user.app_metadata?.providers;
+      if (Array.isArray(providers) && !providers.includes("email"))
+        return { ok: false, message: "Your email comes from Google and cannot be changed here." };
+      const next = newEmail.trim();
+      if (next.toLowerCase() === email.toLowerCase())
+        return { ok: false, message: "That is already your email." };
+      // Ask for the password again, so someone holding an open phone cannot take over the account.
+      const check = await supabase.auth.signInWithPassword({ email, password });
+      if (check.error) {
+        return {
+          ok: false,
+          message: check.error.message.toLowerCase().includes("invalid login")
+            ? "That password is not correct."
+            : friendly(check.error.message),
+        };
+      }
+      const { error } = await supabase.auth.updateUser(
+        { email: next },
+        { emailRedirectTo: window.location.origin },
+      );
+      return error ? { ok: false, message: emailChangeMessage(error.message) } : { ok: true };
     },
     async deleteAccount(password) {
       const { data } = await supabase.auth.getSession();

@@ -34,6 +34,14 @@ Set up (owner, once): Google Cloud Console > create a project > APIs & Services 
 
 **Not verified:** a real Google sign-in round trip and a real email from Gmail (needs the owner's Google project and Gmail). Covered by tests: the button appears only when Google is on, signing in, the Google-only account rules, the screens in all themes.
 
+## 1d. Change email
+
+Account > Change email. The student enters the new address and their password (checked again, so a stolen open phone cannot take over the account). Supabase then emails confirmation links; the address changes only after they are opened, and until then the old email still signs in. Supabase may ask for the link in the old inbox too (the "Secure email change" setting in Authentication > Sign In / Providers > Email).
+
+- Needs the same Supabase Site URL / Redirect URL setup as the reset link (https://learivo.pages.dev).
+- Google-only accounts see no form: their email is managed by Google.
+- Not verified by me: a real confirmation email arriving and the address switching. Test it once with a throwaway account.
+
 ## 2. Offline use and sync
 
 **Needs** the copy of the bank on the device (it downloads when online; status under Saved).
