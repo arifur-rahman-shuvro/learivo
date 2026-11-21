@@ -38,7 +38,7 @@ Todo: the sign-out dialog itself is not covered by a screen test; a stored-data 
 9. Application security — Partial (2026-11-20). Done: tests that fail the build if source code uses innerHTML, dangerouslySetInnerHTML, eval, document.write, javascript: links or string timers, or builds a link from student content; hostile text (script tags, event handlers, javascript: links, iframes) rendered through the text formatter creates no elements; the header file is tested (script-src only our own, no eval, no object/frame embedding, https-only named connections, nosniff, frame deny, HSTS, no inline script in the page). Dependency audit runs in CI. AI keys stay on the device.
    Todo: the live site's headers have not been fetched from here (the sandbox cannot reach it): check on securityheaders.com (Needs you); independent penetration test (Needs a third party); file-import fuzzing.
 
-10. Go backend — Not used by the app today. Decision: keep or remove `backend/`.
+10. Go backend — Done 2026-11-21: removed. The app never called it (no code, no network rule, no deploy pointed at it); it only ran in CI. It is still in git history (before commit "Remove unused Go backend") if a server is ever needed.
 
 ## Phase 4: AI [P1]
 

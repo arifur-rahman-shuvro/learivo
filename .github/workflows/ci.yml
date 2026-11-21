@@ -41,26 +41,6 @@ jobs:
           pnpm e2e
           pnpm design
 
-  backend:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: backend/go.mod
-      - name: Format check
-        run: test -z "$(gofmt -l .)"
-      - run: go vet ./...
-      - run: go test -race -count=1 ./...
-      - run: go build ./...
-      - name: Build container image
-        run: docker build -t learivo-api:ci .
-      - name: Vulnerability scan
-        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
-
   database:
     runs-on: ubuntu-latest
     services:
