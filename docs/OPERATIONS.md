@@ -18,6 +18,12 @@ Written from what is built, not from plans. Anything not yet proven is marked **
 
 **Reminder.** The app reminds the student when the last backup is old.
 
+## 1b. Forgot password
+
+Sign in screen > **Forgot password?** > email > **Send reset link**. The screen says "If <email> has an account, we sent a link" for any address, so it never reveals who has an account. The emailed link opens the app on a **Choose a new password** screen (8+ characters, typed twice); nothing else is shown until a new password is saved. **Cancel** signs out. An expired or already-used link shows a notice on the sign-in screen asking for a new one.
+
+Needs in Supabase (Dashboard > Authentication > URL Configuration): Site URL `https://learivo.pages.dev`, and the same address in Redirect URLs, or the link will not bring the student back to the app. Supabase's built-in email sender is limited to a few emails an hour; for many students set up your own sender (Authentication > SMTP Settings). **Not verified:** a real email being delivered and the link opened on a phone (needs the owner's real email); the screens and the link handling are covered by tests, the email itself is not.
+
 ## 2. Offline use and sync
 
 **Needs** the copy of the bank on the device (it downloads when online; status under Saved).

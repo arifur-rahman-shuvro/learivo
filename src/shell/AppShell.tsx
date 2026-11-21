@@ -3,6 +3,7 @@ import { EmptyState, ThemeBackground } from "../ui-kit/index.ts";
 import { BottomNav } from "./navigation/BottomNav.tsx";
 import App from "../App.tsx";
 import { useAuth } from "../auth/AuthProvider.tsx";
+import SetNewPassword from "../auth/SetNewPassword.tsx";
 import AuthScreen from "../auth/AuthScreen.tsx";
 import AccountMenu from "../account/AccountMenu.tsx";
 import AppFrame from "./AppFrame.tsx";
@@ -68,10 +69,11 @@ export default function AppShell({
   makeLive,
 }: Repos = {}) {
   const [hash, go] = useHash();
-  const { status, user } = useAuth();
+  const { status, user, recovering } = useAuth();
   const focus = useFocusMode();
   if (hash === LAB_ROUTE) return <App />;
   if (status === "loading") return <div role="status" aria-label="Loading" className="min-h-dvh" />;
+  if (status === "signed-in" && recovering) return <SetNewPassword />;
   if (status === "signed-out") return <AuthScreen />;
 
   const current = moduleForHash(hash);

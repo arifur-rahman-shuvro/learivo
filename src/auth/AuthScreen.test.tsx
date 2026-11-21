@@ -126,3 +126,101 @@ describe("sign-up", () => {
     expect(screen.queryByText(/Your session ended/)).toBeNull();
   });
 });
+
+describe("forgot password", () => {
+  it("asks for the email only, sends the link, and says the same thing for any address", async () => {
+    const client = fakeAuth(null);
+    renderApp(client);
+    fireEvent.click(await screen.findByRole("button", { name: "Forgot password?" }));
+    expect(screen.getByRole("heading", { name: "Reset your password" })).toBeTruthy();
+    expect(screen.queryByLabelText("Password")).toBeNull();
+    const send = screen.getByRole("button", { name: "Send reset link" }) as HTMLButtonElement;
+    expect(send.disabled).toBe(true);
+    type("Email", "student@example.com");
+    expect(send.disabled).toBe(false);
+    fireEvent.click(send);
+    expect((await screen.findByRole("status")).textContent).toMatch(
+      /If student@example\.com has an account/,
+    );
+    expect(client.calls).toContain("requestPasswordReset:student@example.com");
+    fireEvent.click(screen.getByRole("button", { name: "Back to sign in" }));
+    expect(await screen.findByRole("heading", { name: "Sign in to Learivo" })).toBeTruthy();
+  });
+
+  it("shows a refusal, such as too many requests, and stays on the form", async () => {
+    const client = fakeAuth(null);
+    client.requestPasswordReset = async () => ({
+      ok: false,
+      message: "Too many requests. Wait a few minutes and try again.",
+    });
+    renderApp(client);
+    fireEvent.click(await screen.findByRole("button", { name: "Forgot password?" }));
+    type("Email", "student@example.com");
+    fireEvent.click(screen.getByRole("button", { name: "Send reset link" }));
+    expect((await screen.findByRole("alert")).textContent).toMatch(/Too many requests/);
+    expect(screen.getByRole("heading", { name: "Reset your password" })).toBeTruthy();
+  });
+
+  it("opening the emailed link asks for a new password before showing the app", async () => {
+    const client = fakeAuth(null);
+    renderApp(client);
+    await screen.findByRole("heading", { name: "Sign in to Learivo" });
+    act(() => client.openResetLink("student@example.com"));
+    expect(await screen.findByRole("heading", { name: "Choose a new password" })).toBeTruthy();
+    expect(screen.queryByRole("navigation", { name: "Primary" })).toBeNull();
+    const save = screen.getByRole("button", { name: "Save new password" }) as HTMLButtonElement;
+    expect(save.disabled).toBe(true);
+    type("New password", "short");
+    expect(screen.getByText("Use at least 8 characters.", { selector: "p, span" })).toBeTruthy();
+    type("New password", "a-good-password");
+    type("Repeat new password", "different-one");
+    expect(screen.getByText("The passwords do not match.")).toBeTruthy();
+    expect(save.disabled).toBe(true);
+    type("Repeat new password", "a-good-password");
+    expect(save.disabled).toBe(false);
+    fireEvent.click(save);
+    expect(await screen.findByRole("navigation", { name: "Primary" })).toBeTruthy();
+    expect(client.calls).toContain("setNewPassword:a-good-password");
+  });
+
+  it("keeps the new-password screen when the password is refused", async () => {
+    const client = fakeAuth(null);
+    renderApp(client);
+    await screen.findByRole("heading", { name: "Sign in to Learivo" });
+    act(() => client.openResetLink("student@example.com"));
+    await screen.findByRole("heading", { name: "Choose a new password" });
+    type("New password", "same-as-before");
+    type("Repeat new password", "same-as-before");
+    fireEvent.click(screen.getByRole("button", { name: "Save new password" }));
+    expect((await screen.findByRole("alert")).textContent).toMatch(/not used on this account/);
+    expect(screen.getByRole("heading", { name: "Choose a new password" })).toBeTruthy();
+  });
+
+  it("cancelling the reset signs out and returns to sign in", async () => {
+    const client = fakeAuth(null);
+    renderApp(client);
+    await screen.findByRole("heading", { name: "Sign in to Learivo" });
+    act(() => client.openResetLink("student@example.com"));
+    await screen.findByRole("heading", { name: "Choose a new password" });
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(await screen.findByRole("heading", { name: "Sign in to Learivo" })).toBeTruthy();
+    expect(client.calls).toContain("signOut");
+    // No "session ended" notice: the student chose this.
+    expect(screen.queryByText(/session ended/i)).toBeNull();
+  });
+
+  it("starts on the new-password screen when the page was opened from the link", async () => {
+    const client = fakeAuth({ id: "u1", email: "student@example.com" });
+    client.startedInRecovery = true;
+    renderApp(client);
+    expect(await screen.findByRole("heading", { name: "Choose a new password" })).toBeTruthy();
+  });
+
+  it("tells the student when the link has expired", async () => {
+    const client = fakeAuth(null);
+    client.startupNotice =
+      "That link has expired or was already used. Choose Forgot password and ask for a new one.";
+    renderApp(client);
+    expect(await screen.findByText(/link has expired/)).toBeTruthy();
+  });
+});

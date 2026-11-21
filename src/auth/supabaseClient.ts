@@ -17,8 +17,51 @@ function friendly(message: string): string {
   return "Something went wrong. Check your connection and try again.";
 }
 
-export function createSupabaseAuth(): AuthClient {
+/** What the address looked like when the page opened: the emailed link puts its result there. */
+export function readLink(hash = window.location.hash, search = window.location.search) {
+  const raw = `${hash.replace(/^#\/?/, "")}&${search.replace(/^\?/, "")}`;
+  const p = new URLSearchParams(raw);
   return {
+    recovery: p.get("type") === "recovery",
+    expired: p.get("error_code") === "otp_expired" || p.get("error") === "access_denied",
+  };
+}
+
+export function createSupabaseAuth(): AuthClient {
+  const link = readLink();
+  return {
+    startedInRecovery: link.recovery,
+    startupNotice: link.expired
+      ? "That link has expired or was already used. Choose Forgot password and ask for a new one."
+      : undefined,
+    onRecovery(listener) {
+      const { data } = supabase.auth.onAuthStateChange((event) => {
+        if (event === "PASSWORD_RECOVERY") listener();
+      });
+      return () => data.subscription.unsubscribe();
+    },
+    async requestPasswordReset(email) {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin,
+      });
+      // The answer never says whether the email has an account.
+      if (error && /rate limit|too many|seconds/i.test(error.message)) {
+        return { ok: false, message: "Too many requests. Wait a few minutes and try again." };
+      }
+      if (error && !/not found|invalid/i.test(error.message))
+        return { ok: false, message: friendly(error.message) };
+      return { ok: true };
+    },
+    async setNewPassword(next) {
+      const { error } = await supabase.auth.updateUser({ password: next });
+      if (!error) return { ok: true };
+      const m = error.message.toLowerCase();
+      if (m.includes("different") || m.includes("same"))
+        return { ok: false, message: "Choose a password you have not used on this account." };
+      if (m.includes("session"))
+        return { ok: false, message: "That link has expired. Ask for a new one." };
+      return { ok: false, message: friendly(error.message) };
+    },
     async getUser() {
       const { data } = await supabase.auth.getSession();
       return toUser(data.session);

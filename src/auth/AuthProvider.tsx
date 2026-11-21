@@ -17,6 +17,9 @@ interface AuthValue {
   client: AuthClient;
   /** Set when the session ended without the student asking for it (expired, revoked elsewhere). */
   notice: string | null;
+  /** The emailed reset link was opened: the student must choose a new password before anything else. */
+  recovering: boolean;
+  finishRecovery: () => void;
 }
 
 const AuthContext = createContext<AuthValue | null>(null);
@@ -24,7 +27,8 @@ const AuthContext = createContext<AuthValue | null>(null);
 export function AuthProvider({ client, children }: { client: AuthClient; children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [status, setStatus] = useState<Status>("loading");
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(client.startupNotice ?? null);
+  const [recovering, setRecovering] = useState(client.startedInRecovery ?? false);
   const was = useRef<Status>("loading");
   const leaving = useRef(false);
   // Signing out or deleting the account is the student's own doing, so it earns no "session ended" notice.
@@ -60,20 +64,30 @@ export function AuthProvider({ client, children }: { client: AuthClient; childre
         leaving.current = false;
       }
       was.current = next;
+      if (next === "signed-out") setRecovering(false);
       setUser(u);
       setStatus(next);
     };
     client.getUser().then(apply, () => apply(null));
     const off = client.onChange(apply);
+    const offRecovery = client.onRecovery(() => alive && setRecovering(true));
     return () => {
       alive = false;
       off();
+      offRecovery();
     };
   }, [client]);
 
   const value = useMemo(
-    () => ({ status, user, client: wrapped, notice }),
-    [status, user, wrapped, notice],
+    () => ({
+      status,
+      user,
+      client: wrapped,
+      notice,
+      recovering,
+      finishRecovery: () => setRecovering(false),
+    }),
+    [status, user, wrapped, notice, recovering],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

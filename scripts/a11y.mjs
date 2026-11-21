@@ -67,6 +67,11 @@ try {
     await page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
     await page.waitForSelector("h1, h2");
     await checkScreen(page, `${theme}/${mode} sign-in`);
+    await page.getByRole("button", { name: "Forgot password?" }).click();
+    await page.getByRole("heading", { name: "Reset your password" }).waitFor();
+    await checkScreen(page, `${theme}/${mode} forgot password`);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await page.getByRole("heading", { name: "Sign in to Learivo" }).waitFor();
     // Signed-in screens: the account service is answered by a stand-in (empty account), so the
     // screens render their empty state. Nothing leaves the test browser.
     await ctx.route("**/auth/v1/**", (r) =>

@@ -3,7 +3,7 @@ import { Button, Field, LogoWordmark, ThemeBackground } from "../ui-kit/index.ts
 import AppearanceMenu from "../ui-kit/themes/AppearanceMenu.tsx";
 import { useAuth } from "./AuthProvider.tsx";
 
-type Mode = "sign-in" | "sign-up";
+type Mode = "sign-in" | "sign-up" | "forgot";
 const MIN_PASSWORD = 8;
 
 export default function AuthScreen() {
@@ -14,6 +14,7 @@ export default function AuthScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const [sentTo, setSentTo] = useState<string>();
+  const [resetSentTo, setResetSentTo] = useState<string>();
 
   const emailError =
     email.length > 0 && !/^\S+@\S+\.\S+$/.test(email) ? "Enter a valid email address." : undefined;
@@ -22,14 +23,20 @@ export default function AuthScreen() {
       ? `Use at least ${MIN_PASSWORD} characters.`
       : undefined;
   const ready =
-    email.length > 0 && !emailError && password.length >= (mode === "sign-up" ? MIN_PASSWORD : 1);
+    email.length > 0 &&
+    !emailError &&
+    (mode === "forgot" || password.length >= (mode === "sign-up" ? MIN_PASSWORD : 1));
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     if (!ready || busy) return;
     setBusy(true);
     setError(undefined);
-    if (mode === "sign-up") {
+    if (mode === "forgot") {
+      const r = await client.requestPasswordReset(email.trim());
+      if (!r.ok) setError(r.message);
+      else setResetSentTo(email.trim());
+    } else if (mode === "sign-up") {
       const r = await client.signUp(email.trim(), password);
       if (!r.ok) setError(r.message);
       else if (r.needsConfirmation) setSentTo(email.trim());
@@ -44,6 +51,7 @@ export default function AuthScreen() {
     setMode(next);
     setError(undefined);
     setSentTo(undefined);
+    setResetSentTo(undefined);
   }
 
   return (
@@ -60,7 +68,19 @@ export default function AuthScreen() {
               {notice}
             </p>
           )}
-          {sentTo ? (
+          {resetSentTo ? (
+            <div role="status" className="flex flex-col gap-3">
+              <h1 className="m-0 text-2xl font-bold">Check your email</h1>
+              <p className="m-0 text-muted">
+                If <strong className="text-fg">{resetSentTo}</strong> has an account, we sent a link
+                to choose a new password. Open it on this device. It may take a few minutes, and
+                check your spam folder.
+              </p>
+              <Button variant="secondary" onClick={() => switchMode("sign-in")}>
+                Back to sign in
+              </Button>
+            </div>
+          ) : sentTo ? (
             <div role="status" className="flex flex-col gap-3">
               <h1 className="m-0 text-2xl font-bold">Check your email</h1>
               <p className="m-0 text-muted">
@@ -74,8 +94,17 @@ export default function AuthScreen() {
           ) : (
             <form onSubmit={submit} noValidate className="flex flex-col gap-4">
               <h1 className="m-0 text-2xl font-bold">
-                {mode === "sign-in" ? "Sign in to Learivo" : "Create your account"}
+                {mode === "sign-in"
+                  ? "Sign in to Learivo"
+                  : mode === "forgot"
+                    ? "Reset your password"
+                    : "Create your account"}
               </h1>
+              {mode === "forgot" && (
+                <p className="m-0 text-sm text-muted">
+                  Enter your email and we will send a link to choose a new password.
+                </p>
+              )}
               <Field
                 label="Email"
                 type="email"
@@ -85,22 +114,37 @@ export default function AuthScreen() {
                 error={emailError}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <Field
-                label="Password"
-                type="password"
-                autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
-                value={password}
-                hint={mode === "sign-up" ? `At least ${MIN_PASSWORD} characters.` : undefined}
-                error={passwordError}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              {mode !== "forgot" && (
+                <Field
+                  label="Password"
+                  type="password"
+                  autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
+                  value={password}
+                  hint={mode === "sign-up" ? `At least ${MIN_PASSWORD} characters.` : undefined}
+                  error={passwordError}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+              )}
+              {mode === "sign-in" && (
+                <button
+                  type="button"
+                  className="-mt-2 inline-flex min-h-10 items-center self-start px-1 text-sm font-semibold text-accent underline"
+                  onClick={() => switchMode("forgot")}
+                >
+                  Forgot password?
+                </button>
+              )}
               {error && (
                 <p role="alert" className="m-0 text-sm font-medium text-danger">
                   {error}
                 </p>
               )}
               <Button type="submit" size="lg" loading={busy} disabled={!ready}>
-                {mode === "sign-in" ? "Sign in" : "Create account"}
+                {mode === "sign-in"
+                  ? "Sign in"
+                  : mode === "forgot"
+                    ? "Send reset link"
+                    : "Create account"}
               </Button>
               <p className="m-0 text-center text-sm text-muted">
                 {mode === "sign-in" ? "New to Learivo? " : "Already have an account? "}

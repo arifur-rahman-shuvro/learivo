@@ -1,16 +1,43 @@
-import type { AuthClient, AuthUser, SignInResult, SignUpResult } from "../auth/types.ts";
+import type {
+  AuthClient,
+  AuthUser,
+  ResetResult,
+  SignInResult,
+  SignUpResult,
+} from "../auth/types.ts";
 
 /** In-memory authentication for tests. */
 export function fakeAuth(
   initial: AuthUser | null = null,
   over: Partial<Pick<AuthClient, "signIn" | "signUp" | "changePassword" | "deleteAccount">> = {},
-): AuthClient & { calls: string[]; expire: () => void } {
+): AuthClient & { calls: string[]; expire: () => void; openResetLink: (email: string) => void } {
   let user = initial;
   const listeners = new Set<(u: AuthUser | null) => void>();
   const emit = () => listeners.forEach((l) => l(user));
   const calls: string[] = [];
+  const recoveryListeners = new Set<() => void>();
   return {
     calls,
+    /** The student opens the emailed reset link: a session starts and the recovery event fires. */
+    openResetLink: (email) => {
+      user = { id: "u1", email };
+      emit();
+      recoveryListeners.forEach((l) => l());
+    },
+    onRecovery: (l) => {
+      recoveryListeners.add(l);
+      return () => recoveryListeners.delete(l);
+    },
+    requestPasswordReset: async (email): Promise<ResetResult> => {
+      calls.push(`requestPasswordReset:${email}`);
+      return { ok: true };
+    },
+    setNewPassword: async (next): Promise<ResetResult> => {
+      calls.push(`setNewPassword:${next}`);
+      return next === "same-as-before"
+        ? { ok: false, message: "Choose a password you have not used on this account." }
+        : { ok: true };
+    },
     /** The session ends without the student asking (it expired, or was revoked elsewhere). */
     expire: () => {
       user = null;
