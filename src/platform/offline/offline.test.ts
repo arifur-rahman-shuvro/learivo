@@ -73,7 +73,7 @@ describe("offline pack", () => {
     await expect(pack.addTag()).rejects.toThrow(OFFLINE_MESSAGE);
   });
 
-  it("uses the live bank online and the pack offline, and refuses structure changes offline", async () => {
+  it("uses the live bank online and the pack offline", async () => {
     const bank = await seededBank();
     let online = true;
     const repo = new OfflineAwareRepo(bank, new MemoryStore(), "u1", () => online);
@@ -86,7 +86,6 @@ describe("offline pack", () => {
 
     online = false;
     expect((await repo.list(DEFAULT_QUERY)).total).toBe(3);
-    await expect(repo.addTag("nope")).rejects.toThrow(OFFLINE_MESSAGE);
   });
 
   it("without a copy on the device, an offline add is refused with a clear reason", async () => {
@@ -475,6 +474,107 @@ describe("offline edits", () => {
     expect(report).toMatchObject({ conflicts: 1 });
     expect((await bank.get(a.id))?.status).toBe("archived");
     expect((await bank.get(b.id))?.tagIds).toContain(tag.id);
+  });
+
+  it("organises subjects, tags and collections offline and sends it all in order when back online", async () => {
+    const { bank, net, repo } = await setup();
+    net.online = false;
+    const heart = (await repo.list({ ...DEFAULT_QUERY, search: "heart" })).items[0]!;
+    const loose = (await repo.list({ ...DEFAULT_QUERY, search: "loose" })).items[0]!;
+    const core = (await repo.tags())[0]!;
+    // New items get ids made on the device; later changes use them.
+    const phys = await repo.addNode(null, "Physiology");
+    const renal = await repo.addNode(phys.id, "Renal");
+    const exam = await repo.addTag("exam");
+    const mock = await repo.addCollection("Mock 1");
+    await repo.bulk([loose.id], { kind: "classify", nodeId: renal.id });
+    await repo.bulk([loose.id], { kind: "tag", tagId: exam.id, add: true });
+    await repo.bulk([loose.id], { kind: "collection", collectionId: mock.id, add: true });
+    await repo.renameTag(core.id, "high yield");
+    await repo.setNodeColor(phys.id, "teal");
+    // At once on the device:
+    expect((await repo.get(loose.id))?.path).toEqual(["Physiology", "Renal"]);
+    expect((await repo.get(loose.id))?.tags).toEqual(["exam"]);
+    expect((await repo.get(heart.id))?.tags).toEqual(["high yield"]);
+    expect((await repo.taxonomy()).find((n) => n.id === phys.id)?.color).toBe("teal");
+    expect((await repo.collections()).find((c) => c.id === mock.id)?.count).toBe(1);
+    expect((await repo.pendingSummaries()).slice(0, 2)).toEqual([
+      "Add subject: Physiology",
+      "Add subject: Renal",
+    ]);
+    // Not yet in the account:
+    expect((await bank.taxonomy()).map((n) => n.name)).not.toContain("Physiology");
+
+    net.online = true;
+    const report = await repo.flushEdits();
+    expect(report).toMatchObject({ failed: 0 });
+    const nodes = await bank.taxonomy();
+    const physReal = nodes.find((n) => n.name === "Physiology")!;
+    expect(physReal.color).toBe("teal");
+    expect(nodes.find((n) => n.name === "Renal")?.parentId).toBe(physReal.id);
+    const sent = (await bank.get(loose.id))!;
+    expect(sent.path).toEqual(["Physiology", "Renal"]);
+    expect(sent.tags).toEqual(["exam"]);
+    expect(sent.collectionIds).toHaveLength(1);
+    expect((await bank.tags()).map((t) => t.name).sort()).toEqual(["exam", "high yield"]);
+    expect((await repo.status()).waiting).toBe(0);
+  });
+
+  it("deletes and merges offline, and refuses a name already used", async () => {
+    const { bank, net, repo } = await setup();
+    net.online = false;
+    const heart = (await repo.taxonomy()).find((n) => n.name === "Heart")!;
+    await expect(repo.addNode(heart.parentId, "heart")).rejects.toThrow("already used");
+    await expect(repo.addTag("CORE")).rejects.toThrow("already used");
+    const other = await repo.addTag("other");
+    const core = (await repo.tags()).find((t) => t.name === "core")!;
+    await repo.mergeTags(core.id, other.id);
+    await repo.deleteNode(heart.id);
+    expect((await repo.tags()).map((t) => t.name)).toEqual(["other"]);
+    expect((await repo.list({ ...DEFAULT_QUERY, search: "heart" })).items[0]!.path).toEqual([]);
+
+    net.online = true;
+    await repo.flushEdits();
+    expect((await bank.tags()).map((t) => t.name)).toEqual(["other"]);
+    expect((await bank.taxonomy()).map((n) => n.name).sort()).toEqual(["Anatomy", "Bones"]);
+    expect((await bank.list({ ...DEFAULT_QUERY, search: "heart" })).items[0]!.tags).toEqual([
+      "other",
+    ]);
+  });
+
+  it("keeps new ids across a dropped connection and a restart", async () => {
+    const { bank, store, net, make, repo } = await setup();
+    net.online = false;
+    const phys = await repo.addNode(null, "Physiology");
+    const q = (await repo.list({ ...DEFAULT_QUERY, search: "loose" })).items[0]!;
+    await repo.bulk([q.id], { kind: "classify", nodeId: phys.id });
+    // The connection drops right after the subject is sent.
+    const real = bank.bulk.bind(bank);
+    bank.bulk = async () => {
+      throw new Error("Failed to fetch");
+    };
+    net.online = true;
+    await repo.flushEdits();
+    expect((await repo.status()).waiting).toBe(1);
+    expect((await bank.taxonomy()).map((n) => n.name)).toContain("Physiology");
+    // A new session on the same device finishes the job with the real id.
+    bank.bulk = real;
+    await make().flushEdits();
+    expect((await bank.get(q.id))?.path).toEqual(["Physiology"]);
+    expect(await store.get("u:u1:idmap")).toBeUndefined();
+  });
+
+  it("an organising change that the account refuses is listed, and later ones carry on", async () => {
+    const { bank, net, repo } = await setup();
+    net.online = false;
+    const anat = (await repo.taxonomy()).find((n) => n.name === "Anatomy")!;
+    await repo.renameNode(anat.id, "Anatomy and more");
+    await repo.addTag("fresh");
+    await bank.deleteNode(anat.id); // gone in the account meanwhile
+    net.online = true;
+    const report = await repo.flushEdits();
+    expect((await bank.tags()).map((t) => t.name)).toContain("fresh");
+    expect(report.sent + report.failed).toBe(2);
   });
 
   it("survives closing the app: a new session picks the waiting changes up", async () => {

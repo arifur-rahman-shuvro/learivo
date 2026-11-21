@@ -23,7 +23,7 @@ Findings 1 to 5 are fixed and tested (448 tests, build and phone-width smoke tes
 
 ## Offline editing (added after the audit)
 
-- Offline you can add, edit, archive, restore-from-queue, delete, classify, tag and add to collections. Changing subjects, tags and collections themselves (rename, delete, merge, add) still needs a connection.
+- Offline you can add, edit, archive, restore-from-queue, delete, classify, tag and add to collections. Since 2026-11-22 subjects, tags and collections themselves (add, rename, colour, merge, delete) work offline too: they are queued with ids made on the device, swapped for real ones when sent.
 - Needs the copy of the bank on the device (Download copy). Without it an offline add or edit is refused with that reason.
 - Changes apply to the copy at once and wait in a list on the device (kept if the app is closed). They are sent in order when you are online. New questions get their id on the device, so a repeated send never duplicates one.
 - Several edits to one question count as one. If the question was changed somewhere else meanwhile, your edit wins and the other version stays in that question's history. An edit to a question deleted elsewhere is dropped.

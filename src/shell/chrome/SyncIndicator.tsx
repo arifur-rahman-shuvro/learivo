@@ -140,7 +140,7 @@ export default function SyncIndicator() {
             </p>
             <p className="m-0 text-sm text-muted">
               {pack?.savedAt
-                ? "With this copy you can read, practise and add, edit, archive, tag and move questions offline. Changes are sent when you are back online. Changing subjects, tags and collections needs a connection."
+                ? "With this copy you can read, practise and add, edit, archive, tag and move questions offline. Changes are sent when you are back online. Subjects, tags and collections can be added, renamed, merged and deleted offline too."
                 : "Download the copy to use your questions, and edit them, without a connection."}
             </p>
             {(pack?.waiting ?? 0) > 0 && (

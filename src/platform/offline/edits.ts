@@ -1,5 +1,7 @@
 import {
+  KIND_BY_DEPTH,
   pathOf,
+  subtreeIds,
   type BulkAction,
   type QuestionRecord,
 } from "../../modules/question-bank/data/repo.ts";
@@ -20,7 +22,29 @@ export type EditOp =
       /** The question as it was before the first offline edit, for the three-way comparison. */
       base?: QuestionInput;
     }
-  | { kind: "bulk"; ids: string[]; action: BulkAction };
+  | { kind: "bulk"; ids: string[]; action: BulkAction }
+  | OrganizeOp;
+
+/**
+ * A change to the lists that organise questions: subjects (and chapters), tags and collections.
+ * A new item gets an id made on this device; it is swapped for the real one when it is sent, and
+ * later changes that mention it are sent with the real id.
+ */
+export interface OrganizeOp {
+  kind: "organize";
+  what: "node" | "tag" | "collection";
+  act: "add" | "rename" | "delete" | "merge" | "color";
+  id: string;
+  /** The item's name when the change was made, for the list of waiting changes. */
+  label: string;
+  name?: string;
+  parentId?: string | null;
+  /** merge: the item that takes over the questions of `id`. */
+  into?: string;
+  color?: string | null;
+}
+
+const WHAT = { node: "subject", tag: "tag", collection: "collection" } as const;
 
 export interface FailedEdit {
   summary: string;
@@ -28,6 +52,19 @@ export interface FailedEdit {
 }
 
 export const summarise = (op: EditOp): string => {
+  if (op.kind === "organize") {
+    const w = WHAT[op.what];
+    const n = op.name ? `: ${op.name}` : op.label ? `: ${op.label}` : "";
+    return op.act === "add"
+      ? `Add ${w}${n}`
+      : op.act === "rename"
+        ? `Rename ${w} ${op.label} to ${op.name ?? ""}`
+        : op.act === "color"
+          ? `Colour ${w}${n}`
+          : op.act === "merge"
+            ? `Merge ${w}${n}`
+            : `Delete ${w}${n}`;
+  }
   if (op.kind === "bulk") {
     const n = op.ids.length;
     return `${op.action.kind} ${n} question${n === 1 ? "" : "s"}`;
@@ -45,6 +82,14 @@ export function isEditOp(x: unknown): x is EditOp {
   if (o.kind === "create") return typeof o.id === "string" && input(o.input);
   if (o.kind === "update") {
     return typeof o.id === "string" && input(o.input) && typeof o.baseVersion === "number";
+  }
+  if (o.kind === "organize") {
+    return (
+      (o.what === "node" || o.what === "tag" || o.what === "collection") &&
+      ["add", "rename", "delete", "merge", "color"].includes(o.act as string) &&
+      typeof o.id === "string" &&
+      typeof o.label === "string"
+    );
   }
   if (o.kind === "bulk") {
     const a = o.action as { kind?: unknown } | null;
@@ -70,9 +115,9 @@ export function isTransient(e: unknown): boolean {
  */
 export function enqueue(queue: EditOp[], op: EditOp): EditOp[] {
   if (op.kind !== "update") return [...queue, op];
-  const at = queue.findIndex((q) => q.kind !== "bulk" && q.id === op.id);
+  const at = queue.findIndex((q) => (q.kind === "create" || q.kind === "update") && q.id === op.id);
   const had = queue[at];
-  if (!had || had.kind === "bulk") return [...queue, op];
+  if (!had || (had.kind !== "create" && had.kind !== "update")) return [...queue, op];
   const next = [...queue];
   next[at] =
     had.kind === "create"
@@ -108,6 +153,10 @@ function bump<T extends { id: string; count: number }>(list: T[], id: string, by
 /** Applies an op to the copy on this device, the way the database will once it is sent. */
 export function applyEdit(pack: Pack, op: EditOp, now: () => Date = () => new Date()): void {
   const at = now().toISOString();
+  if (op.kind === "organize") {
+    applyOrganize(pack, op);
+    return;
+  }
   if (op.kind === "create") {
     if (pack.questions.some((q) => q.id === op.id)) return; // already laid over this copy
     const rec: QuestionRecord = {
@@ -176,5 +225,105 @@ export function applyEdit(pack: Pack, op: EditOp, now: () => Date = () => new Da
         bump(pack.collections, a.collectionId, -1);
       }
     }
+  }
+}
+
+/** Lays an organising change over the copy on this device. */
+function applyOrganize(pack: Pack, op: OrganizeOp): void {
+  const list =
+    op.what === "node" ? pack.taxonomy : op.what === "tag" ? pack.tags : pack.collections;
+  const has = (id: string) => list.some((x) => x.id === id);
+  const lower = (t: string) => t.trim().toLowerCase();
+
+  if (op.act === "add") {
+    if (has(op.id)) return; // already laid over this copy
+    const name = (op.name ?? "").trim();
+    if (op.what === "node") {
+      const parent = op.parentId ? pack.taxonomy.find((n) => n.id === op.parentId) : null;
+      if (op.parentId && !parent) throw new Error("The parent no longer exists.");
+      const depth = parent ? KIND_BY_DEPTH.indexOf(parent.kind) + 1 : 0;
+      if (depth > 3) throw new Error("A subtopic cannot have children.");
+      if (
+        pack.taxonomy.some(
+          (n) => n.parentId === (op.parentId ?? null) && lower(n.name) === lower(name),
+        )
+      )
+        throw new Error("That name is already used here.");
+      pack.taxonomy.push({
+        id: op.id,
+        parentId: op.parentId ?? null,
+        kind: KIND_BY_DEPTH[depth]!,
+        name,
+        position: 0,
+        color: null,
+      });
+    } else {
+      const items = list as { name: string }[];
+      if (items.some((x) => lower(x.name) === lower(name)))
+        throw new Error("That name is already used.");
+      (list as { id: string; name: string; count: number }[]).push({ id: op.id, name, count: 0 });
+    }
+    return;
+  }
+  if (!has(op.id)) return; // gone already, or never reached this copy
+
+  if (op.act === "rename") {
+    const name = (op.name ?? "").trim();
+    const item = list.find((x) => x.id === op.id) as { name: string };
+    const old = item.name;
+    item.name = name;
+    if (op.what === "node") {
+      for (const q of pack.questions) q.path = pathOf(q.nodeId, pack.taxonomy);
+    } else if (op.what === "tag") {
+      for (const q of pack.questions)
+        if (q.tagIds.includes(op.id))
+          q.tags = q.tags.map((t) => (lower(t) === lower(old) ? name : t));
+    }
+    return;
+  }
+  if (op.act === "color") {
+    const n = pack.taxonomy.find((x) => x.id === op.id);
+    if (n) n.color = op.color ?? null;
+    return;
+  }
+  if (op.act === "merge") {
+    const into = op.into
+      ? (list as { id: string; name: string; count?: number }[]).find((x) => x.id === op.into)
+      : undefined;
+    if (!into) return;
+    const from = (list as { id: string; name: string; count: number }[]).find(
+      (x) => x.id === op.id,
+    )!;
+    for (const q of pack.questions) {
+      if (op.what === "tag" && q.tagIds.includes(op.id)) {
+        q.tagIds = [...new Set(q.tagIds.map((t) => (t === op.id ? into.id : t)))];
+        q.tags = [...new Set(q.tags.map((t) => (lower(t) === lower(from.name) ? into.name : t)))];
+      } else if (op.what === "collection" && q.collectionIds.includes(op.id)) {
+        q.collectionIds = [...new Set(q.collectionIds.map((c) => (c === op.id ? into.id : c)))];
+      }
+    }
+    into.count = (into.count ?? 0) + from.count;
+  }
+  // delete (and the tail of merge): remove the item and whatever points at it.
+  if (op.what === "node") {
+    const gone = new Set(subtreeIds(op.id, pack.taxonomy));
+    pack.taxonomy = pack.taxonomy.filter((n) => !gone.has(n.id));
+    for (const q of pack.questions)
+      if (q.nodeId && gone.has(q.nodeId)) {
+        q.nodeId = null;
+        q.path = [];
+      }
+  } else if (op.what === "tag") {
+    const name = (pack.tags.find((t) => t.id === op.id)?.name ?? "").toLowerCase();
+    pack.tags = pack.tags.filter((t) => t.id !== op.id);
+    for (const q of pack.questions)
+      if (q.tagIds.includes(op.id) && op.act === "delete") {
+        q.tagIds = q.tagIds.filter((t) => t !== op.id);
+        q.tags = q.tags.filter((t) => lower(t) !== name);
+      }
+  } else {
+    pack.collections = pack.collections.filter((c) => c.id !== op.id);
+    for (const q of pack.questions)
+      if (op.act === "delete") q.collectionIds = q.collectionIds.filter((c) => c !== op.id);
   }
 }

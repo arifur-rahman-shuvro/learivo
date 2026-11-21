@@ -3,6 +3,7 @@ import { contentHash } from "../../modules/question-bank/domain/hash.ts";
 import type { QuestionInput } from "../../modules/question-bank/domain/model.ts";
 import {
   DEFAULT_QUERY,
+  KIND_BY_DEPTH,
   subtreeIds,
   type Collection,
   type Page,
@@ -22,6 +23,7 @@ import {
   summarise,
   type EditOp,
   type FailedEdit,
+  type OrganizeOp,
 } from "./edits.ts";
 import { questionToRecord } from "../../modules/question-bank/domain/importExport.ts";
 import {
@@ -42,8 +44,7 @@ export interface Pack {
   collections: Collection[];
 }
 
-export const OFFLINE_MESSAGE =
-  "You are offline. Changing subjects, tags and collections needs a connection. Adding, editing, archiving and moving questions work offline.";
+export const OFFLINE_MESSAGE = "You are offline, and this copy of your questions can only be read.";
 export const NO_COPY_MESSAGE =
   "You are offline and there is no copy of your questions on this device. Download the copy while online to edit offline.";
 
@@ -188,6 +189,7 @@ export interface FlushReport {
 }
 
 const editsKey = (userId: string) => `u:${userId}:edits`;
+const idMapKey = (userId: string) => `u:${userId}:idmap`;
 const failedKey = (userId: string) => `u:${userId}:edits-failed`;
 const conflictsKey = (userId: string) => `u:${userId}:conflicts`;
 const resolvedKey = (userId: string) => `u:${userId}:conflicts-resolved`;
@@ -208,6 +210,8 @@ export class OfflineAwareRepo implements QuestionRepo {
   private conflicts: Conflict[] = [];
   private resolved: ResolvedConflict[] = [];
   private flushing?: Promise<FlushReport>;
+  /** Ids made on this device for new subjects, tags and collections, and the real ones they became. */
+  private idMap: Record<string, string> = {};
 
   constructor(
     private readonly remote: QuestionRepo,
@@ -231,6 +235,8 @@ export class OfflineAwareRepo implements QuestionRepo {
         return false;
       }
     });
+    const ids = await this.store.get<Record<string, string>>(idMapKey(this.userId));
+    this.idMap = ids && typeof ids === "object" ? ids : {};
     this.failed = (await this.store.get<FailedEdit[]>(failedKey(this.userId))) ?? [];
     const cs = await this.store.get<unknown>(conflictsKey(this.userId));
     this.conflicts = Array.isArray(cs) ? (cs as Conflict[]).filter((c) => c && c.mine && c.id) : [];
@@ -431,16 +437,6 @@ export class OfflineAwareRepo implements QuestionRepo {
   bulk: QuestionRepo["bulk"] = (ids, action) =>
     this.edit([{ kind: "bulk", ids, action }], () => this.remote.bulk(ids, action), undefined);
 
-  private async write<T>(fn: () => Promise<T>): Promise<T> {
-    if (!this.isOnline()) throw new Error(OFFLINE_MESSAGE);
-    await this.load();
-    // Renaming or deleting a subject while older changes wait could confuse them.
-    if (this.queue.length > 0) {
-      throw new Error("Changes made offline are still being sent. Try again in a moment.");
-    }
-    return fn();
-  }
-
   /** Sends changes made offline, in order. Stops at the first connection problem and tries again later. */
   flushEdits(): Promise<FlushReport> {
     this.flushing ??= this.runFlush().finally(() => {
@@ -473,6 +469,10 @@ export class OfflineAwareRepo implements QuestionRepo {
       await this.store.set(failedKey(this.userId), this.failed);
       await this.store.set(conflictsKey(this.userId), this.conflicts);
       this.changed();
+    }
+    if (touched && this.queue.length === 0 && Object.keys(this.idMap).length > 0) {
+      this.idMap = {}; // every waiting change has been sent: the swaps are no longer needed
+      await this.store.del(idMapKey(this.userId));
     }
     if (touched && this.queue.length === 0 && this.enabled) {
       await this.download().catch(() => undefined);
@@ -522,10 +522,65 @@ export class OfflineAwareRepo implements QuestionRepo {
         report.merged += 1;
       }
       await this.remote.update(op.id, input);
+    } else if (op.kind === "organize") {
+      await this.replayOrganize(op);
     } else {
-      await this.remote.bulk(op.ids, op.action);
+      const a = op.action;
+      const real = (id: string) => this.idMap[id] ?? id;
+      await this.remote.bulk(
+        op.ids,
+        a.kind === "classify"
+          ? { ...a, nodeId: a.nodeId ? real(a.nodeId) : a.nodeId }
+          : a.kind === "tag"
+            ? { ...a, tagId: real(a.tagId) }
+            : a.kind === "collection"
+              ? { ...a, collectionId: real(a.collectionId) }
+              : a,
+      );
     }
     report.sent += 1;
+  }
+
+  /** Sends one change to subjects, tags or collections, swapping ids made here for the real ones. */
+  private async replayOrganize(op: OrganizeOp) {
+    const real = (id: string) => this.idMap[id] ?? id;
+    const r = this.remote;
+    const id = real(op.id);
+    const name = op.name ?? "";
+    if (op.act === "add") {
+      if (this.idMap[op.id]) return; // sent before a connection dropped
+      let made: string;
+      if (op.what === "node") {
+        const parent = op.parentId ? real(op.parentId) : null;
+        const same = (await r.taxonomy()).find(
+          (n) => n.parentId === parent && n.name.toLowerCase() === name.toLowerCase(),
+        );
+        made = same ? same.id : (await r.addNode(parent, name)).id;
+      } else if (op.what === "tag") {
+        const same = (await r.tags()).find((t) => t.name.toLowerCase() === name.toLowerCase());
+        made = same ? same.id : (await r.addTag(name)).id;
+      } else {
+        const same = (await r.collections()).find(
+          (c) => c.name.toLowerCase() === name.toLowerCase(),
+        );
+        made = same ? same.id : (await r.addCollection(name)).id;
+      }
+      this.idMap[op.id] = made;
+      await this.store.set(idMapKey(this.userId), this.idMap);
+      return;
+    }
+    const into = op.into ? real(op.into) : "";
+    if (op.what === "node") {
+      if (op.act === "rename") await r.renameNode(id, name);
+      else if (op.act === "color") await r.setNodeColor(id, op.color ?? null);
+      else await r.deleteNode(id);
+    } else if (op.what === "tag") {
+      if (op.act === "rename") await r.renameTag(id, name);
+      else if (op.act === "merge") await r.mergeTags(id, into);
+      else await r.deleteTag(id);
+    } else if (op.act === "rename") await r.renameCollection(id, name);
+    else if (op.act === "merge") await r.mergeCollections(id, into);
+    else await r.deleteCollection(id);
   }
 
   private holdConflict(report: FlushReport, c: Conflict) {
@@ -596,20 +651,102 @@ export class OfflineAwareRepo implements QuestionRepo {
     this.changed();
   }
 
-  addNode: QuestionRepo["addNode"] = (p, n) => this.write(() => this.remote.addNode(p, n));
-  renameNode = (id: string, n: string) => this.write(() => this.remote.renameNode(id, n));
-  setNodeColor = (id: string, c: string | null) =>
-    this.write(() => this.remote.setNodeColor(id, c));
-  deleteNode = (id: string) => this.write(() => this.remote.deleteNode(id));
-  addTag = (n: string) => this.write(() => this.remote.addTag(n));
-  renameTag = (id: string, n: string) => this.write(() => this.remote.renameTag(id, n));
-  deleteTag = (id: string) => this.write(() => this.remote.deleteTag(id));
-  mergeTags = (a: string, b: string) => this.write(() => this.remote.mergeTags(a, b));
-  mergeCollections = (a: string, b: string) => this.write(() => this.remote.mergeCollections(a, b));
-  addCollection = (n: string) => this.write(() => this.remote.addCollection(n));
-  renameCollection = (id: string, n: string) =>
-    this.write(() => this.remote.renameCollection(id, n));
-  deleteCollection = (id: string) => this.write(() => this.remote.deleteCollection(id));
+  /** Subjects, tags and collections: sent now when online, otherwise kept on this device and sent in order. */
+  private organise<T>(op: Omit<OrganizeOp, "kind" | "label">, direct: () => Promise<T>, result: T) {
+    const list =
+      op.what === "node"
+        ? this.pack?.taxonomy
+        : op.what === "tag"
+          ? this.pack?.tags
+          : this.pack?.collections;
+    const label = (list?.find((x) => x.id === op.id) as { name?: string } | undefined)?.name ?? "";
+    return this.edit([{ kind: "organize", label, ...op }], direct, result);
+  }
+
+  addNode: QuestionRepo["addNode"] = async (parentId, name) => {
+    await this.load();
+    const id = crypto.randomUUID();
+    const depth = parentId
+      ? KIND_BY_DEPTH.indexOf(
+          this.pack?.taxonomy.find((n) => n.id === parentId)?.kind ?? "subject",
+        ) + 1
+      : 0;
+    const node: TaxonomyNode = {
+      id,
+      parentId,
+      kind: KIND_BY_DEPTH[Math.min(depth, 3)]!,
+      name,
+      position: 0,
+      color: null,
+    };
+    return this.organise(
+      { what: "node", act: "add", id, name, parentId },
+      () => this.remote.addNode(parentId, name),
+      node,
+    );
+  };
+  renameNode = (id: string, name: string) =>
+    this.organise(
+      { what: "node", act: "rename", id, name },
+      () => this.remote.renameNode(id, name),
+      undefined,
+    );
+  setNodeColor = (id: string, color: string | null) =>
+    this.organise(
+      { what: "node", act: "color", id, color },
+      () => this.remote.setNodeColor(id, color),
+      undefined,
+    );
+  deleteNode = (id: string) =>
+    this.organise({ what: "node", act: "delete", id }, () => this.remote.deleteNode(id), undefined);
+  addTag = async (name: string) => {
+    const id = crypto.randomUUID();
+    return this.organise({ what: "tag", act: "add", id, name }, () => this.remote.addTag(name), {
+      id,
+      name,
+      count: 0,
+    });
+  };
+  renameTag = (id: string, name: string) =>
+    this.organise(
+      { what: "tag", act: "rename", id, name },
+      () => this.remote.renameTag(id, name),
+      undefined,
+    );
+  deleteTag = (id: string) =>
+    this.organise({ what: "tag", act: "delete", id }, () => this.remote.deleteTag(id), undefined);
+  mergeTags = (from: string, into: string) =>
+    this.organise(
+      { what: "tag", act: "merge", id: from, into },
+      () => this.remote.mergeTags(from, into),
+      undefined,
+    );
+  addCollection = async (name: string) => {
+    const id = crypto.randomUUID();
+    return this.organise(
+      { what: "collection", act: "add", id, name },
+      () => this.remote.addCollection(name),
+      { id, name, count: 0 },
+    );
+  };
+  renameCollection = (id: string, name: string) =>
+    this.organise(
+      { what: "collection", act: "rename", id, name },
+      () => this.remote.renameCollection(id, name),
+      undefined,
+    );
+  deleteCollection = (id: string) =>
+    this.organise(
+      { what: "collection", act: "delete", id },
+      () => this.remote.deleteCollection(id),
+      undefined,
+    );
+  mergeCollections = (from: string, into: string) =>
+    this.organise(
+      { what: "collection", act: "merge", id: from, into },
+      () => this.remote.mergeCollections(from, into),
+      undefined,
+    );
 
   /** What is waiting to be sent, one line each. */
   async pendingSummaries(): Promise<string[]> {
@@ -628,10 +765,14 @@ export class OfflineAwareRepo implements QuestionRepo {
     await this.load();
     if (this.queue.length === 0 && this.conflicts.length === 0) return null;
     const questions = [
-      ...this.queue.flatMap((op) => (op.kind === "bulk" ? [] : [questionToRecord(op.input)])),
+      ...this.queue.flatMap((op) =>
+        op.kind === "create" || op.kind === "update" ? [questionToRecord(op.input)] : [],
+      ),
       ...this.conflicts.map((c) => questionToRecord(c.mine)), // my side of each undecided clash
     ];
-    const others = this.queue.filter((op) => op.kind === "bulk").map(summarise);
+    const others = this.queue
+      .filter((op) => op.kind === "bulk" || op.kind === "organize")
+      .map(summarise);
     return JSON.stringify(
       { format: "learivo-questions", version: 1, questions, otherChanges: others },
       null,
@@ -649,10 +790,11 @@ export class OfflineAwareRepo implements QuestionRepo {
     if ((this.queue.length > 0 || this.conflicts.length > 0) && !opts.discardUnsent) {
       throw new UnsentChangesError(await this.pendingSummaries());
     }
-    for (const k of [editsKey, failedKey, conflictsKey, resolvedKey]) {
+    for (const k of [editsKey, failedKey, conflictsKey, resolvedKey, idMapKey]) {
       await this.store.del(k(this.userId));
     }
     this.queue = [];
+    this.idMap = {};
     this.failed = [];
     this.conflicts = [];
     this.resolved = [];

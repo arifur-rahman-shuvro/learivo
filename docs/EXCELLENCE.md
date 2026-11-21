@@ -103,3 +103,10 @@ Todo: real-database query timing (Needs you or a test project: the sandbox canno
 - Runtime row checks now also cover collections and question version history (old snapshots missing later columns still show, with blanks). Tests: `supabaseRepo.test.ts`.
 - `docs/MIGRATIONS.md`: what each migration added and the SQL to undo it, plus rules for new ones.
 - Question version history already existed (editor > versions). The data-export reader already validates through its own checks.
+
+## Offline organising (2026-11-22)
+
+- Subjects, tags and collections: add, rename, colour, merge, delete now queue offline (`OrganizeOp` in `edits.ts`), apply to the device copy at once, and replay in order. New items get a device id; `pack.ts` swaps it for the real id (saved in the store so a dropped connection or restart cannot lose the link) and re-checks by name before adding, so a repeated send never makes a duplicate.
+- A change the account refuses (for example, a subject deleted elsewhere) is listed under refused changes and the rest carry on.
+- Tested with a broken id-swap and a missing id-save: both make a test fail.
+- Still online-only: notes, bookmarks, flashcards, glossary and revision (workspace data).
