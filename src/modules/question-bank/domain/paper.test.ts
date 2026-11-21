@@ -51,11 +51,37 @@ describe("printable paper", () => {
       key: false,
       explanations: false,
     });
-    expect(html).not.toContain("<script>");
+    expect(html).not.toContain("<script>x");
+    expect(html).toContain("&lt;script&gt;x&lt;/script&gt;");
     expect(html).toContain("&lt;b&gt;B&lt;/b&gt;");
     expect(html).toContain("Plants use __________ for food.");
     expect(html).not.toContain("sunlight");
     expect(html).not.toContain("Answer key");
+    // Without a key the page carries no answers at all, not even hidden ones.
+    expect(html).not.toContain('data-ok="');
+    expect(html).not.toContain("Because two.");
+    expect(html).not.toContain("Check my answers");
+  });
+
+  it("keeps a title from breaking out of the page footer style", () => {
+    const html = paperHtml([sba], { title: 'x"}</style><b>', key: false, explanations: false });
+    expect(html.match(/<\/style>/g)).toHaveLength(1);
+    expect(html).not.toContain("<b>x");
+  });
+
+  it("puts the answer key on its own page, after every question", () => {
+    const html = paperHtml([sba, multi], { title: "Quiz", key: true, explanations: true });
+    const key = html.indexOf('<main class="keypage">');
+    expect(key).toBeGreaterThan(html.indexOf('id="q2"'));
+    expect(html).toContain(".keypage { break-before: page; }");
+    // Explanations are on a further page of their own.
+    expect(html.indexOf('<main class="whypage">')).toBeGreaterThan(key);
+    expect(html).toContain("Check my answers");
+  });
+
+  it("leaves out the explanations page when nothing is explained", () => {
+    const html = paperHtml([multi], { title: "Quiz", key: true, explanations: true });
+    expect(html).not.toContain('<main class="whypage">');
   });
 
   it("adds an answer key, with explanations only when asked", () => {
@@ -79,10 +105,11 @@ describe("printable paper", () => {
         marksWrong: 0.5,
       },
     });
-    expect(html).toContain("4 questions");
-    expect(html).toContain("Total marks: 8");
-    expect(html).toContain("Time: 90 minutes");
-    expect(html).toContain("0.5 deducted for each wrong answer");
+    const text = html.replace(/<[^>]+>/g, "");
+    expect(text).toContain("4 questions");
+    expect(text).toContain("Total marks: 8");
+    expect(text).toContain("Time: 90 minutes");
+    expect(text).toContain("0.5 deducted for each wrong answer");
     expect(html).toContain("Answer all questions.");
     const order = ["Section A", "Section B", "Section C", "Section D"].map((x) => html.indexOf(x));
     expect(order.every((i) => i > 0)).toBe(true);
@@ -91,7 +118,7 @@ describe("printable paper", () => {
       html.indexOf("Primes"),
     );
     // The key follows the printed order: the single-best-answer question comes first.
-    expect(html.indexOf("<li>B</li>")).toBeGreaterThan(html.indexOf("Answer key"));
+    expect(html.indexOf("<span>B</span>")).toBeGreaterThan(html.indexOf("Answer key"));
   });
 
   it("says no time limit for an untimed exam", () => {
@@ -101,7 +128,7 @@ describe("printable paper", () => {
       explanations: false,
       exam: { instructions: "", minutes: null, marksCorrect: 1, marksWrong: 0 },
     });
-    expect(html).toContain("No time limit");
+    expect(html.replace(/<[^>]+>/g, "")).toContain("No time limit");
     expect(html).not.toContain("deducted");
   });
 });

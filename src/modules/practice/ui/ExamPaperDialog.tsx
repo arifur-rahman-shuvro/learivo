@@ -90,7 +90,8 @@ export function ExamPaperDialog({
       <div className="flex flex-col gap-3">
         <p className="m-0 text-sm text-muted">
           The paper has your exam&apos;s title, instructions, time and marks, with the questions in
-          sections by type. In the print window choose &quot;Save as PDF&quot; to keep a file.
+          sections by type. On screen, tap the options to try it and use Check my answers. In the
+          print window choose &quot;Save as PDF&quot; to keep a file.
         </p>
         <div>
           <Button variant="secondary" size="sm" disabled={!questions} onClick={load}>
@@ -104,7 +105,7 @@ export function ExamPaperDialog({
             checked={key}
             onChange={(e) => setKey(e.target.checked)}
           />
-          Add an answer key on the last page
+          Add the answer key on a separate page
         </label>
         <label className="flex items-center gap-2 text-sm">
           <input
@@ -114,7 +115,7 @@ export function ExamPaperDialog({
             disabled={!key}
             onChange={(e) => setExplanations(e.target.checked)}
           />
-          Include explanations in the key
+          Add an explanations page after the key
         </label>
         {error && (
           <p role="alert" className="m-0 text-sm text-danger">

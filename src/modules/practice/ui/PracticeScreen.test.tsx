@@ -279,7 +279,7 @@ describe("Practice", () => {
     expect(html).toContain("Section A: Single best answer");
     expect(html).toContain("Paper Q one");
     expect(html).toContain("Answer key");
-    fireEvent.click(within(dlg).getByLabelText("Add an answer key on the last page"));
+    fireEvent.click(within(dlg).getByLabelText("Add the answer key on a separate page"));
     await waitFor(() => expect(frame.getAttribute("srcdoc")).not.toContain("Answer key"));
   });
 
