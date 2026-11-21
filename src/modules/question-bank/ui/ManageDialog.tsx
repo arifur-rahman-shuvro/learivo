@@ -184,7 +184,7 @@ function ColorPick({
           aria-label={c.label}
           title={c.label}
           onClick={() => void onPick(value === c.id ? null : c.id)}
-          className="grid size-8 place-items-center rounded-full border-0 bg-transparent p-0"
+          className="grid size-10 place-items-center rounded-full border-0 bg-transparent p-0"
         >
           <span
             className="block size-5 rounded-full"
