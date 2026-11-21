@@ -495,7 +495,16 @@ describe("Home: exam countdown", () => {
       screen.getByRole("progressbar", { name: "Questions practised at least once" }),
     ).toBeTruthy();
     expect((await workspace.examTarget()).date).toBe(iso);
+    // A calendar of the days up to the exam: seven days, ending with the exam only when it is within reach.
+    const cal = await screen.findByRole("region", { name: "Study calendar" });
+    const days = within(cal).getAllByRole("listitem");
+    expect(days).toHaveLength(7);
+    expect(days[0]!.getAttribute("aria-label")).toMatch(/^Today .*: \d+ new, 0 to revise/);
+    expect(within(days[0]!).getByText("Today", { exact: false })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Remove exam" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("region", { name: "Study calendar" })).toBeNull(),
+    );
     expect(await screen.findByRole("button", { name: "Set exam date" })).toBeTruthy();
   });
 });

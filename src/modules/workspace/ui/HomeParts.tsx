@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button, ProgressBar } from "../../../ui-kit/index.ts";
 import { daysUntil, studyPlan, type ExamTarget } from "../domain/examTarget.ts";
+import type { PlanDay } from "../domain/weekPlan.ts";
 import { openBackup } from "../../../core/dialogs/backup.ts";
 import { shouldRemindBackup, snoozeBackupReminder } from "../../../core/backupReminder.ts";
 
@@ -79,5 +80,48 @@ export function ExamLine({
       </p>
       <ProgressBar value={plan.coverage} label="Questions practised at least once" />
     </>
+  );
+}
+
+const WEEKDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** The days up to the exam as a small calendar: new questions and revision for each day. */
+export function WeekPlan({ days }: { days: PlanDay[] }) {
+  if (days.length === 0) return null;
+  const weekday = (day: string) => WEEKDAY[new Date(`${day}T00:00:00`).getDay()]!;
+  return (
+    <section aria-label="Study calendar" className="mt-2 flex flex-col gap-2">
+      <h3 className="m-0 text-sm font-semibold">Your days until the exam</h3>
+      <ol className="m-0 grid list-none grid-cols-[repeat(auto-fit,minmax(5.5rem,1fr))] gap-2 p-0">
+        {days.map((d, i) => (
+          <li
+            key={d.day}
+            aria-label={`${i === 0 ? "Today" : weekday(d.day)} ${d.day}: ${
+              d.kind === "exam"
+                ? "exam day"
+                : `${d.fresh} new, ${d.revise} to revise${d.kind === "light" ? ", revision day" : ""}`
+            }`}
+            className={`flex flex-col gap-0.5 rounded-control border p-2 text-xs ${
+              d.kind === "exam" ? "border-accent bg-surface-2" : "border-line"
+            }`}
+          >
+            <span className={`font-bold ${i === 0 ? "text-fg" : "text-muted"}`}>
+              {i === 0 ? "Today" : weekday(d.day)} {Number(d.day.slice(8))}
+            </span>
+            {d.kind === "exam" ? (
+              <span className="font-semibold">Exam</span>
+            ) : (
+              <>
+                <span>{d.fresh > 0 ? `${d.fresh} new` : "No new"}</span>
+                <span className="text-muted">
+                  {d.revise > 0 ? `${d.revise} to revise` : "Nothing due"}
+                </span>
+                {d.kind === "light" && <span className="text-muted">Revise only</span>}
+              </>
+            )}
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }

@@ -31,7 +31,8 @@ import PractiseArea from "./PractiseArea.tsx";
 import CustomizeDialog from "./CustomizeDialog.tsx";
 import { useInsightsData } from "./useInsightsData.ts";
 import { useWorkspace } from "./workspace.tsx";
-import { BackupNudge, Tile, ExamLine } from "./HomeParts.tsx";
+import { BackupNudge, Tile, ExamLine, WeekPlan } from "./HomeParts.tsx";
+import { weekPlan } from "../domain/weekPlan.ts";
 
 /** Home for a student who has questions: today's focus, goal, streak and weak areas. */
 export default function HomeDashboard({ onNavigate }: { onNavigate: (route: string) => void }) {
@@ -329,6 +330,7 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
         ) : exam.date ? (
           <>
             <ExamLine exam={exam} total={total} seen={seen} today={today} />
+            <WeekPlan days={weekPlan(exam.date, total, seen, forecast, today)} />
             <div className="flex gap-2">
               <Button size="sm" variant="ghost" onClick={() => setExamEditing(true)}>
                 Change exam
