@@ -1,7 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { QUESTION_TYPES } from "../domain/model.ts";
 import type { AnswerSpec, QuestionInput, QuestionType } from "../domain/model.ts";
-import { checkRow, opt, UnexpectedDataError, type RowSpec } from "../../../core/rowCheck.ts";
+import {
+  checkRow,
+  checkRows,
+  opt,
+  UnexpectedDataError,
+  type RowSpec,
+} from "../../../core/rowCheck.ts";
 import {
   KIND_BY_DEPTH,
   pathOf,
@@ -70,6 +76,15 @@ export function checkedQuestionRow(raw: QuestionRow): QuestionRow {
   return row;
 }
 
+const NODE_ROW: RowSpec = {
+  id: "string",
+  parent_id: opt("string"),
+  kind: "string",
+  name: "string",
+  position: "number",
+};
+const TAG_ROW: RowSpec = { id: "string", name: "string" };
+
 interface Failure {
   code?: string;
   message: string;
@@ -124,7 +139,11 @@ export class SupabaseRepo implements QuestionRepo {
 
   private async tagNames(): Promise<{ id: string; name: string }[]> {
     if (!this.tagCache) {
-      this.tagCache = ok(await this.db.from("tags").select("id, name").order("name")) ?? [];
+      this.tagCache = checkRows<{ id: string; name: string }>(
+        "tags",
+        ok(await this.db.from("tags").select("id, name").order("name")),
+        TAG_ROW,
+      );
     }
     return this.tagCache;
   }
@@ -454,6 +473,7 @@ export class SupabaseRepo implements QuestionRepo {
       name: string;
       position: number;
     }[];
+    checkRows("taxonomy_nodes", rows, NODE_ROW);
     this.nodeCache = rows.map((r) => ({
       id: r.id,
       parentId: r.parent_id,
@@ -508,6 +528,7 @@ export class SupabaseRepo implements QuestionRepo {
     const rows = (ok(
       await this.db.from("tags").select("id, name, question_tags(count)").order("name"),
     ) ?? []) as { id: string; name: string; question_tags: { count: number }[] }[];
+    checkRows("tags", rows, { ...TAG_ROW, question_tags: "array" });
     this.tagCache = rows.map((r) => ({ id: r.id, name: r.name }));
     return rows.map((r) => ({ id: r.id, name: r.name, count: r.question_tags[0]?.count ?? 0 }));
   }
