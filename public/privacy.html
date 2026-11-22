@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy · Learivo</title>
+    <link rel="icon" href="/favicon.svg" />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #fbfaf7;
+        --fg: #1d1b18;
+        --muted: #5d5851;
+        --link: #1f5fbf;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #17161a;
+          --fg: #ecebe8;
+          --muted: #a9a59d;
+          --link: #8db4f2;
+        }
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          17px/1.65 system-ui,
+          "Noto Sans Bengali",
+          sans-serif;
+      }
+      main {
+        max-width: 42rem;
+        margin: 0 auto;
+        padding: 24px 16px 48px;
+      }
+      h1 {
+        font-size: 1.7rem;
+        line-height: 1.25;
+        margin: 0 0 4px;
+      }
+      h2 {
+        font-size: 1.15rem;
+        margin: 28px 0 4px;
+      }
+      p,
+      li {
+        margin: 8px 0;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      a {
+        color: var(--link);
+      }
+      nav a {
+        display: inline-block;
+        min-height: 40px;
+        line-height: 40px;
+        margin-right: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <nav>
+        <a href="/">Open Learivo</a><a href="/privacy.html">Privacy</a
+        ><a href="/terms.html">Terms</a>
+      </nav>
+      <h1>Privacy</h1>
+      <p class="muted">Last updated 22 November 2026</p>
+      <p>
+        Learivo is a private question bank and exam practice app at https://learivo.pages.dev. This
+        page says what it stores and who can see it.
+      </p>
+      <h2>What Learivo stores</h2>
+      <ul>
+        <li>
+          Your email address and, if you use an email account, a password (kept by Supabase in
+          hashed form, never readable by Learivo).
+        </li>
+        <li>
+          If you sign in with Google: your Google account email and name, so you can sign in.
+          Learivo asks Google for nothing else.
+        </li>
+        <li>
+          What you create in the app: questions, notes, flashcards, glossary terms, collections,
+          saved exams, practice and exam results, your confidence ratings and mistake reasons, and
+          your settings.
+        </li>
+      </ul>
+      <h2>Where it is kept</h2>
+      <p>
+        In a database run by Supabase (supabase.com). Each person can read and change only their own
+        rows; this is enforced by the database itself. A copy of recent data is also kept in your
+        own browser so the app works offline, and it is removed when you sign out or use "Clear data
+        on this device".
+      </p>
+      <h2>Who can see it</h2>
+      <p>
+        Only you. Learivo has no advertising, no analytics and no tracking of what you study, and it
+        does not sell or share your data. The person who runs the app can technically access the
+        database as an administrator, as with any hosted service, and will not look at your content
+        except to fix a fault you ask about.
+      </p>
+      <h2>Optional services</h2>
+      <ul>
+        <li>
+          <strong>AI helpers.</strong> If you add your own AI provider key, it stays in your browser
+          on your device and is never sent to Learivo. Question text you choose to send goes to the
+          provider you picked, under that provider's rules.
+        </li>
+        <li>
+          <strong>Crash reports.</strong> If switched on, reports describe the kind of error only.
+          They contain no question text, notes or personal details.
+        </li>
+      </ul>
+      <h2>Backups and deleting your data</h2>
+      <p>
+        You can download all your data at any time from Menu, Back up and restore. You can delete
+        your account and everything in it from Account, Delete account. Deleting removes your data
+        from the live database. Encrypted database backups kept by the owner are removed after 30
+        days.
+      </p>
+      <h2>Contact</h2>
+      <p>Questions about your data: contact the person who invited you to Learivo.</p>
+    </main>
+  </body>
+</html>

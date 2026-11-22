@@ -198,6 +198,20 @@ export default function AuthScreen() {
             </form>
           )}
         </main>
+        <nav aria-label="Legal" className="mt-2 flex justify-center gap-4 text-sm">
+          <a
+            className="inline-flex min-h-10 items-center px-1 text-muted underline"
+            href="/privacy.html"
+          >
+            Privacy
+          </a>
+          <a
+            className="inline-flex min-h-10 items-center px-1 text-muted underline"
+            href="/terms.html"
+          >
+            Terms
+          </a>
+        </nav>
       </div>
     </>
   );

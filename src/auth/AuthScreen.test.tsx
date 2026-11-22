@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { ThemeProvider } from "../ui-kit/themes/ThemeProvider.tsx";
 import AppShell from "../shell/AppShell.tsx";
 import { AuthProvider } from "./AuthProvider.tsx";
@@ -29,6 +29,17 @@ describe("auth gate and sign-in", () => {
     renderApp(fakeAuth(null));
     expect(await screen.findByRole("heading", { name: "Sign in to Learivo" })).toBeTruthy();
     expect(screen.queryByRole("navigation", { name: "Primary" })).toBeNull();
+  });
+
+  it("links to the privacy and terms pages before sign-in", async () => {
+    renderApp(fakeAuth(null));
+    const legal = await screen.findByRole("navigation", { name: "Legal" });
+    expect(within(legal).getByRole("link", { name: "Privacy" }).getAttribute("href")).toBe(
+      "/privacy.html",
+    );
+    expect(within(legal).getByRole("link", { name: "Terms" }).getAttribute("href")).toBe(
+      "/terms.html",
+    );
   });
 
   it("keeps the submit button disabled until the email looks valid", async () => {
