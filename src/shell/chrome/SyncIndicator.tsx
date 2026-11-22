@@ -32,6 +32,7 @@ export default function SyncIndicator() {
   const [note, setNote] = useState<string | null>(null);
   const [lines, setLines] = useState<string[]>([]);
   const [wsWaiting, setWsWaiting] = useState(0);
+  const [wsProblems, setWsProblems] = useState<string[]>([]);
 
   const subscribe = useCallback(
     (fn: () => void) => (controls ? controls.sync.subscribe(fn) : () => undefined),
@@ -48,6 +49,7 @@ export default function SyncIndicator() {
     if (!controls) return;
     const load = () => {
       void controls.pack.status().then(setPack);
+      void (controls.ws?.problems() ?? Promise.resolve([] as string[])).then(setWsProblems);
       void Promise.all([
         controls.pack.pendingSummaries(),
         controls.ws?.pendingSummaries() ?? Promise.resolve([] as string[]),
@@ -79,7 +81,8 @@ export default function SyncIndicator() {
   else if (state.syncing) [label, tone] = ["Syncing", "busy"];
   else if (state.waiting + (pack?.waiting ?? 0) + wsWaiting > 0) {
     [label, tone] = [`${state.waiting + (pack?.waiting ?? 0) + wsWaiting} waiting to sync`, "busy"];
-  } else if ((pack?.failed.length ?? 0) > 0) [label, tone] = ["Needs attention", "warn"];
+  } else if ((pack?.failed.length ?? 0) + wsProblems.length > 0)
+    [label, tone] = ["Needs attention", "warn"];
   else if (!online) [label, tone] = ["Offline", "warn"];
 
   async function act(fn: () => Promise<unknown>, done: string) {
@@ -186,21 +189,33 @@ export default function SyncIndicator() {
                 </Button>
               </p>
             )}
-            {(pack?.failed.length ?? 0) > 0 && (
+            {(pack?.failed.length ?? 0) + wsProblems.length > 0 && (
               <div role="alert" className="flex flex-col gap-1 text-sm">
-                <p className="m-0 font-medium">These offline changes could not be saved:</p>
+                <p className="m-0 font-medium">These offline changes need your attention:</p>
                 <ul className="m-0 pl-5">
-                  {pack!.failed.map((f, i) => (
-                    <li key={i}>
+                  {(pack?.failed ?? []).map((f, i) => (
+                    <li key={`p${i}`}>
                       {f.summary}. {f.message}
                     </li>
+                  ))}
+                  {wsProblems.map((f, i) => (
+                    <li key={`w${i}`}>{f}</li>
                   ))}
                 </ul>
                 <div>
                   <Button
                     size="sm"
                     variant="ghost"
-                    onClick={() => void act(() => controls.pack.dismissFailed(), "Cleared.")}
+                    onClick={() =>
+                      void act(
+                        () =>
+                          Promise.all([
+                            controls.pack.dismissFailed(),
+                            controls.ws?.dismissProblems(),
+                          ]),
+                        "Cleared.",
+                      )
+                    }
                   >
                     Dismiss
                   </Button>

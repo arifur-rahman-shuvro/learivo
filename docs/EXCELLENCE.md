@@ -142,3 +142,13 @@ A bank of 20,000 questions makes a 16 MB file and takes about 1.2 seconds to bui
 ### Retry timing
 
 A failed send of waiting changes is retried after 2 s, then 4, 8, 16 s and so on, never more than 5 minutes between tries (`src/platform/offline/retry.ts`). While there is no connection it waits for the browser's online signal instead of polling, and it tries at once when the connection returns or the student taps **Try now**. AI requests retry twice (3 s, 9 s) on a busy provider or rate limit, and honour the provider's Retry-After up to 30 s.
+
+## Roadmap build, 2026-11-22 (R1 to R4)
+
+- **Fonts:** Latin letters only, copied into `src/ui-kit/themes/fonts/` (5 files, 180 KB instead of 23 files, 564 KB). The five `@fontsource-variable` packages were removed. Bangla and other scripts use the phone's own font.
+- **Bangla in the PDF:** the paper stack now lists Bengali-capable fonts before the generic one, and `pnpm paper` prints a Bangla question and checks the words are in the PDF. CI installs a Bengali-capable font if the runner has none.
+- **Smart mix preview:** the button says what today's mix holds ("0 revision due, 0 weak, 3 new") from the same function that builds the mix (`smartPreview` in `start.ts`).
+- **Offline:** every list is opened once after sign-in and when the connection returns (`OfflineWorkspace.prefetch`), so a list never opened online is not empty offline.
+- **Offline notes edited on two devices:** the edit remembers the version it started from. If the account has a newer one when it is sent, the student is told that their version replaced it. Refused changes of the offline workspace were never shown anywhere before; they now appear in the sync panel under "need your attention" until dismissed, and survive a restart.
+- **Coverage:** `pnpm coverage` runs in CI with a floor (lines 78, statements 75, functions 70, branches 68). Measured today: lines 81.4, statements 78.8, functions 74.5, branches 72.6.
+- **Already existed, so not rebuilt:** Smart mix, mistake groups by reason and confidence, missed questions added to revision automatically, exam pace and week plan, keyboard shortcuts in the player, paste import.

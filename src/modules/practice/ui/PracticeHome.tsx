@@ -24,6 +24,7 @@ import {
   countAvailable,
   startExam,
   startPractice,
+  smartPreview,
   startSmart,
   type PracticeSetup,
 } from "./start.ts";
@@ -47,6 +48,7 @@ export default function PracticeHome({ onOpen }: { onOpen: (v: View) => void }) 
 
   const [setup, setSetup] = useState<PracticeSetup>(rememberedSetup);
   const [counts, setCounts] = useState<Record<string, number> | null>(null);
+  const [smart, setSmart] = useState<{ due: number; weak: number; fresh: number } | null>(null);
   const [available, setAvailable] = useState<number | null>(null);
   const [recent, setRecent] = useState<Attempt[] | null>(null);
   const [exams, setExams] = useState<Exam[] | null>(null);
@@ -95,6 +97,17 @@ export default function PracticeHome({ onOpen }: { onOpen: (v: View) => void }) 
     ).then(
       (rows) => alive && setCounts(Object.fromEntries(rows)),
       () => alive && setCounts(null),
+    );
+    return () => {
+      alive = false;
+    };
+  }, [repo, attempts, workspace, rev]);
+
+  useEffect(() => {
+    let alive = true;
+    smartPreview(repo, attempts, workspace).then(
+      (p) => alive && setSmart(p),
+      () => alive && setSmart(null),
     );
     return () => {
       alive = false;
@@ -187,7 +200,9 @@ export default function PracticeHome({ onOpen }: { onOpen: (v: View) => void }) 
           <span className="flex min-w-0 flex-col">
             <span className="font-semibold">{busy === "smart" ? "Starting…" : "Smart mix"}</span>
             <span className="text-xs text-muted">
-              20 questions: revision that is due, your weak areas and new questions
+              {smart
+                ? `20 questions for today: ${smart.due} revision due, ${smart.weak} weak, ${smart.fresh} new`
+                : "20 questions: revision that is due, your weak areas and new questions"}
             </span>
           </span>
         </button>

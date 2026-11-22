@@ -336,6 +336,12 @@ describe("Practice", () => {
       await screen.findByText(/Question 1 of 3/);
     });
 
+    it("says under Smart mix what today's mix is made of", async () => {
+      const { ready } = setup();
+      await ready;
+      await screen.findByText("20 questions for today: 0 revision due, 0 weak, 3 new");
+    });
+
     it("disables a preset when nothing matches and says so", async () => {
       const { ready } = setup();
       await ready;

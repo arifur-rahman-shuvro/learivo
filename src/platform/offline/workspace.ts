@@ -27,7 +27,7 @@ import type { KeyValueStore } from "./store.ts";
  */
 export type WsOp =
   | { k: "bookmark"; q: string; on: boolean }
-  | { k: "note"; input: NoteInput; localId: string; at: string }
+  | { k: "note"; input: NoteInput; localId: string; at: string; base?: string }
   | { k: "noteDel"; id: string }
   | { k: "addCards"; ids: string[]; at: string }
   | { k: "saveCard"; q: string; card: Card }
@@ -54,6 +54,7 @@ interface Cache {
 
 const cacheKey = (u: string) => `u:${u}:ws-cache`;
 const queueKey = (u: string) => `u:${u}:ws-queue`;
+const problemsKey = (u: string) => `u:${u}:ws-problems`;
 const MESSAGE =
   "You are offline and this has not been opened on this device yet. Open it once while online.";
 
@@ -232,10 +233,26 @@ export class OfflineWorkspace implements WorkspaceRepo {
     this.cache = (await this.store.get<Cache>(cacheKey(this.userId))) ?? {};
     const q = await this.store.get<unknown>(queueKey(this.userId));
     this.queue = Array.isArray(q) ? (q as WsOp[]).filter((o) => o && typeof o.k === "string") : [];
+    const f = await this.store.get<unknown>(problemsKey(this.userId));
+    this.failed = Array.isArray(f) ? f.filter((x): x is string => typeof x === "string") : [];
     this.loaded = true;
   }
 
+  /** Changes that were refused, or that replaced a newer copy, until the student dismisses them. */
+  async problems(): Promise<string[]> {
+    await this.load();
+    return [...this.failed];
+  }
+
+  async dismissProblems(): Promise<void> {
+    await this.load();
+    this.failed = [];
+    await this.store.set(problemsKey(this.userId), this.failed);
+    this.changed();
+  }
+
   private async save() {
+    await this.store.set(problemsKey(this.userId), this.failed);
     await this.store.set(cacheKey(this.userId), this.cache);
     await this.store.set(queueKey(this.userId), this.queue);
   }
@@ -292,9 +309,19 @@ export class OfflineWorkspace implements WorkspaceRepo {
     switch (op.k) {
       case "bookmark":
         return r.setBookmark(op.q, op.on);
-      case "note":
+      case "note": {
+        if (op.base && op.input.id) {
+          const id = op.input.id;
+          const now = (await r.notes()).find((n) => n.id === id);
+          if (now && now.updatedAt > op.base) {
+            this.failed.push(
+              `${wsSummary(op)}: it was changed on another device after you started editing. Your version replaced it.`,
+            );
+          }
+        }
         await r.saveNote(op.input);
         return;
+      }
       case "noteDel":
         return r.deleteNote(op.id);
       case "addCards":
@@ -435,8 +462,15 @@ export class OfflineWorkspace implements WorkspaceRepo {
       body: input.body,
       updatedAt: at,
     };
+    // The version this edit started from, so a newer one made elsewhere can be noticed when sending.
+    const queued = this.queue.find(
+      (o): o is Extract<WsOp, { k: "note" }> => o.k === "note" && o.localId === ids.localId,
+    );
+    const base =
+      queued?.base ??
+      (ids.id !== null ? this.cache.notes?.find((n) => n.id === ids.id)?.updatedAt : undefined);
     return this.write(
-      { k: "note", input: sent, localId: ids.localId, at },
+      { k: "note", input: sent, localId: ids.localId, at, ...(base ? { base } : {}) },
       () => this.remote.saveNote(sent),
       () => note,
     );
@@ -603,6 +637,27 @@ export class OfflineWorkspace implements WorkspaceRepo {
       () => undefined,
     );
 
+  /**
+   * Opens every list once while online so each has a copy on the device. Without this a list the
+   * student never opened (say, the glossary) would be empty if the first time were offline.
+   */
+  async prefetch(): Promise<void> {
+    if (!this.isOnline()) return;
+    for (const load of [
+      () => this.bookmarks(),
+      () => this.notes(),
+      () => this.cards(),
+      () => this.flashcards(),
+      () => this.glossary(),
+      () => this.dailyGoal(),
+      () => this.examTarget(),
+      () => this.homeLayout(),
+    ]) {
+      if (!this.isOnline()) return;
+      await load().catch(() => undefined);
+    }
+  }
+
   /** Forgets everything kept on this device (sign-out or clearing data). */
   async clear() {
     this.cache = {};
@@ -611,5 +666,6 @@ export class OfflineWorkspace implements WorkspaceRepo {
     this.loaded = false;
     await this.store.del(cacheKey(this.userId));
     await this.store.del(queueKey(this.userId));
+    await this.store.del(problemsKey(this.userId));
   }
 }

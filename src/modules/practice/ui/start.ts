@@ -197,13 +197,13 @@ export async function startFromQuestions(
 
 const SMART_SIZE = 20;
 
-/** A session mixing due revision, weak areas and new questions. */
-export async function startSmart(
+/** The groups a Smart mix is drawn from: revision that is due, weak questions, new questions. */
+async function smartPools(
   questions: QuestionRepo,
   attempts: AttemptRepo,
   workspace: WorkspaceRepo,
-  now: Date = new Date(),
-): Promise<string> {
+  now: Date,
+) {
   const [pool, nodes, past, cards, facts] = await Promise.all([
     fetchPool(questions, { nodeId: null, tagId: null, collectionId: null }),
     questions.taxonomy(),
@@ -224,7 +224,35 @@ export async function startSmart(
     )
     .map((q) => q.id);
   const fresh = pool.filter((q) => !past.has(q.id)).map((q) => q.id);
-  const ids = composeSmart({ due, weak, fresh, rest: pool.map((q) => q.id) }, SMART_SIZE);
+  return { due, weak, fresh, rest: pool.map((q) => q.id) };
+}
+
+/** What a Smart mix would draw on right now, for the line under its button. */
+export async function smartPreview(
+  questions: QuestionRepo,
+  attempts: AttemptRepo,
+  workspace: WorkspaceRepo,
+  now: Date = new Date(),
+): Promise<{ due: number; weak: number; fresh: number }> {
+  const p = await smartPools(questions, attempts, workspace, now);
+  const picked = composeSmart(p, SMART_SIZE, (items) => [...items]);
+  const set = new Set(picked);
+  const within = (ids: readonly string[]) => ids.filter((id) => set.has(id)).length;
+  // Counts of what is in the mix, in the order it fills: due first, then weak, then new.
+  const due = within(p.due);
+  const weak = within(p.weak.filter((id) => !p.due.includes(id)));
+  const fresh = within(p.fresh.filter((id) => !p.due.includes(id) && !p.weak.includes(id)));
+  return { due, weak, fresh };
+}
+
+/** A session mixing due revision, weak areas and new questions. */
+export async function startSmart(
+  questions: QuestionRepo,
+  attempts: AttemptRepo,
+  workspace: WorkspaceRepo,
+  now: Date = new Date(),
+): Promise<string> {
+  const ids = composeSmart(await smartPools(questions, attempts, workspace, now), SMART_SIZE);
   if (ids.length === 0) throw new Error(NO_QUESTIONS);
   return startFromQuestions(questions, attempts, ids, "Smart mix");
 }

@@ -30,7 +30,7 @@ jobs:
       - run: pnpm audit --audit-level=high
       - run: pnpm cycles
       - run: pnpm typecheck
-      - run: pnpm test
+      - run: pnpm coverage
       - run: pnpm build
       - run: pnpm envcheck
       - name: Phone-width smoke test

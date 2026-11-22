@@ -164,3 +164,58 @@ describe("workspace change rules", () => {
     expect(c.flashcards[0]).toMatchObject({ front: "F", back: "B", reps: 3, state: "review" });
   });
 });
+
+describe("OfflineWorkspace.prefetch", () => {
+  it("makes a copy of every list, so one never opened online still shows offline", async () => {
+    const { remote, net, make } = await setup();
+    await remote.saveTerm({ id: null, term: "Ischaemia", definition: "Low supply" });
+    await remote.setDailyGoal(33);
+    const ws = make();
+    await ws.prefetch();
+    net.online = false;
+    expect((await ws.glossary()).map((t) => t.term)).toEqual(["Ischaemia"]);
+    expect(await ws.dailyGoal()).toBe(33);
+  });
+
+  it("does nothing while offline", async () => {
+    const { net, ws } = await setup();
+    net.online = false;
+    await expect(ws.prefetch()).resolves.toBeUndefined();
+  });
+});
+
+describe("OfflineWorkspace note edited on two devices", () => {
+  it("tells the student when their version replaced a newer one, and keeps the notice until dismissed", async () => {
+    const { remote, net, make } = await setup();
+    const first = await remote.saveNote({ id: null, questionId: null, title: "T", body: "v1" });
+    const ws = make();
+    await ws.notes(); // copy made while online
+    net.online = false;
+    await ws.saveNote({ id: first.id, questionId: null, title: "T", body: "from phone" });
+    // Meanwhile the note is changed somewhere else.
+    await new Promise((r) => setTimeout(r, 5));
+    await remote.saveNote({ id: first.id, questionId: null, title: "T", body: "from laptop" });
+    net.online = true;
+    await ws.flush();
+    expect((await remote.notes())[0]!.body).toBe("from phone");
+    const problems = await ws.problems();
+    expect(problems).toHaveLength(1);
+    expect(problems[0]).toContain("changed on another device");
+    // Kept across a restart of the app:
+    expect(await make().problems()).toHaveLength(1);
+    await ws.dismissProblems();
+    expect(await make().problems()).toEqual([]);
+  });
+
+  it("says nothing when nobody else changed the note", async () => {
+    const { remote, net, make } = await setup();
+    const first = await remote.saveNote({ id: null, questionId: null, title: "T", body: "v1" });
+    const ws = make();
+    await ws.notes();
+    net.online = false;
+    await ws.saveNote({ id: first.id, questionId: null, title: "T", body: "edit" });
+    net.online = true;
+    await ws.flush();
+    expect(await ws.problems()).toEqual([]);
+  });
+});

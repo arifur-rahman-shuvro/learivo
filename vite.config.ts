@@ -71,5 +71,13 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     include: ["src/**/*.test.{ts,tsx}"],
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/**/*.test.*", "src/testing/**"],
+      reporter: ["text-summary", "json-summary"],
+      // A floor a little under what was measured on 2026-11-22 (lines 81, branches 72), so it can only go up.
+      thresholds: { lines: 78, statements: 75, functions: 70, branches: 68 },
+    },
   },
 });

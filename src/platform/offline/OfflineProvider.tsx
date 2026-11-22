@@ -103,9 +103,12 @@ export function OfflineProvider({ userId, live, injected, children }: Props) {
   }, [userId]);
 
   useEffect(() => {
-    const { retry } = services;
+    const { retry, ws } = services;
     if (!retry) return;
-    const run = () => retry.kick();
+    const run = () => {
+      retry.kick();
+      void ws?.prefetch();
+    };
     run();
     const onVisible = () => document.visibilityState === "visible" && run();
     window.addEventListener("online", run);
