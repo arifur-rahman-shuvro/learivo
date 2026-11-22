@@ -344,3 +344,7 @@ Progress, row actions (2026-11-19): every question row has a "more" button (thre
 
 - 2026-11-22: Checked the open list against the code. Already built, docs were stale: options 1 to 9 shortcuts in practice, tap a weak subject to practise (Insights), Mistakes grouped by reason, revision forecast, skeleton loading, sticky filters on phones. New: **subject colours** (M14, applied to production 2026-11-22; Organize > pick a dot on a subject; a dot shows on its questions). Rollback: `alter table public.taxonomy_nodes drop column color;`.
 - 2026-11-22: **Study calendar** on Home (under the exam countdown): the days until the exam (up to 7) with new questions and revision due per day; the day before the exam is revision only. Rule of thumb in `weekPlan.ts`. Not seen on a real phone.
+
+## Audit and next roadmap (2026-11-22)
+
+A full audit was done on 2026-11-22 (measurements, findings by priority and the new roadmap R1 to R5: trust, study power, speed and comfort, safety and quality, later). It is kept as the owner's document "Learivo audit and roadmap, Nov 2026". Highlights: real-phone and real-email checks are the main open risk; Latin-only fonts would cut about 200 KB from every install; Bangla text in the exam PDF is untested; a CI run against a local Supabase is missing. Question types stay parked.
