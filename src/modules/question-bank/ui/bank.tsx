@@ -47,6 +47,8 @@ export interface Loaded<T> {
   data: T | undefined;
   error: string | undefined;
   loading: boolean;
+  /** Loads again, for a Retry button after a failure. */
+  retry: () => void;
 }
 
 /** Load data from the repository; reloads when the bank changes or the dependencies change. */
@@ -55,7 +57,9 @@ export function useLoad<T>(
   deps: readonly unknown[] = [],
 ): Loaded<T> {
   const { repo, rev } = useBank();
-  const [state, setState] = useState<Loaded<T>>({
+  const [tries, setTries] = useState(0);
+  const retry = useCallback(() => setTries((n) => n + 1), []);
+  const [state, setState] = useState<Omit<Loaded<T>, "retry">>({
     data: undefined,
     error: undefined,
     loading: true,
@@ -71,6 +75,6 @@ export function useLoad<T>(
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [repo, rev, ...deps]);
-  return state;
+  }, [repo, rev, tries, ...deps]);
+  return { ...state, retry };
 }

@@ -1,4 +1,5 @@
 import { useEffect, useId, useLayoutEffect, useRef, type ReactNode } from "react";
+import { ErrorBoundary } from "../feedback/ErrorBoundary.tsx";
 import {
   playEnter,
   playExit,
@@ -123,7 +124,12 @@ export function Dialog({
             Close
           </button>
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+          {/* A crash inside the dialog stays inside it: the screen behind keeps working. */}
+          <ErrorBoundary inline resetKey={open} onClose={onClose}>
+            {children}
+          </ErrorBoundary>
+        </div>
         {footer && (
           <div className="flex flex-wrap items-center justify-end gap-2 border-t border-line px-5 py-3">
             {footer}

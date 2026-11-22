@@ -9,6 +9,9 @@ interface Props {
   resetKey?: unknown;
   /** Fills the whole page instead of one panel. */
   page?: boolean;
+  /** For the inside of a dialog: no card around it, and a Close button that shuts the dialog. */
+  inline?: boolean;
+  onClose?: () => void;
 }
 
 interface State {
@@ -42,7 +45,11 @@ export class ErrorBoundary extends Component<Props, State> {
       <div
         role="alert"
         className={`flex flex-col items-start gap-3 ${
-          this.props.page ? "mx-auto min-h-dvh max-w-md justify-center px-4 py-10" : "lv-card p-5"
+          this.props.page
+            ? "mx-auto min-h-dvh max-w-md justify-center px-4 py-10"
+            : this.props.inline
+              ? "py-2"
+              : "lv-card p-5"
         }`}
       >
         <h2 className="m-0 text-xl font-bold">{d.title}</h2>
@@ -51,6 +58,11 @@ export class ErrorBoundary extends Component<Props, State> {
           {d.kind !== "session" && !this.props.page && (
             <Button onClick={() => this.setState({ error: null, hasError: false })}>
               Try again
+            </Button>
+          )}
+          {this.props.inline && this.props.onClose && d.kind !== "session" && (
+            <Button variant="ghost" onClick={this.props.onClose}>
+              Close
             </Button>
           )}
           <Button

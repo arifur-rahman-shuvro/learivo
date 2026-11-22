@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { ErrorBoundary } from "./ErrorBoundary.tsx";
+import { Dialog } from "../overlays/Dialog.tsx";
 
 let fail = true;
 function Bomb({ message = "x is undefined" }: { message?: string }) {
@@ -76,5 +77,23 @@ describe("ErrorBoundary", () => {
     );
     expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
     expect(screen.getByRole("button", { name: "Reload the app" })).toBeTruthy();
+  });
+
+  it("a crash inside a dialog stays in the dialog, which can still be closed", () => {
+    const onClose = vi.fn();
+    render(
+      <>
+        <p>Screen behind</p>
+        <Dialog open title="Organize" onClose={onClose}>
+          <Bomb />
+        </Dialog>
+      </>,
+    );
+    expect(screen.getByText("Screen behind")).toBeTruthy();
+    const dialog = screen.getByRole("dialog", { name: "Organize" });
+    expect(dialog.textContent).toContain("Something went wrong");
+    fail = false;
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(screen.getByText("All good")).toBeTruthy();
   });
 });

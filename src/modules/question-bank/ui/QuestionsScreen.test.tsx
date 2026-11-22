@@ -48,6 +48,26 @@ async function pick(field: string, option: string) {
 }
 
 describe("QuestionsScreen", () => {
+  it("a list that fails to load in Organize says why and loads again on Try again", async () => {
+    const repo = new MemoryRepo();
+    const real = repo.taxonomy.bind(repo);
+    let fail = true;
+    repo.taxonomy = async () => {
+      if (fail)
+        throw new Error("Could not reach your question bank. Check your connection and try again.");
+      return real();
+    };
+    renderScreen(repo);
+    fireEvent.click(await screen.findByRole("button", { name: "Organize" }));
+    const dialog = await screen.findByRole("dialog");
+    const alert = await within(dialog).findByRole("alert");
+    expect(alert.textContent).toContain("Could not reach your question bank");
+    fail = false;
+    fireEvent.click(within(dialog).getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(within(dialog).queryByRole("alert")).toBeNull());
+    expect(within(dialog).getByRole("textbox", { name: "New subject" })).toBeTruthy();
+  });
+
   it("a subject colour set in Organize shows as a dot on its questions, and can be cleared", async () => {
     const repo = new MemoryRepo();
     await repo.create([{ ...tf("Colour me"), path: ["Anatomy"] }]);

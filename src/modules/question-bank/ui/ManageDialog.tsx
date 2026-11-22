@@ -200,9 +200,21 @@ function ColorPick({
   );
 }
 
+/** Shown when a list could not be loaded: says why and loads it again on request. */
+function LoadFailed({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div role="alert" className="flex flex-col items-start gap-2">
+      <p className="m-0 text-sm text-danger">{message}</p>
+      <Button size="sm" variant="secondary" onClick={onRetry}>
+        Try again
+      </Button>
+    </div>
+  );
+}
+
 function SubjectsTab() {
   const { repo, refresh } = useBank();
-  const { data, loading } = useLoad((r) => r.taxonomy());
+  const { data, loading, error: loadError, retry } = useLoad((r) => r.taxonomy());
   const [error, setError] = useState<string>();
   const [addingUnder, setAddingUnder] = useState<string | null>(null);
   const nodes = data ?? [];
@@ -241,7 +253,9 @@ function SubjectsTab() {
           {error}
         </p>
       )}
-      {loading && !data ? (
+      {loadError && !data ? (
+        <LoadFailed message={loadError} onRetry={retry} />
+      ) : loading && !data ? (
         <Spinner />
       ) : ordered.length === 0 ? (
         <p className="m-0 text-muted">No subjects yet. Add your first one above.</p>
@@ -296,7 +310,12 @@ function SubjectsTab() {
 
 function NamedListTab({ kind }: { kind: "tags" | "collections" }) {
   const { repo, refresh } = useBank();
-  const { data, loading } = useLoad((r) => (kind === "tags" ? r.tags() : r.collections()), [kind]);
+  const {
+    data,
+    loading,
+    error: loadError,
+    retry,
+  } = useLoad((r) => (kind === "tags" ? r.tags() : r.collections()), [kind]);
   const [error, setError] = useState<string>();
   const singular = kind === "tags" ? "tag" : "collection";
 
@@ -328,7 +347,9 @@ function NamedListTab({ kind }: { kind: "tags" | "collections" }) {
           {error}
         </p>
       )}
-      {loading && !data ? (
+      {loadError && !data ? (
+        <LoadFailed message={loadError} onRetry={retry} />
+      ) : loading && !data ? (
         <Spinner />
       ) : (data ?? []).length === 0 ? (
         <p className="m-0 text-muted">No {kind} yet.</p>
