@@ -94,6 +94,30 @@ ok(whyPage > keyPage, "explanations come after the key");
 console.log(
   `paper: ${pages} pages, questions end on ${lastQ}, key on ${keyPage}, explanations on ${whyPage}`,
 );
+// Bangla: the PDF must carry the Bangla words, drawn with a font that has the letters (not empty boxes).
+{
+  const bn = {
+    ...blankQuestion("sba"),
+    stem: "কোন অঙ্গ সারা শরীরে রক্ত পাম্প করে?",
+    answer: o([
+      ["যকৃৎ", false],
+      ["হৃৎপিণ্ড", true],
+    ]),
+  };
+  const bnFile = join(dir, "bn.html");
+  writeFileSync(bnFile, paperHtml([bn], { title: "বাংলা", key: true, explanations: false }));
+  const b2 = await chromium.launch();
+  const p2 = await b2.newPage();
+  await p2.goto("file://" + bnFile);
+  await p2.emulateMedia({ media: "print" });
+  const bnPdf = join(dir, "bn.pdf");
+  await p2.pdf({ path: bnPdf, format: "A4", preferCSSPageSize: true });
+  await b2.close();
+  const text = execFileSync("pdftotext", [bnPdf, "-"]).toString();
+  ok(text.includes("হৃৎপিণ্ড") && text.includes("সারা শরীরে"), "Bangla words appear in the PDF");
+  const fonts = execFileSync("pdffonts", [bnPdf]).toString();
+  ok(!/\.notdef/i.test(fonts), "no missing-glyph font in the Bangla PDF");
+}
 if (fails.length) {
   console.error("paper check FAILED:\n- " + fails.join("\n- "));
   process.exit(1);

@@ -111,8 +111,8 @@ const STYLE = `
 :root { --ink: #16243f; --gold: #b7791f; --tint: #eef1f7; --rule: #c4cbdb; --soft: #5b667d; }
 @page { size: A4; margin: 18mm 14mm 20mm; @bottom-right { content: "Page " counter(page) " of " counter(pages); font: 9pt system-ui, sans-serif; color: #5b667d; } @bottom-left { content: var(--foot); font: 9pt system-ui, sans-serif; color: #5b667d; } }
 * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-body { font-family: Georgia, "Times New Roman", serif; color: #111827; background: #fff; font-size: 12pt; line-height: 1.45; margin: 0; padding: 0 14px 24px; }
-.sans, .bar, .chips, .box, .sec, .bub, .cell, .num, .grade { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { font-family: Georgia, "Times New Roman", "Noto Serif Bengali", "Noto Sans Bengali", "Nirmala UI", Kalpurush, serif; color: #111827; background: #fff; font-size: 12pt; line-height: 1.45; margin: 0; padding: 0 14px 24px; }
+.sans, .bar, .chips, .box, .sec, .bub, .cell, .num, .grade { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans Bengali", "Nirmala UI", Kalpurush, sans-serif; }
 .bar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; background: #fff; border-bottom: 1px solid var(--rule); padding: 8px 0; margin: 0 0 10px; font-size: 13px; }
 .bar a, .bar button { font: inherit; color: var(--ink); background: var(--tint); border: 1px solid var(--rule); border-radius: 999px; padding: 4px 12px; text-decoration: none; cursor: pointer; min-height: 32px; }
 .bar button.go { background: var(--ink); color: #fff; border-color: var(--ink); }

@@ -3,7 +3,7 @@
 // stand-in fails like a dead connection whenever the browser says it is offline, so switching
 // the test browser offline behaves like losing signal. Not part of the production build.
 import { createRoot } from "react-dom/client";
-import "@fontsource-variable/inter";
+import "../src/ui-kit/themes/fonts.css";
 import "virtual:learivo-theme.css";
 import "../src/styles/index.css";
 import AppShell from "../src/shell/AppShell.tsx";
