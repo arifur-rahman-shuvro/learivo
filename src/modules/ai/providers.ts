@@ -1,3 +1,5 @@
+import { recordUse } from "./usage.ts";
+
 export type ProviderId = "gemini" | "openai" | "openrouter" | "anthropic";
 
 export interface Provider {
@@ -226,6 +228,16 @@ function textOf(cfg: AiConfig, body: unknown): string {
   return typeof msg.content === "string" ? msg.content : "";
 }
 
+/** Tokens the provider says it used, or 0 when it does not say. */
+function tokensOf(cfg: AiConfig, body: unknown): number {
+  const b = obj(body);
+  const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : 0);
+  if (cfg.provider === "gemini") return n(obj(b.usageMetadata).totalTokenCount);
+  const u = obj(b.usage);
+  if (cfg.provider === "anthropic") return n(u.input_tokens) + n(u.output_tokens);
+  return n(u.total_tokens);
+}
+
 /** Longest wait for one answer from a provider. */
 export const AI_TIMEOUT_MS = 90_000;
 
@@ -278,6 +290,8 @@ export async function askAi(cfg: AiConfig, prompt: string, opts: AskOptions = {}
       throw new AiError("network", `Could not reach ${label}. Check your internet and try again.`);
     }
     const body: unknown = await res.json().catch(() => null);
+    // A retried attempt is a request too, so the counter follows what the provider really got.
+    recordUse(cfg.provider, res.ok ? tokensOf(cfg, body) : 0);
     if (!res.ok) {
       const retryable = res.status === 429 || res.status >= 500;
       if (retryable && attempt < waits.length) {

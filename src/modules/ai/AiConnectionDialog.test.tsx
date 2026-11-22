@@ -1,7 +1,8 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ThemeProvider } from "../../ui-kit/themes/ThemeProvider.tsx";
-import { AiConnectionDialog } from "./AiConnectionDialog.tsx";
+import { ADVICE, AiConnectionDialog } from "./AiConnectionDialog.tsx";
+import { reloadUsage } from "./usage.ts";
 import { activeConfig, reloadAi } from "./keys.ts";
 import { closeAiConnection, openAiConnection } from "../../core/dialogs/ai.ts";
 
@@ -88,5 +89,50 @@ describe("AI connection dialog", () => {
     await screen.findByRole("button", { name: "Copied" });
     expect(copied[0]).toContain("Never ask me to paste my key into this chat");
     expect(copied[0]).toContain("https://aistudio.google.com/apikey");
+  });
+});
+
+describe("AI connection help", () => {
+  it("tells the student what to do for each kind of failure, and counts requests", async () => {
+    localStorage.clear();
+    reloadUsage();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(new Response(JSON.stringify({ error: { message: "x" } }), { status: 402 })),
+      ),
+    );
+    show();
+    fireEvent.change(await screen.findByLabelText("API key"), { target: { value: "k" } });
+    fireEvent.click(screen.getByRole("button", { name: "Test and save" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toContain("no credit left");
+    expect(alert.textContent).toContain(ADVICE.credit);
+    expect(screen.getByText(/1 request today, 1 in all/)).toBeTruthy();
+  });
+
+  it("shows tokens a provider reports and resets the counter", async () => {
+    localStorage.clear();
+    reloadUsage();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify({
+              candidates: [{ content: { parts: [{ text: "OK" }] } }],
+              usageMetadata: { totalTokenCount: 1234 },
+            }),
+          ),
+        ),
+      ),
+    );
+    show();
+    fireEvent.change(await screen.findByLabelText("API key"), { target: { value: "k" } });
+    fireEvent.click(screen.getByRole("button", { name: "Test and save" }));
+    await screen.findByRole("status");
+    expect(screen.getByText(/About 1,234 tokens/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Reset counter" }));
+    expect(screen.getByText(/0 requests today, 0 in all/)).toBeTruthy();
   });
 });

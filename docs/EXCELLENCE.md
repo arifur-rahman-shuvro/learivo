@@ -124,3 +124,9 @@ Todo: real-database query timing (Needs you or a test project: the sandbox canno
 - Signing out or clearing data sends waiting changes first and asks before discarding them; deleting data clears the copy.
 - The Saved dialog counts and lists these changes with the question changes.
 - Not verified on a real phone. A list never opened online cannot be read offline (it says so).
+
+## Phase F (2026-11-22): failures that explain themselves
+
+- A crash inside any dialog shows a message with a Close button instead of blanking the app (`Dialog` wraps its content in an inline `ErrorBoundary`).
+- The Organize tabs say why a list did not load and offer **Try again**.
+- AI connection: a failed test now says what to do next for each kind of failure (key, credit, limit, model, network, blocked). A counter on this device shows requests today and in total, and tokens when the provider reports them (`src/modules/ai/usage.ts`). It only counts what this device sent; the provider's site is the real bill. The key already stays in browser storage only, and the dialog says so.

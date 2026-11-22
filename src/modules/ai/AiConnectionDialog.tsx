@@ -3,10 +3,32 @@ import { Button, Dialog, Picker } from "../../ui-kit/index.ts";
 import { keyGuidePrompt } from "./guidePrompt.ts";
 import { aiState, removeKey, saveAi, useAiState } from "./keys.ts";
 import { closeAiConnection, useAiDialogOpen } from "../../core/dialogs/ai.ts";
-import { AiError, PROVIDERS, askAi, providerOf, type ProviderId } from "./providers.ts";
+import {
+  AiError,
+  PROVIDERS,
+  askAi,
+  providerOf,
+  type AiErrorKind,
+  type ProviderId,
+} from "./providers.ts";
+import { resetUsage, useUsage } from "./usage.ts";
+
+/** What to do next, for each kind of failure. The provider's own words come first. */
+export const ADVICE: Record<AiErrorKind, string> = {
+  key: "Open the key page below, make a new key and paste all of it. A key that was deleted or copied in part will not work.",
+  credit: "Add credit on the provider's billing page, then test again.",
+  limit: "You have hit the provider's limit. Wait a few minutes, or use another provider.",
+  model: "Pick a model from the list in the Model box, or clear the box to use the default.",
+  network: "Check that your internet works. Some school or office networks block AI sites.",
+  blocked: "The provider refused the test. Try again, or use another provider.",
+  other: "Try again in a minute. If it keeps failing, use another provider.",
+};
 
 type Test =
-  { state: "idle" } | { state: "busy" } | { state: "ok" } | { state: "bad"; message: string };
+  | { state: "idle" }
+  | { state: "busy" }
+  | { state: "ok" }
+  | { state: "bad"; message: string; kind: AiErrorKind };
 
 /** Connects the student's own AI account. The key stays on this device. */
 export function AiConnectionDialog() {
@@ -23,6 +45,7 @@ function Inner() {
   const [test, setTest] = useState<Test>({ state: "idle" });
   const [copied, setCopied] = useState<"ok" | "fail" | null>(null);
   const info = providerOf(provider);
+  const use = useUsage(provider);
 
   const pick = (id: ProviderId) => {
     const s = aiState();
@@ -46,6 +69,7 @@ function Inner() {
       setTest({
         state: "bad",
         message: e instanceof AiError ? e.message : "Something went wrong. Try again.",
+        kind: e instanceof AiError ? e.kind : "other",
       });
     }
   }
@@ -168,10 +192,34 @@ function Inner() {
           </p>
         )}
         {test.state === "bad" && (
-          <p role="alert" className="m-0 text-sm text-danger">
-            {test.message}
-          </p>
+          <div role="alert" className="flex flex-col gap-1 text-sm">
+            <p className="m-0 text-danger">{test.message}</p>
+            <p className="m-0">{ADVICE[test.kind]}</p>
+          </div>
         )}
+
+        <section
+          aria-label="Use on this device"
+          className="flex flex-col gap-1 border-t border-line pt-3"
+        >
+          <h3 className="m-0 text-base font-semibold">Use on this device</h3>
+          <p className="m-0 text-sm">
+            {info.label}: {use.todayRequests} {use.todayRequests === 1 ? "request" : "requests"}{" "}
+            today, {use.requests} in all.
+            {use.tokens > 0 && ` About ${use.tokens.toLocaleString("en")} tokens in all.`}
+          </p>
+          <p className="m-0 text-xs text-muted">
+            This only counts what this device sent. The provider&apos;s site shows your real usage
+            and bill.
+          </p>
+          {use.requests > 0 && (
+            <div>
+              <Button variant="ghost" size="sm" onClick={resetUsage}>
+                Reset counter
+              </Button>
+            </div>
+          )}
+        </section>
 
         <section
           aria-label="How to get a key"
