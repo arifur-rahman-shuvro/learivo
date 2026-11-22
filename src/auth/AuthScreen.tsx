@@ -6,9 +6,16 @@ import { useAuth } from "./AuthProvider.tsx";
 type Mode = "sign-in" | "sign-up" | "forgot";
 const MIN_PASSWORD = 8;
 
-export default function AuthScreen() {
+export default function AuthScreen({
+  initialMode = "sign-in",
+  onBack,
+}: {
+  initialMode?: "sign-in" | "sign-up";
+  /** Goes back to the page that introduces Learivo. */
+  onBack?: () => void;
+} = {}) {
   const { client, notice } = useAuth();
-  const [mode, setMode] = useState<Mode>("sign-in");
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -198,15 +205,24 @@ export default function AuthScreen() {
             </form>
           )}
         </main>
-        <nav aria-label="Legal" className="mt-2 flex justify-center gap-4 text-sm">
+        <nav aria-label="Legal" className="mt-2 flex flex-wrap justify-center gap-4 text-sm">
+          {onBack && (
+            <button
+              type="button"
+              className="inline-flex min-h-10 min-w-10 items-center justify-center px-1 text-muted underline"
+              onClick={onBack}
+            >
+              About Learivo
+            </button>
+          )}
           <a
-            className="inline-flex min-h-10 items-center px-1 text-muted underline"
+            className="inline-flex min-h-10 min-w-10 items-center justify-center px-1 text-muted underline"
             href="/privacy.html"
           >
             Privacy
           </a>
           <a
-            className="inline-flex min-h-10 items-center px-1 text-muted underline"
+            className="inline-flex min-h-10 min-w-10 items-center justify-center px-1 text-muted underline"
             href="/terms.html"
           >
             Terms

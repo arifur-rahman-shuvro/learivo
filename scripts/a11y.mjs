@@ -73,7 +73,17 @@ try {
     );
     const page = await ctx.newPage();
     await page.goto(`http://localhost:${PORT}/`, { waitUntil: "networkidle" });
-    await page.waitForSelector("h1, h2");
+    // A new visitor meets the introduction first. Its question is answered, so the open answer is checked too.
+    await page
+      .getByRole("heading", { level: 1, name: "Practise the way the exam asks." })
+      .waitFor();
+    await checkScreen(page, `${theme}/${mode} landing`);
+    await page.getByRole("radio", { name: /Left anterior descending/ }).click();
+    await page.getByRole("button", { name: "Sure", exact: true }).click();
+    await page.getByText(/Not quite: the answer is the right coronary artery/).waitFor();
+    await page.waitForTimeout(400);
+    await checkScreen(page, `${theme}/${mode} landing, answered`);
+    await page.getByRole("button", { name: "Sign in" }).first().click();
     await page.getByRole("button", { name: "Continue with Google" }).waitFor();
     await checkScreen(page, `${theme}/${mode} sign-in`);
     await page.getByRole("button", { name: "Forgot password?" }).click();
@@ -159,5 +169,5 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  `Accessibility passed: sign-in and 5 signed-in screens in ${combos.length} theme/mode combinations at 360 px`,
+  `Accessibility passed: landing, sign-in and 5 signed-in screens in ${combos.length} theme/mode combinations at 360 px`,
 );

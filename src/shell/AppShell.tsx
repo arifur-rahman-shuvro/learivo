@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
 import { EmptyState, ThemeBackground } from "../ui-kit/index.ts";
 import { BottomNav } from "./navigation/BottomNav.tsx";
 import App from "../App.tsx";
 import { useAuth } from "../auth/AuthProvider.tsx";
 import SetNewPassword from "../auth/SetNewPassword.tsx";
 import AuthScreen from "../auth/AuthScreen.tsx";
+import { markReturning, isReturning } from "./returning.ts";
 import AccountMenu from "../account/AccountMenu.tsx";
 import AppFrame from "./AppFrame.tsx";
 import ModuleHost from "./ModuleHost.tsx";
@@ -47,6 +48,11 @@ function AccountHost({ userId, makeProfile }: Pick<Repos, "makeProfile"> & { use
 }
 
 const LAB_ROUTE = "#/lab";
+const SIGN_IN_ROUTE = "#/sign-in";
+const CREATE_ROUTE = "#/create-account";
+const ABOUT_ROUTE = "#/about";
+/** The page that introduces Learivo is code only visitors who are signed out ever need. */
+const Landing = lazy(() => import("../landing/Landing.tsx"));
 
 function useHash(): [string, (hash: string) => void] {
   const [hash, setHash] = useState(() => window.location.hash);
@@ -70,12 +76,36 @@ export default function AppShell({
   makeLive,
 }: Repos = {}) {
   const [hash, go] = useHash();
-  const { status, user, recovering } = useAuth();
+  const { status, user, recovering, notice } = useAuth();
   const focus = useFocusMode();
+  useEffect(() => {
+    if (status !== "signed-in") return;
+    markReturning();
+    // Leave the sign-in address behind, so the app opens on Home.
+    if (hash === SIGN_IN_ROUTE || hash === CREATE_ROUTE) go("");
+  }, [status, hash, go]);
   if (hash === LAB_ROUTE) return <App />;
   if (status === "loading") return <div role="status" aria-label="Loading" className="min-h-dvh" />;
   if (status === "signed-in" && recovering) return <SetNewPassword />;
-  if (status === "signed-out") return <AuthScreen />;
+  if (status === "signed-out") {
+    // Someone who has used Learivo on this device, or whose session just ended, goes straight to sign-in.
+    const direct =
+      hash === SIGN_IN_ROUTE || hash === CREATE_ROUTE || notice !== null || isReturning();
+    if (!direct) {
+      return (
+        <Suspense fallback={<div role="status" aria-label="Loading" className="min-h-dvh" />}>
+          <Landing onSignIn={() => go(SIGN_IN_ROUTE)} onCreate={() => go(CREATE_ROUTE)} />
+        </Suspense>
+      );
+    }
+    return (
+      <AuthScreen
+        key={hash}
+        initialMode={hash === CREATE_ROUTE ? "sign-up" : "sign-in"}
+        onBack={() => go(ABOUT_ROUTE)}
+      />
+    );
+  }
 
   const current = moduleForHash(hash);
   const modules = visibleModules();

@@ -7,18 +7,21 @@ import { fakeAuth } from "../testing/fakeAuth.ts";
 import type { AuthClient } from "./types.ts";
 import { MemoryProfile } from "../modules/profile/data/memoryProfile.ts";
 
-const renderApp = (client: AuthClient) =>
-  render(
+const renderApp = (client: AuthClient, at: string = "#/sign-in") => {
+  window.location.hash = at;
+  return render(
     <ThemeProvider>
       <AuthProvider client={client}>
         <AppShell makeProfile={() => new MemoryProfile()} />
       </AuthProvider>
     </ThemeProvider>,
   );
+};
 
 afterEach(() => {
   cleanup();
   window.location.hash = "";
+  window.localStorage.clear();
 });
 
 const type = (label: string, value: string) =>
@@ -31,7 +34,7 @@ describe("auth gate and sign-in", () => {
     expect(screen.queryByRole("navigation", { name: "Primary" })).toBeNull();
   });
 
-  it("links to the privacy and terms pages before sign-in", async () => {
+  it("links to the privacy and terms pages from the sign-in screen", async () => {
     renderApp(fakeAuth(null));
     const legal = await screen.findByRole("navigation", { name: "Legal" });
     expect(within(legal).getByRole("link", { name: "Privacy" }).getAttribute("href")).toBe(
@@ -276,5 +279,85 @@ describe("Google sign-in", () => {
     renderApp(client);
     fireEvent.click(await screen.findByRole("button", { name: /Continue with Google/ }));
     expect((await screen.findByRole("alert")).textContent).toMatch(/Something went wrong/);
+  });
+});
+
+describe("the page that introduces Learivo", () => {
+  it("is what a new visitor sees, with a question they can answer without an account", async () => {
+    renderApp(fakeAuth(null), "");
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Practise the way the exam asks." }),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("radio", { name: /Left anterior descending/ }));
+    expect(screen.getByRole("group", { name: "How sure are you?" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Sure" }));
+    expect(
+      await screen.findByText(/Not quite: the answer is the right coronary artery/),
+    ).toBeTruthy();
+    expect(screen.getByText(/Sure, but wrong\./)).toBeTruthy();
+    // The right answer is marked, and the choice is locked.
+    expect(
+      screen.getByRole("radio", { name: /Right coronary artery/ }).getAttribute("data-state"),
+    ).toBe("right");
+    expect(screen.getByRole("radio", { name: /Left main stem/ }).hasAttribute("disabled")).toBe(
+      true,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    expect(screen.queryByText(/Not quite/)).toBeNull();
+    expect(screen.getByRole("radio", { name: /Left main stem/ }).hasAttribute("disabled")).toBe(
+      false,
+    );
+  });
+
+  it("says what happens to a right answer you were unsure about", async () => {
+    renderApp(fakeAuth(null), "");
+    fireEvent.click(await screen.findByRole("radio", { name: /Right coronary artery/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Not sure" }));
+    expect(await screen.findByText(/Correct: right coronary artery/)).toBeTruthy();
+    expect(screen.getByText(/Right, but unsure\./)).toBeTruthy();
+  });
+
+  it("opens Create your account or Sign in from its buttons, and comes back with About Learivo", async () => {
+    renderApp(fakeAuth(null), "");
+    fireEvent.click((await screen.findAllByRole("button", { name: "Create your account" }))[0]!);
+    expect(await screen.findByRole("heading", { name: "Create your account" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "About Learivo" }));
+    await screen.findByRole("heading", { level: 1, name: "Practise the way the exam asks." });
+    fireEvent.click(screen.getAllByRole("button", { name: "Sign in" })[0]!);
+    expect(await screen.findByRole("heading", { name: "Sign in to Learivo" })).toBeTruthy();
+  });
+
+  it("skips the introduction for someone who has signed in on this device", async () => {
+    window.localStorage.setItem("learivo.returning", "1");
+    renderApp(fakeAuth(null), "");
+    expect(await screen.findByRole("heading", { name: "Sign in to Learivo" })).toBeTruthy();
+  });
+
+  it("remembers the device after signing in, and leaves the sign-in address", async () => {
+    renderApp(fakeAuth(null));
+    await screen.findByRole("heading", { name: "Sign in to Learivo" });
+    type("Email", "me@example.test");
+    type("Password", "secret-password");
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    await screen.findByRole("navigation", { name: "Primary" });
+    expect(window.localStorage.getItem("learivo.returning")).toBe("1");
+    expect(window.location.hash).not.toBe("#/sign-in");
+  });
+
+  it("works out the daily pace and explains the four kinds of answer", async () => {
+    renderApp(fakeAuth(null), "");
+    await screen.findByRole("heading", { level: 1 });
+    // 1,500 questions over 60 days is 25 a day.
+    expect(screen.getByText("25")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText(/Days until your exam/), { target: { value: "30" } });
+    expect(screen.getByText("50")).toBeTruthy();
+    // Never round down: 1,000 questions in 60 days needs 17 a day, not 16.
+    fireEvent.change(screen.getByLabelText(/Days until your exam/), { target: { value: "60" } });
+    fireEvent.change(screen.getByLabelText(/Questions you still want to cover/), {
+      target: { value: "1000" },
+    });
+    expect(screen.getByText("17")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Right but unsure/ }));
+    expect(screen.getByText(/Right by instinct or luck/)).toBeTruthy();
   });
 });

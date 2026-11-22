@@ -5,7 +5,7 @@ A map of `src/`. Find what you want to change, then edit that one place.
 ## Layers (enforced by lint)
 
 ```
-core, motion   <   ui-kit, auth, help   <   modules   <   platform, account   <   shell
+core, motion   <   ui-kit, auth, help, landing   <   modules   <   platform, account   <   shell
 ```
 
 A folder may only import from layers to its left. `pnpm lint` fails if a lower layer reaches up
@@ -16,6 +16,7 @@ A folder may only import from layers to its left. `pnpm lint` fails if a lower l
 | `core/`     | No UI. Config, Supabase client, monitoring, `createStore`, toast, intents, focus mode, dialog open/close stores, backup reminder rule                                             |
 | `motion/`   | All animation: tokens, CSS, origin morph, grow-in                                                                                                                                 |
 | `ui-kit/`   | Presentational building blocks. `primitives/`, `feedback/`, `overlays/`, `icons/`, `brand/`, `themes/`                                                                            |
+| `landing/`  | The introduction page signed-out visitors see first (its own chunk; may import core, motion, ui-kit)                                                                              |
 | `auth/`     | Sign-in screen and auth provider                                                                                                                                                  |
 | `help/`     | The "All features" list, its icons and data                                                                                                                                       |
 | `modules/`  | The features: `question-bank`, `practice`, `workspace` (home, review, insights), `ai`, `profile`, `data`. Each has `domain/` (rules, no React), `data/` (stores), `ui/` (screens) |

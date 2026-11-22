@@ -44,3 +44,7 @@ Status as of 2026-11-21. These were not run by the assistant (it has no phone, n
 "Reported passed by the owner" is the evidence; no logs, screenshots or timings were supplied. Still not verified by anyone: a timed restore from Supabase's own database backup, many students on one database, a real reset email arriving, and 100k questions on a low-end phone.
 
 2026-11-22: notes, bookmarks, revision, flashcards, glossary, goal, exam date and Home layout also work offline (last change wins).
+
+## Owner checks, 2026-11-22
+
+The owner reported that every owner task in the 2026-11-22 list was done and passed: Supabase Site URL and redirect, password reset email, change email, Google sign-in (consent screen, OAuth client, Supabase provider), Gmail sender, install and offline use on the phone, exam PDF on the phone, restore drill with the app's backup file. No logs or screenshots were supplied, so these stay "reported passed by the owner", the same standard as before. Not done, by decision: leaked-password protection (Supabase Pro only), branch protection (to keep pushes smooth). Still not verified by anyone: a timed restore of the full database from the weekly backup on a computer.

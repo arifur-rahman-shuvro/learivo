@@ -1,0 +1,211 @@
+/* Landing page only. Colours and fonts come from the theme tokens, so every theme and mode works. */
+.lp-card {
+  background: var(--lv-surface-1);
+  border: 1px solid var(--lv-border);
+  border-radius: var(--lv-radius-card);
+  box-shadow: var(--lv-shadow-raised);
+}
+
+.lp-h1 {
+  font-family: var(--lv-font-heading);
+  font-size: clamp(2.25rem, 7.5vw, 3.9rem);
+  line-height: 1.06;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+  text-wrap: balance;
+}
+.lp-h2 {
+  font-family: var(--lv-font-heading);
+  font-size: clamp(1.5rem, 4.5vw, 2.15rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  text-wrap: balance;
+}
+
+.lp-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+  background: var(--lv-surface-2);
+  border: 1px solid var(--lv-border);
+  border-radius: var(--lv-radius-control);
+  color: var(--lv-text);
+  cursor: pointer;
+  transition:
+    background var(--lv-motion-fast) var(--lv-ease),
+    border-color var(--lv-motion-fast) var(--lv-ease),
+    opacity var(--lv-motion-base) var(--lv-ease);
+}
+.lp-option:hover:not(:disabled) {
+  border-color: var(--lv-border-strong);
+}
+.lp-option:disabled {
+  cursor: default;
+}
+.lp-option[data-state="picked"] {
+  border-color: var(--lv-accent);
+  background: var(--lv-surface-1);
+}
+.lp-option[data-state="right"] {
+  border-color: var(--lv-success);
+  background: var(--lv-surface-1);
+}
+.lp-option[data-state="wrong"] {
+  border-color: var(--lv-danger);
+  background: var(--lv-surface-1);
+}
+.lp-option[data-state="dim"] {
+  opacity: 0.62;
+}
+.lp-letter {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--lv-border-strong);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.lp-option[data-state="right"] .lp-letter {
+  background: var(--lv-success);
+  border-color: var(--lv-success);
+  color: #fff;
+}
+.lp-option[data-state="wrong"] .lp-letter {
+  background: var(--lv-danger);
+  border-color: var(--lv-danger);
+  color: #fff;
+}
+
+/* The answer opens by growing, the one planned moment on the page. */
+.lp-reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--lv-motion-base) var(--lv-ease);
+}
+.lp-reveal[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+.lp-reveal > div {
+  overflow: hidden;
+}
+
+.lp-quad {
+  min-height: 84px;
+  padding: 0.75rem;
+  text-align: left;
+  background: var(--lv-surface-1);
+  border: 1px solid var(--lv-border);
+  border-radius: var(--lv-radius-control);
+  color: var(--lv-text);
+  cursor: pointer;
+  transition:
+    border-color var(--lv-motion-fast) var(--lv-ease),
+    background var(--lv-motion-fast) var(--lv-ease);
+}
+.lp-quad[aria-pressed="true"] {
+  border-color: var(--lv-accent);
+  background: var(--lv-surface-2);
+  box-shadow: inset 0 0 0 1px var(--lv-accent);
+}
+
+.lp-range {
+  width: 100%;
+  min-height: 44px;
+  accent-color: var(--lv-accent);
+}
+
+/* A sheet of paper, two columns with a divider, like the exam PDF. */
+.lp-paper {
+  background: #fff;
+  color: #1a1a1a;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  box-shadow: var(--lv-shadow-raised);
+  padding: 14px 16px 10px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.lp-paper-cols {
+  column-count: 2;
+  column-gap: 20px;
+  column-rule: 1px solid #bbb;
+}
+.lp-paper-cols p {
+  break-inside: avoid;
+  margin: 0 0 8px;
+}
+
+.lp-facts > div {
+  display: grid;
+  gap: 4px;
+  padding: 18px 0;
+  border-top: 1px solid var(--lv-border);
+}
+@media (min-width: 720px) {
+  .lp-facts > div {
+    grid-template-columns: minmax(0, 14rem) minmax(0, 1fr);
+    gap: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-reveal,
+  .lp-option,
+  .lp-quad {
+    transition: none;
+  }
+}
+
+/* Sheets behind the question: a bank of questions, not one. */
+.lp-stack {
+  position: relative;
+  isolation: isolate;
+}
+.lp-stack::before,
+.lp-stack::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: var(--lv-radius-card);
+  border: 1px solid var(--lv-border);
+}
+.lp-stack::before {
+  background: var(--lv-surface-3);
+  transform: translate(10px, 14px) rotate(2.2deg);
+}
+.lp-stack::after {
+  background: var(--lv-surface-2);
+  transform: translate(-8px, 8px) rotate(-1.8deg);
+}
+@media (max-width: 480px) {
+  .lp-stack::before {
+    transform: translate(5px, 9px) rotate(1.6deg);
+  }
+  .lp-stack::after {
+    transform: translate(-5px, 5px) rotate(-1.4deg);
+  }
+}
+
+/* Each kind of answer has its own colour edge, taken from the theme's status colours. */
+.lp-quad[data-tone="known"] {
+  border-left: 5px solid var(--lv-success);
+}
+.lp-quad[data-tone="shaky"] {
+  border-left: 5px solid var(--lv-warning);
+}
+.lp-quad[data-tone="over"] {
+  border-left: 5px solid var(--lv-danger);
+}
+.lp-quad[data-tone="gap"] {
+  border-left: 5px solid var(--lv-border-strong);
+}

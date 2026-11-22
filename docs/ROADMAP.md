@@ -348,3 +348,5 @@ Progress, row actions (2026-11-19): every question row has a "more" button (thre
 ## Audit and next roadmap (2026-11-22)
 
 A full audit was done on 2026-11-22 (measurements, findings by priority and the new roadmap R1 to R5: trust, study power, speed and comfort, safety and quality, later). It is kept as the owner's document "Learivo audit and roadmap, Nov 2026". Highlights: real-phone and real-email checks are the main open risk; Latin-only fonts would cut about 200 KB from every install; Bangla text in the exam PDF is untested; a CI run against a local Supabase is missing. Question types stay parked.
+
+- 2026-11-22: roadmap build R1 to R4 done (Latin-only fonts, Bangla check in the PDF test, Smart mix preview, offline prefetch, note clash notice, refused offline changes shown, coverage floor, dependency update). Owner reported all owner tasks passed (see docs/AUDIT.md). Added the introduction page for signed-out visitors with a question to answer, a daily-pace slider, a four-kinds-of-answer explorer, an exam paper preview and a theme switcher, plus Privacy and Terms pages. Question types stay parked.

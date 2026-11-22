@@ -6,7 +6,7 @@ import prettier from "eslint-config-prettier";
 
 /**
  * Layering: a folder may only import from the layers listed for it. Lower layers never reach up.
- *   core, motion  <  ui-kit, auth, help  <  modules  <  platform, account  <  shell
+ *   core, motion  <  ui-kit, auth, help, landing  <  modules  <  platform, account  <  shell
  * Tests are exempt. See docs/STRUCTURE.md.
  */
 const LAYERS = [
@@ -15,6 +15,7 @@ const LAYERS = [
   "ui-kit",
   "platform",
   "auth",
+  "landing",
   "help",
   "modules",
   "account",
@@ -26,6 +27,7 @@ const MAY_IMPORT = {
   "ui-kit": ["core", "motion"],
   platform: ["core", "modules"],
   auth: ["core", "motion", "ui-kit"],
+  landing: ["core", "motion", "ui-kit"],
   help: ["core", "motion", "ui-kit"],
   modules: ["core", "motion", "ui-kit", "help", "auth"],
   account: ["core", "motion", "ui-kit", "platform", "help", "auth", "modules"],

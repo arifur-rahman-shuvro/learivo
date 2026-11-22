@@ -22,7 +22,7 @@ Written from what is built, not from plans. Anything not yet proven is marked **
 
 Sign in screen > **Forgot password?** > email > **Send reset link**. The screen says "If <email> has an account, we sent a link" for any address, so it never reveals who has an account. The emailed link opens the app on a **Choose a new password** screen (8+ characters, typed twice); nothing else is shown until a new password is saved. **Cancel** signs out. An expired or already-used link shows a notice on the sign-in screen asking for a new one.
 
-Needs in Supabase (Dashboard > Authentication > URL Configuration): Site URL `https://learivo.pages.dev`, and the same address in Redirect URLs, or the link will not bring the student back to the app. Supabase's built-in email sender is limited to a few emails an hour; for many students set up your own sender (Authentication > SMTP Settings). **Not verified:** a real email being delivered and the link opened on a phone (needs the owner's real email); the screens and the link handling are covered by tests, the email itself is not.
+Needs in Supabase (Dashboard > Authentication > URL Configuration): Site URL `https://learivo.pages.dev`, and the same address in Redirect URLs, or the link will not bring the student back to the app. Supabase's built-in email sender is limited to a few emails an hour; for many students set up your own sender (Authentication > SMTP Settings). **Not verified:** a real email being delivered and the link opened on a phone (needs the owner's real email); the screens and the link handling are covered by tests, the email itself is not. **Owner reported 2026-11-22: passed** (no log or screenshot supplied; the assistant cannot receive the email itself).
 
 ## 1c. Google sign-in and sending email from your own Gmail
 
@@ -32,7 +32,7 @@ Set up (owner, once): Google Cloud Console > create a project > APIs & Services 
 
 **Email from your own Gmail (instead of Supabase's sender).** Dashboard only, no code change: Supabase > Authentication > Emails > SMTP Settings > enable custom SMTP: host `smtp.gmail.com`, port 465, username the Gmail address, password a Google **App Password** (Google Account > Security > 2-Step Verification on > App passwords), sender email the same Gmail address, sender name Learivo. Limits: Gmail allows roughly 500 messages a day and may mark mass mail as spam; Google may refuse the sender address if it differs from the login. For a real launch a sender on your own domain (Resend, Brevo) is more reliable. The app code does not change either way.
 
-**Not verified:** a real Google sign-in round trip and a real email from Gmail (needs the owner's Google project and Gmail). Covered by tests: the button appears only when Google is on, signing in, the Google-only account rules, the screens in all themes.
+**Not verified:** a real Google sign-in round trip and a real email from Gmail (needs the owner's Google project and Gmail). Covered by tests: the button appears only when Google is on, signing in, the Google-only account rules, the screens in all themes. **Owner reported 2026-11-22: the Google sign-in and the Gmail sender both passed** (no log or screenshot supplied; the assistant cannot receive the email itself).
 
 ## 1d. Change email
 
@@ -40,7 +40,7 @@ Account > Change email. The student enters the new address and their password (c
 
 - Needs the same Supabase Site URL / Redirect URL setup as the reset link (https://learivo.pages.dev).
 - Google-only accounts see no form: their email is managed by Google.
-- Not verified by me: a real confirmation email arriving and the address switching. Test it once with a throwaway account.
+- Not verified by me: a real confirmation email arriving and the address switching. Test it once with a throwaway account. **Owner reported 2026-11-22: passed** (no log or screenshot supplied; the assistant cannot receive the email itself).
 
 ## 2. Offline use and sync
 
@@ -93,7 +93,7 @@ Account > Change email. The student enters the new address and their password (c
 
 - **Build check** (`pnpm envcheck`, in CI): the built site has the headers file with the CSP, HSTS and nosniff rules, mentions only our own database project, and contains no secret key, token, connection string or AI key. A planted fake key and a wrong project were both caught when tried.
 - **Live site check** (`.github/workflows/live-check.yml`, `scripts/livecheck.mjs`): every 6 hours, and after each successful CI run, GitHub's runner opens the real site and checks it answers, has the security headers, serves the service worker uncached, and that the database sign-in service is up and refuses a signed-out reader. A red run means something is wrong; GitHub emails the repository owner (Settings > Notifications must allow Actions emails).
-- **Weekly database backup** (`backup.yml`): red until the owner adds the two secrets described in RUNBOOK.md.
+- **Weekly database backup** (`backup.yml`): red until the owner adds the two secrets described in RUNBOOK.md. Correction 2026-11-22: it is no longer red. GitHub shows successful runs on 2026-11-21 (manual and scheduled), so the secrets are set.
 - **Crash and failure reports:** go to Sentry only when a DSN is set at build time (it is not set yet). Reported: unexpected screen crashes, unhandled failures, a refused offline change (only its kind), unreadable saved changes, a backup that could not be created, a restore that stopped part way. Never reported: question text, notes, the database's message, the student's identity.
 - **Not monitored:** how long syncs take, how many students have waiting changes (nothing is collected from devices), database size and load (see the Supabase dashboard), email alerts from Sentry (needs a DSN and an alert rule).
 
@@ -103,3 +103,10 @@ Account > Change email. The student enters the new address and their password (c
 2. Code: `git revert <commit>` and push; CI deploys the revert.
 3. Database: migrations are not undone automatically. Write a new migration that reverses the change, apply it, and run the SQL checks and advisors. Take a backup before any risky migration.
 4. Data lost by a mistake: restore a student's backup file (section 1), or the Supabase database backup (plan dependent, drill not yet done).
+
+## 8. Decisions recorded 2026-11-22
+
+- **Leaked-password protection** (Supabase Auth) needs the Pro plan, so it stays off. Sign-up still requires 8 or more characters. Revisit if the project moves to Pro.
+- **Branch protection** on `main` is deliberately not enabled, so the assistant can push after CI is green. A red CI is the signal, and `frontend` and `database` are the check names if it is turned on later.
+- **Gmail as the email sender** works, with Supabase's note that Gmail is meant for personal mail and may hurt delivery. Move to Brevo or Resend if students report missing emails.
+- **Introduction page.** A new visitor who is signed out sees the introduction first (`src/landing`). Someone who has signed in on the device, or whose session just ended, goes straight to sign-in, and "About Learivo" on that screen shows the page again. Privacy and Terms pages are at `/privacy.html` and `/terms.html`, written for the Google consent screen.
