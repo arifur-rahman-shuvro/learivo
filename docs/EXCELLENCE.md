@@ -130,3 +130,15 @@ Todo: real-database query timing (Needs you or a test project: the sandbox canno
 - A crash inside any dialog shows a message with a Close button instead of blanking the app (`Dialog` wraps its content in an inline `ErrorBoundary`).
 - The Organize tabs say why a list did not load and offer **Try again**.
 - AI connection: a failed test now says what to do next for each kind of failure (key, credit, limit, model, network, blocked). A counter on this device shows requests today and in total, and tokens when the provider reports them (`src/modules/ai/usage.ts`). It only counts what this device sent; the provider's site is the real bill. The key already stays in browser storage only, and the dialog says so.
+
+### Backup with changes waiting on the device
+
+Backup reads what the server holds. Before it saves, it now sends any waiting offline changes (questions, organising, notes, flashcards). If some still cannot be sent it lists them and offers **Save without them**, so a backup never silently misses work (`src/account/backup/unsent.ts`).
+
+### Backup size (measured 2026-11-22)
+
+A bank of 20,000 questions makes a 16 MB file and takes about 1.2 seconds to build in tests. The file is built in memory and checked with SHA-256, so streaming is not needed at this size. If a bank ever passes about 100,000 questions, revisit this.
+
+### Retry timing
+
+A failed send of waiting changes is retried after 2 s, then 4, 8, 16 s and so on, never more than 5 minutes between tries (`src/platform/offline/retry.ts`). While there is no connection it waits for the browser's online signal instead of polling, and it tries at once when the connection returns or the student taps **Try now**. AI requests retry twice (3 s, 9 s) on a busy provider or rate limit, and honour the provider's Retry-After up to 30 s.

@@ -16,6 +16,8 @@ import {
 import { MIN_PASSPHRASE, isSealed, seal, unseal } from "./seal.ts";
 import { saveTextFile } from "../../core/saveFile.ts";
 import { markBackedUp } from "../../core/backupReminder.ts";
+import { useOfflineControls } from "../../platform/offline/OfflineProvider.tsx";
+import { unsentBeforeBackup } from "./unsent.ts";
 import { closeBackup, useBackupOpen } from "../../core/dialogs/backup.ts";
 
 function readText(file: File): Promise<string> {
@@ -46,6 +48,8 @@ export default function BackupDialog() {
   const { repo: bank, refresh: refreshBank } = useBank();
   const { repo: ws, refresh: refreshWs } = useWorkspace();
   const { attempts, refresh: refreshPractice } = usePractice();
+  const offline = useOfflineControls();
+  const [unsent, setUnsent] = useState<string[] | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -67,11 +71,19 @@ export default function BackupDialog() {
     closeBackup();
   };
 
-  const download = async () => {
+  const download = async (anyway = false) => {
     setBusy(true);
     setError(null);
     setMessage(null);
+    setUnsent(null);
     try {
+      if (!anyway) {
+        const waiting = await unsentBeforeBackup(offline);
+        if (waiting.length > 0) {
+          setUnsent(waiting);
+          return;
+        }
+      }
       if (pass !== "" && pass.length < MIN_PASSPHRASE) {
         throw new Error(`Use at least ${MIN_PASSPHRASE} characters for the passphrase.`);
       }
@@ -201,10 +213,38 @@ export default function BackupDialog() {
             </p>
           </div>
           <div>
-            <Button variant="secondary" size="sm" disabled={busy} onClick={download}>
+            <Button variant="secondary" size="sm" disabled={busy} onClick={() => void download()}>
               Download backup
             </Button>
           </div>
+          {unsent && (
+            <div role="alert" className="flex flex-col gap-2 text-sm">
+              <p className="m-0 font-semibold">
+                {plural(unsent.length, "change")} on this device could not be sent yet, so{" "}
+                {unsent.length === 1 ? "it is" : "they are"} not in the backup:
+              </p>
+              <ul className="m-0 pl-5">
+                {unsent.slice(0, 5).map((u, i) => (
+                  <li key={i}>{u}</li>
+                ))}
+                {unsent.length > 5 && <li>and {unsent.length - 5} more</li>}
+              </ul>
+              <p className="m-0 text-muted">
+                Connect to the internet and try again to include them, or save the backup without
+                them.
+              </p>
+              <div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => void download(true)}
+                >
+                  Save without them
+                </Button>
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="flex flex-col gap-2">
