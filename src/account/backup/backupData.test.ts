@@ -41,7 +41,7 @@ async function filled() {
   await ws.saveNote({ id: null, questionId: null, title: "Free", body: "Loose note" });
   await ws.saveFlashcard({ id: null, front: "Front", back: "Back" });
   await ws.saveTerm({ id: null, term: "Ischaemia", definition: "Low blood flow" });
-  await ws.setExamTarget({ title: "Final", date: "2031-05-01" });
+  await ws.setExamTarget({ title: "Final", date: "2031-05-01", subjectIds: [] });
   await ws.setDailyGoal(35);
   return { bank, ws };
 }
@@ -97,7 +97,7 @@ describe("backup", () => {
     const { bank, ws } = await filled();
     const backup = await buildBackup(bank, ws);
     const ws2 = new MemoryWorkspace();
-    await ws2.setExamTarget({ title: "Mine", date: "2030-01-01" });
+    await ws2.setExamTarget({ title: "Mine", date: "2030-01-01", subjectIds: [] });
     await restoreBackup(backup, new MemoryRepo(), ws2);
     expect((await ws2.examTarget()).title).toBe("Mine");
   });

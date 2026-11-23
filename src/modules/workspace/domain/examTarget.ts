@@ -3,9 +3,11 @@ export interface ExamTarget {
   title: string;
   /** YYYY-MM-DD, or null when no exam is set. */
   date: string | null;
+  /** Ids of the subjects this exam covers. Empty means every subject. */
+  subjectIds: string[];
 }
 
-export const NO_EXAM: ExamTarget = { title: "", date: null };
+export const NO_EXAM: ExamTarget = { title: "", date: null, subjectIds: [] };
 
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
@@ -19,11 +21,28 @@ export function daysUntil(date: string, now: Date): number {
 }
 
 export function cleanExamTarget(raw: unknown): ExamTarget {
-  const o = (raw && typeof raw === "object" ? raw : {}) as { title?: unknown; date?: unknown };
+  const o = (raw && typeof raw === "object" ? raw : {}) as {
+    title?: unknown;
+    date?: unknown;
+    subjectIds?: unknown;
+  };
   const date =
     typeof o.date === "string" && !Number.isNaN(daysUntil(o.date, new Date())) ? o.date : null;
   const title = typeof o.title === "string" ? o.title.trim().slice(0, 120) : "";
-  return date ? { title, date } : NO_EXAM;
+  const subjectIds = Array.isArray(o.subjectIds)
+    ? [
+        ...new Set(o.subjectIds.filter((x): x is string => typeof x === "string" && x !== "")),
+      ].slice(0, MAX_SUBJECTS)
+    : [];
+  return date ? { title, date, subjectIds } : { ...NO_EXAM, subjectIds: [] };
+}
+
+export const MAX_SUBJECTS = 100;
+
+/** The chosen subjects that still exist. An empty result means the exam covers every subject. */
+export function liveSubjects(chosen: readonly string[], existing: readonly string[]): string[] {
+  const have = new Set(existing);
+  return chosen.filter((id) => have.has(id));
 }
 
 /** About how many questions a day it takes to go through `count` questions before the exam. */

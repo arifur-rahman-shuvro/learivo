@@ -294,7 +294,7 @@ describe("Insights", () => {
       (n) => <InsightsScreen onNavigate={n} />,
       async ({ bank, attempts, workspace }) => {
         await workspace.setDailyGoal(20);
-        await workspace.setExamTarget({ title: "Finals", date });
+        await workspace.setExamTarget({ title: "Finals", date, subjectIds: [] });
         const [a, c] = await bank.create([tf("A1"), tf("P1")]);
         await finished(attempts, [
           { id: a!, stem: "A1", path: ["Anatomy"], right: false },
@@ -515,6 +515,36 @@ describe("Home: exam countdown", () => {
       expect(screen.queryByRole("region", { name: "Study calendar" })).toBeNull(),
     );
     expect(await screen.findByRole("button", { name: "Set exam date" })).toBeTruthy();
+  });
+});
+
+describe("Home: exam subjects", () => {
+  it("counts only the chosen subjects, and shows them", async () => {
+    const { workspace } = await setup(
+      () => <HomeDashboard onNavigate={() => undefined} />,
+      async ({ bank }) => {
+        await bank.create([tf("A1", ["Anatomy"]), tf("A2", ["Anatomy"]), tf("P1", ["Physiology"])]);
+      },
+    );
+    fireEvent.click(await screen.findByRole("button", { name: "Set exam date" }));
+    const soon = new Date(Date.now() + 10 * 86_400_000);
+    const iso = `${soon.getFullYear()}-${String(soon.getMonth() + 1).padStart(2, "0")}-${String(soon.getDate()).padStart(2, "0")}`;
+    fireEvent.change(screen.getByLabelText("Exam date"), { target: { value: iso } });
+    expect((screen.getByLabelText("All subjects") as HTMLInputElement).checked).toBe(true);
+    fireEvent.click(screen.getByLabelText("Anatomy"));
+    expect((screen.getByLabelText("All subjects") as HTMLInputElement).checked).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "Save exam" }));
+    expect(
+      await screen.findByText(/2 of your 2 questions in these subjects are not practised/),
+    ).toBeTruthy();
+    expect(screen.getByText("Subjects: Anatomy.")).toBeTruthy();
+    expect((await workspace.examTarget()).subjectIds).toHaveLength(1);
+    // Choosing "All subjects" again counts the whole bank.
+    fireEvent.click(screen.getByRole("button", { name: "Change exam" }));
+    fireEvent.click(screen.getByLabelText("All subjects"));
+    fireEvent.click(screen.getByRole("button", { name: "Save exam" }));
+    expect(await screen.findByText(/3 of your 3 questions are not practised/)).toBeTruthy();
+    expect((await workspace.examTarget()).subjectIds).toEqual([]);
   });
 });
 

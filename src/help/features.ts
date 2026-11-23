@@ -212,7 +212,7 @@ export const FEATURE_GROUPS: FeatureGroup[] = [
       {
         id: "goal",
         title: "Goal and exam date",
-        description: "Set a daily goal and count down to your exam.",
+        description: "Set a daily goal and count down to your exam, for the subjects it covers.",
         icon: "goal",
         route: "#/home",
       },

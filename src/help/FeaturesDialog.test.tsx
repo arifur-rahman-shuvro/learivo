@@ -84,7 +84,7 @@ describe("User guide", () => {
   it("opens from the account menu and ticks steps from the student's own data", async () => {
     const repo = new MemoryRepo();
     const ws = new MemoryWorkspace();
-    await ws.setExamTarget({ title: "Final", date: "2027-03-01" });
+    await ws.setExamTarget({ title: "Final", date: "2027-03-01", subjectIds: [] });
     render(
       <ThemeProvider>
         <AuthProvider client={fakeAuth({ id: "u1", email: "sara@example.test" })}>

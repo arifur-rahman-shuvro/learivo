@@ -399,16 +399,23 @@ export class SupabaseWorkspace implements WorkspaceRepo {
 
   async examTarget() {
     const row = ok(
-      await this.db.from("user_preferences").select("exam_title, exam_date").maybeSingle(),
-    ) as { exam_title: string; exam_date: string | null } | null;
-    return cleanExamTarget({ title: row?.exam_title, date: row?.exam_date });
+      await this.db
+        .from("user_preferences")
+        .select("exam_title, exam_date, exam_subjects")
+        .maybeSingle(),
+    ) as { exam_title: string; exam_date: string | null; exam_subjects: string[] | null } | null;
+    return cleanExamTarget({
+      title: row?.exam_title,
+      date: row?.exam_date,
+      subjectIds: row?.exam_subjects,
+    });
   }
 
   async setExamTarget(target: ExamTarget) {
     const t = cleanExamTarget(target);
     const res = await this.db
       .from("user_preferences")
-      .update({ exam_title: t.title, exam_date: t.date })
+      .update({ exam_title: t.title, exam_date: t.date, exam_subjects: t.subjectIds })
       .eq("user_id", this.userId);
     if (res.error) fail(res.error);
   }

@@ -51,11 +51,14 @@ export function ExamLine({
   total,
   seen,
   today,
+  subjectNames = [],
 }: {
   exam: ExamTarget;
   total: number;
   seen: number;
   today: Date;
+  /** Names of the subjects the exam covers; empty means all of them. */
+  subjectNames?: string[];
 }) {
   const days = daysUntil(exam.date!, today);
   const name = exam.title || "Your exam";
@@ -73,9 +76,12 @@ export function ExamLine({
         {days} day{days === 1 ? "" : "s"}
       </p>
       <p className="m-0 text-sm text-muted">until {name}.</p>
+      {subjectNames.length > 0 && (
+        <p className="m-0 text-sm text-muted">Subjects: {subjectNames.join(", ")}.</p>
+      )}
       <p className="m-0 mt-1 text-sm">
         {plan.perDay
-          ? `${plan.unseen.toLocaleString()} of your ${total.toLocaleString()} questions are not practised yet. About ${plan.perDay} a day finishes them in time.`
+          ? `${plan.unseen.toLocaleString()} of your ${total.toLocaleString()} questions ${subjectNames.length > 0 ? "in these subjects " : ""}are not practised yet. About ${plan.perDay} a day finishes them in time.`
           : `You have practised every question. Use the days left to revise your mistakes.`}
       </p>
       <ProgressBar value={plan.coverage} label="Questions practised at least once" />

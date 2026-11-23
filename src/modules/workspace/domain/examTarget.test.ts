@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { NO_EXAM, cleanExamTarget, daysUntil, paceFor, studyPlan } from "./examTarget.ts";
+import {
+  NO_EXAM,
+  cleanExamTarget,
+  daysUntil,
+  liveSubjects,
+  paceFor,
+  studyPlan,
+} from "./examTarget.ts";
 
 describe("exam countdown", () => {
   const now = new Date(2026, 10, 15, 23, 30); // 15 Nov 2026, late evening
@@ -19,7 +26,18 @@ describe("exam countdown", () => {
     expect(cleanExamTarget({ title: "  Final  ", date: "2026-12-01" })).toEqual({
       title: "Final",
       date: "2026-12-01",
+      subjectIds: [],
     });
+  });
+  it("keeps the chosen subjects once each and drops junk", () => {
+    expect(
+      cleanExamTarget({ date: "2026-12-01", subjectIds: ["a", "a", "", 3, "b"] }).subjectIds,
+    ).toEqual(["a", "b"]);
+    expect(cleanExamTarget({ date: "2026-12-01", subjectIds: "a" }).subjectIds).toEqual([]);
+  });
+  it("forgets subjects that no longer exist", () => {
+    expect(liveSubjects(["a", "gone", "b"], ["a", "b", "c"])).toEqual(["a", "b"]);
+    expect(liveSubjects(["gone"], ["a"])).toEqual([]);
   });
   it("works out a daily pace", () => {
     expect(paceFor(135, 10)).toBe(14);

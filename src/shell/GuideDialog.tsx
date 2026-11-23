@@ -122,7 +122,7 @@ export default function GuideDialog({ onNavigate }: { onNavigate: (route: string
       id: "exam",
       icon: "goal",
       title: "Set your exam date",
-      why: "Home counts the days down and shows how many questions a day you need.",
+      why: "Pick the exam date and its subjects. Home counts the days down and shows how many questions a day you need.",
       done: d("exam"),
       go: { label: "Go to Home", route: "#/home" },
     },

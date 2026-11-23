@@ -8,7 +8,9 @@ import { DEFAULT_QUERY } from "../../question-bank/data/repo.ts";
 import { usePractice } from "../../practice/ui/practice.tsx";
 import { errorText, useBank } from "../../question-bank/ui/bank.tsx";
 import { DEFAULT_GOAL } from "../data/repo.ts";
-import { NO_EXAM, cleanExamTarget, type ExamTarget } from "../domain/examTarget.ts";
+import { NO_EXAM, cleanExamTarget, liveSubjects, type ExamTarget } from "../domain/examTarget.ts";
+import { examScope } from "../data/examScope.ts";
+import type { TaxonomyNode } from "../../question-bank/data/repo.ts";
 import {
   activeDaySet,
   activityByDay,
@@ -55,25 +57,39 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
   const [examEditing, setExamEditing] = useState(false);
   const [examTitle, setExamTitle] = useState("");
   const [examDate, setExamDate] = useState("");
+  const [examSubjects, setExamSubjects] = useState<string[]>([]);
+  const [subjects, setSubjects] = useState<TaxonomyNode[]>([]);
 
   useEffect(() => {
     let alive = true;
     Promise.all([
       bank.list({ ...DEFAULT_QUERY, limit: 1 }),
+      bank.taxonomy().catch(() => [] as TaxonomyNode[]),
       ws.repo.cards(),
       ws.repo.dailyGoal(),
       ws.repo.homeLayout().catch(() => DEFAULT_HOME_LAYOUT),
       ws.repo.examTarget().catch(() => NO_EXAM),
       attempts.past().then(
-        (m) => m.size,
-        () => 0,
+        (m) => new Set(m.keys()),
+        () => new Set<string>(),
       ),
     ]).then(
-      ([page, cards, g, lay, ex, practised]) => {
+      async ([page, tax, cards, g, lay, ex, practised]) => {
+        const tops = tax.filter((n) => n.parentId === null && n.kind === "subject");
+        const chosen = liveSubjects(
+          ex.subjectIds,
+          tops.map((n) => n.id),
+        );
+        const scope =
+          chosen.length === 0
+            ? { total: page.total, seen: practised.size }
+            : await examScope(bank, chosen, practised);
         if (!alive) return;
         const now = new Date();
-        setTotal(page.total);
-        setSeen(practised);
+        setSubjects(tops);
+        setExamSubjects(chosen);
+        setTotal(scope.total);
+        setSeen(scope.seen);
         setDueCount(cards.filter((c) => isDue(c, now)).length);
         setForecast(dueForecast(cards, now));
         setGoal(g);
@@ -112,13 +128,17 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
   async function saveExam(clear = false) {
     setError(undefined);
     try {
-      const next = clear ? NO_EXAM : cleanExamTarget({ title: examTitle, date: examDate });
+      const next = clear
+        ? NO_EXAM
+        : cleanExamTarget({ title: examTitle, date: examDate, subjectIds: examSubjects });
       if (!clear && next.date === null) throw new Error("Choose the exam date.");
       await ws.repo.setExamTarget(next);
       setExam(next);
       setExamTitle(next.title);
       setExamDate(next.date ?? "");
+      setExamSubjects(next.subjectIds);
       setExamEditing(false);
+      ws.refresh();
     } catch (e) {
       setError(errorText(e));
     }
@@ -335,6 +355,35 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
                 onChange={(e) => setExamDate(e.target.value)}
               />
             </div>
+            {subjects.length > 0 && (
+              <fieldset className="m-0 flex w-full min-w-0 flex-col gap-1 border-0 p-0">
+                <legend className="p-0 text-sm font-semibold">Subjects in this exam</legend>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={examSubjects.length === 0}
+                    onChange={() => setExamSubjects([])}
+                  />
+                  All subjects
+                </label>
+                {subjects.map((n) => (
+                  <label key={n.id} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={examSubjects.includes(n.id)}
+                      onChange={(e) =>
+                        setExamSubjects(
+                          e.target.checked
+                            ? [...examSubjects, n.id]
+                            : examSubjects.filter((x) => x !== n.id),
+                        )
+                      }
+                    />
+                    {n.name}
+                  </label>
+                ))}
+              </fieldset>
+            )}
             <Button size="sm" onClick={() => void saveExam()}>
               Save exam
             </Button>
@@ -344,7 +393,13 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
           </div>
         ) : exam.date ? (
           <>
-            <ExamLine exam={exam} total={total} seen={seen} today={today} />
+            <ExamLine
+              exam={exam}
+              total={total}
+              seen={seen}
+              today={today}
+              subjectNames={subjects.filter((n) => examSubjects.includes(n.id)).map((n) => n.name)}
+            />
             <WeekPlan days={weekPlan(exam.date, total, seen, forecast, today)} />
             <div className="flex gap-2">
               <Button size="sm" variant="ghost" onClick={() => setExamEditing(true)}>
