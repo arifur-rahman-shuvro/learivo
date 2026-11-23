@@ -21,6 +21,10 @@ export interface PromptSpec {
   difficulty: "mixed" | 1 | 2 | 3 | 4 | 5;
   /** Only used when creating. */
   count: number;
+  /** When true the AI decides how many questions the topic needs; `count` is ignored. */
+  autoCount: boolean;
+  /** How deep the AI goes when it decides the number. */
+  coverage: "key" | "standard" | "complete";
   explanation: "none" | "short" | "detailed";
   questionLanguage: string;
   explanationLanguage: string;
@@ -56,6 +60,8 @@ export const DEFAULT_SPEC: PromptSpec = {
   types: [],
   difficulty: "mixed",
   count: 20,
+  autoCount: false,
+  coverage: "standard",
   explanation: "short",
   questionLanguage: "English",
   explanationLanguage: "English",
@@ -76,6 +82,64 @@ export const PROMPT_TYPES: { id: QuestionType; label: string }[] = [
 
 /** Most questions per reply; long answers get cut off by chat tools. */
 export const BATCH_SIZE = 25;
+/** The most questions the AI may decide on for one topic. */
+export const COVERAGE_MAX = 120;
+
+export const COVERAGE_LEVELS: { id: PromptSpec["coverage"]; label: string; hint: string }[] = [
+  { id: "key", label: "Key points", hint: "Only what real exams test again and again" },
+  { id: "standard", label: "Standard", hint: "Everything a student is expected to know" },
+  { id: "complete", label: "Complete", hint: "Every testable point, including the rare ones" },
+];
+
+function coverageRules(spec: PromptSpec): string[] {
+  const depth = {
+    key: "KEY POINTS: only the high-yield points that real exams test repeatedly. For a normal topic that is usually about 10 to 25 questions.",
+    standard:
+      "STANDARD: every point a student is expected to know, weighted by how much real exams test it. For a normal topic that is usually about 25 to 60 questions.",
+    complete:
+      "COMPLETE: every testable point, including the less common ones. For a normal topic that is usually about 50 to 120 questions.",
+  }[spec.coverage];
+  return [
+    "COVERAGE (you decide the number of questions, I do not):",
+    `- Depth: ${depth}`,
+    "- The ranges are only a guide. A narrow topic needs fewer questions and a broad one more. Never pad to reach a number, and never leave out a testable point to stay short.",
+    `- Hard limit: ${COVERAGE_MAX} questions in total.`,
+    "- Weight by exam importance: a point that exams test often or heavily gets more questions (up to 5), a minor point gets one. Stay inside the topic I named.",
+  ];
+}
+
+/** The prompt that asks the AI only for the coverage plan, used by the in-app writer before it writes. */
+export function buildPlanPrompt(spec: PromptSpec): string {
+  const about = [spec.subject, spec.chapter, spec.topic, spec.subtopic]
+    .map(clean)
+    .filter(Boolean)
+    .join(" > ");
+  const level = clean(spec.level);
+  const exam = clean(spec.examName);
+  return [
+    `You are planning exam questions for a private question bank about: ${about || "the topic I give you"}${level ? `, at the level of: ${level}` : ""}${exam ? `, for the exam: ${exam}` : ""}.`,
+    "Do not write any questions yet. List every sub-topic or learning point of this topic that the exam can test, and how many questions each deserves.",
+    ...coverageRules(spec),
+    "",
+    "Reply with JSON only, in one code block, in exactly this shape (at most 30 items):",
+    '{"plan": [{"point": "Blood supply of the heart", "questions": 3}]}',
+    'Each point is a short phrase. Each "questions" is a whole number from 1 to 5.',
+  ].join("\n");
+}
+
+/** The rules for the chat route when the AI decides the number: plan first, then batches, then a coverage check. */
+function autoRules(): string[] {
+  return [
+    'PLAN, QUALITY AND LIMITS (these rules stay in force for every reply, including after I say "continue"):',
+    "- First reply only: before the code block write PLAN: then a numbered list (at most 30 lines) of every testable point, each with the number of questions you will write for it, then TOTAL: and the total. Do not write the plan again later.",
+    `- Then write the first batch in the code block: the first questions of the plan in order, never more than ${BATCH_SIZE} in any reply. Then STOP. Do not carry on past the limit even if you could.`,
+    "- Quality beats quantity. Before you include a question, check it: the facts are correct, exactly one option is clearly best, the wrong options are plausible, the stem is clear, and it is not a repeat. Never pad.",
+    "- Do not let quality fall in later batches: the last question must be as good as the first. Never repeat or rephrase an earlier question.",
+    `- After each code block add one line: NOTE: Batch done, questions A to B of TOTAL. Say continue for the next batch.`,
+    `- When I say "continue", write only the next batch (at most ${BATCH_SIZE}) from the plan, then stop and add the same NOTE line.`,
+    "- After the last batch add COVERAGE: and one line per plan point with the number of questions written. If any point was left out or cut short, say which and why. Then write nothing more unless I ask.",
+  ];
+}
 
 const clean = (s: string) => s.replace(/\s+/g, " ").trim();
 const tagList = (s: string) =>
@@ -289,6 +353,7 @@ export function buildPrompt(spec: PromptSpec): string {
   const lines: string[] = [];
   const level = clean(spec.level);
   const count = Math.max(1, Math.min(200, Math.round(spec.count) || 1));
+  const auto = spec.mode === "create" && spec.autoCount;
 
   if (spec.mode === "create") {
     const about = [
@@ -300,8 +365,9 @@ export function buildPrompt(spec: PromptSpec): string {
       .filter(Boolean)
       .join(" > ");
     lines.push(
-      `You are helping me build a private question bank. Write ${count} exam-style questions${about ? ` about: ${about}` : ""}${level ? `, at the level of: ${level}` : ""}.`,
+      `You are helping me build a private question bank. Write ${auto ? "exam-style questions" : `${count} exam-style questions`}${about ? ` about: ${about}` : ""}${level ? `, at the level of: ${level}` : ""}.`,
     );
+    if (auto) lines.push("", ...coverageRules(spec), "");
     lines.push(
       "If I attached notes, pages or photos, base the questions on them. Otherwise use well-established textbook knowledge only.",
     );
@@ -358,14 +424,18 @@ export function buildPrompt(spec: PromptSpec): string {
   lines.push(
     "",
     "OUTPUT",
-    "Reply with JSON only: one list of question objects in a single code block, in exactly this shape:",
+    auto
+      ? "Reply with the PLAN (first reply only), then one list of question objects in a single code block, in exactly this shape:"
+      : "Reply with JSON only: one list of question objects in a single code block, in exactly this shape:",
     example(spec),
     "",
-    ...(spec.mode === "create"
-      ? batchRules(count)
-      : [
-          `Put at most ${BATCH_SIZE} questions in one reply. If there are more, stop after ${BATCH_SIZE} and I will say "continue".`,
-        ]),
+    ...(auto
+      ? autoRules()
+      : spec.mode === "create"
+        ? batchRules(count)
+        : [
+            `Put at most ${BATCH_SIZE} questions in one reply. If there are more, stop after ${BATCH_SIZE} and I will say "continue".`,
+          ]),
     "Do not add any text inside the JSON. If you skipped or could not read something, add one line starting with NOTE: after the code block.",
   );
   return lines.join("\n");

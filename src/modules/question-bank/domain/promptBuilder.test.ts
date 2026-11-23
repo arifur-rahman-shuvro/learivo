@@ -6,6 +6,7 @@ import {
   NO_DEFAULTS,
   applyDefaults,
   buildFixPrompt,
+  buildPlanPrompt,
   buildPrompt,
   hasDefaults,
   type PromptSpec,
@@ -221,5 +222,39 @@ describe("batch rules", () => {
     const p = buildPrompt({ ...DEFAULT_SPEC, mode: "convert" });
     expect(p).toContain("Put at most 25 questions in one reply");
     expect(p).not.toContain("QUALITY AND LIMITS");
+  });
+});
+
+describe("AI decides the number", () => {
+  const auto = { ...DEFAULT_SPEC, subject: "Anatomy", topic: "Heart", autoCount: true };
+
+  it("asks for a plan, a hard limit, batches and a coverage check instead of a number", () => {
+    const p = buildPrompt(auto);
+    expect(p).not.toContain("20 exam-style questions");
+    expect(p).toContain("you decide the number of questions, I do not");
+    expect(p).toContain("STANDARD");
+    expect(p).toContain("Hard limit: 120 questions in total");
+    expect(p).toContain("Never pad to reach a number, and never leave out a testable point");
+    expect(p).toContain("First reply only: before the code block write PLAN:");
+    expect(p).toContain("COVERAGE:");
+    expect(p).toContain("never more than 25 in any reply");
+  });
+
+  it("depth changes the range", () => {
+    expect(buildPrompt({ ...auto, coverage: "key" })).toContain("KEY POINTS");
+    expect(buildPrompt({ ...auto, coverage: "complete" })).toContain("COMPLETE");
+  });
+
+  it("is ignored when converting, and a fixed number is unchanged", () => {
+    expect(buildPrompt({ ...auto, mode: "convert" })).not.toContain("COVERAGE");
+    expect(buildPrompt({ ...DEFAULT_SPEC, count: 12 })).toContain("Write 12 exam-style questions");
+  });
+
+  it("the plan prompt asks for JSON points with 1 to 5 questions each and writes no questions", () => {
+    const p = buildPlanPrompt({ ...auto, examName: "Final Prof" });
+    expect(p).toContain("Anatomy > Heart");
+    expect(p).toContain("Final Prof");
+    expect(p).toContain('{"plan": [');
+    expect(p).toContain("from 1 to 5");
   });
 });

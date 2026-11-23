@@ -217,6 +217,21 @@ describe("Smart import", () => {
       expect(copied[0]).toContain('"exam_year": "2024"');
     });
 
+    it("lets the AI decide how many questions: hides the number, shows the depth, changes the prompt", () => {
+      open();
+      fireEvent.click(screen.getByRole("tab", { name: "Make a prompt" }));
+      fireEvent.click(screen.getByLabelText(/Write new questions/)); // the form remembers the last test's choice
+      fireEvent.change(screen.getByLabelText("Topic"), { target: { value: "Heart" } });
+      const box = screen.getByRole("region", { name: "Your prompt" });
+      expect(screen.getByLabelText("Number of questions")).toBeTruthy();
+      expect(box.textContent).toContain("Write 20 exam-style questions");
+      fireEvent.click(screen.getByRole("radio", { name: "AI decides" }));
+      expect(screen.queryByLabelText("Number of questions")).toBeNull();
+      expect(box.textContent).toContain("you decide the number of questions, I do not");
+      fireEvent.click(screen.getByRole("radio", { name: "Complete" }));
+      expect(box.textContent).toContain("COMPLETE");
+    });
+
     it("generates questions with the connected AI and shows them for review", async () => {
       localStorage.clear();
       saveAi("openai", "sk-test", "");
@@ -277,7 +292,7 @@ describe("Smart import", () => {
       );
       open(repo);
       fireEvent.click(screen.getByRole("tab", { name: "Generate with AI" }));
-      fireEvent.change(screen.getByLabelText("How many questions"), { target: { value: "30" } });
+      fireEvent.change(screen.getByLabelText("Number of questions"), { target: { value: "30" } });
       fireEvent.click(screen.getByRole("button", { name: /Generate questions/ }));
       await screen.findByRole("region", { name: "Preview" }, { timeout: 4000 });
       expect(call).toBe(2);

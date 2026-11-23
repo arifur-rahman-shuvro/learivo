@@ -67,3 +67,21 @@ describe("generateQuestions", () => {
     expect(String(f.mock.calls[0]![1].body)).toContain("Mitochondria make ATP.");
   });
 });
+
+describe("plan reading", () => {
+  it("reads a plan, caps each point at 5 and the total at the hard limit", async () => {
+    const { parsePlan, planBatches } = await import("./generate.ts");
+    const items = Array.from({ length: 30 }, (_, i) => ({ point: `P${i}`, questions: 9 }));
+    const plan = parsePlan("Here:\n```json\n" + JSON.stringify({ plan: items }) + "\n```")!;
+    expect(plan.every((i) => i.questions === 5)).toBe(true);
+    expect(plan.reduce((n, i) => n + i.questions, 0)).toBeLessThanOrEqual(120);
+    expect(planBatches(plan).every((b) => b.reduce((n, i) => n + i.questions, 0) <= 25)).toBe(true);
+  });
+
+  it("refuses unreadable or empty plans", async () => {
+    const { parsePlan } = await import("./generate.ts");
+    expect(parsePlan("no json here")).toBeNull();
+    expect(parsePlan('{"plan": []}')).toBeNull();
+    expect(parsePlan('{"plan": [{"point": "", "questions": 2}]}')).toBeNull();
+  });
+});

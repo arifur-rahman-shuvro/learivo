@@ -5,6 +5,8 @@ import { activeConfig, useAiState } from "../../ai/keys.ts";
 import { openAiConnection } from "../../../core/dialogs/ai.ts";
 import { AiError, providerOf } from "../../ai/providers.ts";
 import {
+  COVERAGE_LEVELS,
+  COVERAGE_MAX,
   DEFAULT_SPEC,
   PROMPT_TYPES,
   BATCH_SIZE,
@@ -260,9 +262,20 @@ export function PromptMaker({
 
       <div className="grid gap-3 sm:grid-cols-2">
         {!convert && (
+          <Segmented
+            label="How many questions"
+            value={spec.autoCount ? "ai" : "number"}
+            options={[
+              { value: "number", label: "I choose" },
+              { value: "ai", label: "AI decides" },
+            ]}
+            onChange={(v) => set("autoCount", v === "ai")}
+          />
+        )}
+        {!convert && !spec.autoCount && (
           <div className="flex flex-col gap-1">
             <label htmlFor="pm-count" className="text-sm font-semibold">
-              How many questions
+              Number of questions
             </label>
             <input
               id="pm-count"
@@ -273,6 +286,23 @@ export function PromptMaker({
               value={spec.count}
               onChange={(e) => set("count", Number(e.target.value))}
             />
+          </div>
+        )}
+        {!convert && spec.autoCount && (
+          <div className="flex flex-col gap-1.5 sm:col-span-2">
+            <Segmented
+              label="How deep"
+              value={spec.coverage}
+              options={COVERAGE_LEVELS.map((c) => ({ value: c.id, label: c.label }))}
+              onChange={(v) => set("coverage", v as PromptSpec["coverage"])}
+            />
+            <p className="m-0 text-sm text-muted">
+              {COVERAGE_LEVELS.find((c) => c.id === spec.coverage)?.hint}. The AI first lists every
+              point of the topic with how many questions each deserves (up to {COVERAGE_MAX} in
+              total), then writes them in batches of {BATCH_SIZE}, and finishes with a coverage
+              check. A fixed number can miss parts of a topic or pad it, so use this for whole
+              chapters and topics.
+            </p>
           </div>
         )}
         <Segmented
@@ -386,15 +416,18 @@ export function PromptMaker({
             <>
               <p className="m-0 text-sm text-muted">
                 Uses your {providerOf(cfg.provider).label} account ({cfg.model}). Questions are
-                written in batches of {BATCH_SIZE}, up to 200 in one go. This may use your credit or
-                daily limit. You will see the questions before anything is saved.
+                written in batches of {BATCH_SIZE}, up to {spec.autoCount ? COVERAGE_MAX : 200} in
+                one go. This may use your credit or daily limit. You will see the questions before
+                anything is saved.
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 <Button loading={working} onClick={() => void generate()}>
                   {working
-                    ? progress && progress.batches > 1
-                      ? `Writing batch ${progress.batch} of ${progress.batches}`
-                      : "Writing questions"
+                    ? progress?.phase === "plan"
+                      ? "Planning what to cover"
+                      : progress && progress.batches > 1
+                        ? `Writing batch ${progress.batch} of ${progress.batches}`
+                        : "Writing questions"
                     : "Generate questions"}
                 </Button>
                 {working && (

@@ -1,5 +1,11 @@
 import { analyzeImport, parseImportFile } from "../question-bank/domain/importExport.ts";
-import { BATCH_SIZE, buildPrompt, type PromptSpec } from "../question-bank/domain/promptBuilder.ts";
+import {
+  BATCH_SIZE,
+  COVERAGE_MAX,
+  buildPlanPrompt,
+  buildPrompt,
+  type PromptSpec,
+} from "../question-bank/domain/promptBuilder.ts";
 import { askAi, type AiConfig, type AskOptions } from "./providers.ts";
 
 export interface Generated {
@@ -44,7 +50,82 @@ export async function generateQuestions(
   return { text: second, retried: true, asked };
 }
 
+export interface PlanItem {
+  point: string;
+  questions: number;
+}
+
+/** Reads the AI's coverage plan. Returns null when it cannot be used. Total is capped at COVERAGE_MAX. */
+export function parsePlan(text: string): PlanItem[] | null {
+  const fenced = /```[a-zA-Z]*[ \t]*\r?\n?([\s\S]*?)```/.exec(text);
+  const body = (fenced?.[1] ?? text).trim();
+  const from = body.indexOf("{");
+  const to = body.lastIndexOf("}");
+  if (from < 0 || to <= from) return null;
+  let data: unknown;
+  try {
+    data = JSON.parse(body.slice(from, to + 1));
+  } catch {
+    return null;
+  }
+  const list = (data as { plan?: unknown }).plan;
+  if (!Array.isArray(list)) return null;
+  const plan: PlanItem[] = [];
+  let total = 0;
+  for (const raw of list.slice(0, 30)) {
+    const r = raw as { point?: unknown; questions?: unknown };
+    const point = typeof r.point === "string" ? r.point.trim().slice(0, 120) : "";
+    const n = Math.round(Number(r.questions));
+    if (point === "" || !Number.isFinite(n) || n < 1) continue;
+    const questions = Math.min(5, n);
+    if (total + questions > COVERAGE_MAX) break;
+    plan.push({ point, questions });
+    total += questions;
+  }
+  return plan.length > 0 ? plan : null;
+}
+
+/** Asks the AI what the topic needs, once more if the first reply cannot be read. */
+export async function planCoverage(
+  cfg: AiConfig,
+  spec: PromptSpec,
+  opts: AskOptions = {},
+): Promise<PlanItem[]> {
+  const prompt = buildPlanPrompt(spec);
+  const first = parsePlan(await askAi(cfg, prompt, opts));
+  if (first) return first;
+  const second = parsePlan(
+    await askAi(
+      cfg,
+      `${prompt}\n\nYour last reply could not be used. Reply again with the JSON only.`,
+      opts,
+    ),
+  );
+  if (second) return second;
+  throw new Error("The AI did not give a usable plan of what to cover. Try again.");
+}
+
+/** Groups plan points into batches of at most BATCH_SIZE questions, keeping the plan order. */
+export function planBatches(plan: PlanItem[]): PlanItem[][] {
+  const batches: PlanItem[][] = [];
+  let current: PlanItem[] = [];
+  let size = 0;
+  for (const item of plan) {
+    if (size + item.questions > BATCH_SIZE && current.length > 0) {
+      batches.push(current);
+      current = [];
+      size = 0;
+    }
+    current.push(item);
+    size += item.questions;
+  }
+  if (current.length > 0) batches.push(current);
+  return batches;
+}
+
 export interface Progress {
+  /** "plan" while the AI is deciding what to cover. */
+  phase?: "plan" | "write";
   batch: number;
   batches: number;
   /** Questions collected so far. */
@@ -69,26 +150,50 @@ export async function generateMany(
   opts: AskOptions & { onProgress?: (p: Progress) => void } = {},
 ): Promise<GeneratedMany> {
   const { onProgress, ...ask } = opts;
-  const wanted =
-    spec.mode === "create" ? Math.min(Math.max(1, Math.round(spec.count) || 1), 200) : BATCH_SIZE;
-  const batches = Math.ceil(wanted / BATCH_SIZE);
+  const auto = spec.mode === "create" && spec.autoCount;
+  let plan: PlanItem[][] | null = null;
+  if (auto) {
+    onProgress?.({ phase: "plan", batch: 0, batches: 0, have: 0 });
+    plan = planBatches(await planCoverage(cfg, spec, ask));
+  }
+  const wanted = plan
+    ? plan.flat().reduce((n, i) => n + i.questions, 0)
+    : spec.mode === "create"
+      ? Math.min(Math.max(1, Math.round(spec.count) || 1), 200)
+      : BATCH_SIZE;
+  const batches = plan ? plan.length : Math.ceil(wanted / BATCH_SIZE);
   const records: Record<string, unknown>[] = [];
   let retried = false;
   let stoppedBecause: string | null = null;
 
   for (let b = 0; b < batches; b++) {
-    onProgress?.({ batch: b + 1, batches, have: records.length });
-    const count = Math.min(BATCH_SIZE, wanted - records.length);
+    onProgress?.({ phase: "write", batch: b + 1, batches, have: records.length });
+    const part = plan?.[b];
+    const count = part
+      ? part.reduce((n, i) => n + i.questions, 0)
+      : Math.min(BATCH_SIZE, wanted - records.length);
+    const cover = part
+      ? `Write exactly these questions, the number for each point in brackets:\n${part.map((i) => `- ${i.point} (${i.questions})`).join("\n")}`
+      : "";
     const earlier = records
       .slice(-60)
       .map((r) => `- ${String(r.stem ?? "").slice(0, 90)}`)
       .join("\n");
-    const note =
+    const note = [
+      spec.extra,
+      cover,
       earlier === ""
-        ? spec.extra
-        : `${spec.extra}\nDo not repeat or reword any of these questions already written:\n${earlier}`.trim();
+        ? ""
+        : `Do not repeat or reword any of these questions already written:\n${earlier}`,
+    ]
+      .filter((x) => x.trim() !== "")
+      .join("\n");
     try {
-      const out = await generateQuestions(cfg, { ...spec, count, extra: note }, ask);
+      const out = await generateQuestions(
+        cfg,
+        { ...spec, count, autoCount: false, extra: note },
+        ask,
+      );
       retried ||= out.retried;
       const file = parseImportFile(out.text, "json");
       if (!file.ok) throw new Error(file.message);
