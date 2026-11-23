@@ -592,7 +592,7 @@ Not an image-model job. Copy the three shapes from src/ui-kit/brand/Logo.tsx int
 | Purpose                  | A horizontal lockup file for non-React uses.                                                                                                       |
 | Visual Description       | Mark at left, lowercase 'learivo' in Inter bold to its right, both ink #12142B and indigo #4F46E5 as in the app.                                   |
 | Composition              | Mark 36 px at x=0; wordmark baseline-aligned, font-size 26 px, converted to outlines so the file does not depend on a font.                        |
-| Technical Specifications | viewBox 0 0 180 48, SVG, text converted to paths, transparent, max 3 KB, one variant.                                                              |
+| Technical Specifications | viewBox 0 0 140 48, SVG, text converted to paths, transparent, max 10 KB, one variant.                                                             |
 | Generation Prompt        | See section 7 (images) or section 8 (SVG): LV-018                                                                                                  |
 | Upload Instructions      | File: logo-lockup.svg. Directory: public/brand/. Relative path: public/brand/logo-lockup.svg. Replaces existing: no.                               |
 | Implementation Mapping   | None in the app. Do not modify now.                                                                                                                |
@@ -1052,7 +1052,7 @@ Do not redraw, simplify or restyle the mark.
 
 #### ASSET: LV-018 logo-lockup.svg
 
-**FORMAT:** SVG, 180 x 48 viewBox (3.75:1)
+**FORMAT:** SVG, 140 x 48 viewBox (2.9:1)
 
 **RESOLUTION:** vector; displays at 120 x 96 CSS px (90 % under 360 px width)
 
@@ -1068,7 +1068,7 @@ Not an image-model job. Compose from LV-017 plus the word 'learivo' set in Inter
 Do not use another typeface, do not add a tagline, do not add effects.
 ```
 
-**OUTPUT REQUIREMENTS:** viewBox 0 0 180 48, SVG, text converted to paths, transparent, max 3 KB, one variant.
+**OUTPUT REQUIREMENTS:** viewBox 0 0 140 48, SVG, text converted to paths, transparent, max 10 KB, one variant.
 
 ## 9. All Video Generation Prompts
 
@@ -1159,28 +1159,28 @@ How to upload from a phone: GitHub app or github.com, repository, the directory,
 
 ## 13. Master Asset Manifest
 
-| ID     | Asset Name                | Type | Priority | Feature         | Dimensions                | Upload Path                                   | Generation Required                    |
-| ------ | ------------------------- | ---- | -------- | --------------- | ------------------------- | --------------------------------------------- | -------------------------------------- |
-| LV-001 | og-default.png            | PNG  | P0       | Brand / sharing | 1200 x 630 (1.91:1)       | public/social/og-default.png                  | Yes                                    |
-| LV-002 | empty-questions.svg       | SVG  | P1       | Empty states    | 120 x 96 viewBox (5:4)    | src/assets/illustrations/empty-questions.svg  | Optional (can be authored in code)     |
-| LV-003 | empty-caught-up.svg       | SVG  | P1       | Empty states    | 120 x 96 viewBox (5:4)    | src/assets/illustrations/empty-caught-up.svg  | Optional (can be authored in code)     |
-| LV-004 | error-boundary.svg        | SVG  | P1       | Error states    | 120 x 96 viewBox (5:4)    | src/assets/illustrations/error-boundary.svg   | Optional (can be authored in code)     |
-| LV-005 | icon-192.png              | PNG  | P2       | PWA / install   | 192 x 192                 | public/icon-192.png                           | No (export from the existing mark)     |
-| LV-006 | icon-512.png              | PNG  | P2       | PWA / install   | 512 x 512                 | public/icon-512.png                           | No (export from the existing mark)     |
-| LV-007 | icon-maskable-512.png     | PNG  | P2       | PWA / install   | 512 x 512                 | public/icon-maskable-512.png                  | No (export from the existing mark)     |
-| LV-008 | apple-touch-icon.png      | PNG  | P2       | PWA / install   | 180 x 180                 | public/apple-touch-icon.png                   | No (export from the existing mark)     |
-| LV-009 | empty-insights.svg        | SVG  | P2       | Empty states    | 120 x 96 viewBox (5:4)    | src/assets/illustrations/empty-insights.svg   | Optional (can be authored in code)     |
-| LV-010 | empty-search.svg          | SVG  | P2       | Empty states    | 120 x 96 viewBox (5:4)    | src/assets/illustrations/empty-search.svg     | Optional (can be authored in code)     |
-| LV-011 | empty-saved.svg           | SVG  | P2       | Empty states    | 120 x 96 viewBox (5:4)    | src/assets/illustrations/empty-saved.svg      | Optional (can be authored in code)     |
-| LV-012 | empty-exams.svg           | SVG  | P2       | Empty states    | 120 x 96 viewBox (5:4)    | src/assets/illustrations/empty-exams.svg      | Optional (can be authored in code)     |
-| LV-013 | empty-flashcards.svg      | SVG  | P2       | Empty states    | 120 x 96 viewBox (5:4)    | src/assets/illustrations/empty-flashcards.svg | Optional (can be authored in code)     |
-| LV-014 | pwa-home-narrow.png       | PNG  | P2       | PWA / install   | 1080 x 1920 (9:16)        | public/pwa/pwa-home-narrow.png                | No (captured from the real app)        |
-| LV-015 | pwa-practice-narrow.png   | PNG  | P2       | PWA / install   | 1080 x 1920 (9:16)        | public/pwa/pwa-practice-narrow.png            | No (captured from the real app)        |
-| LV-016 | pwa-home-wide.png         | PNG  | P2       | PWA / install   | 1920 x 1080 (16:9)        | public/pwa/pwa-home-wide.png                  | No (captured from the real app)        |
-| LV-017 | logo-mark.svg             | SVG  | P2       | Brand           | 64 x 64 viewBox (1:1)     | public/brand/logo-mark.svg                    | No (extract from existing code)        |
-| LV-018 | logo-lockup.svg           | SVG  | P2       | Brand           | 180 x 48 viewBox (3.75:1) | public/brand/logo-lockup.svg                  | No (compose from existing mark + font) |
-| LV-019 | brand-logo-240.png        | PNG  | P2       | Brand           | 240 x 240 (1:1)           | public/brand/brand-logo-240.png               | No (export from the existing mark)     |
-| LV-020 | github-social-preview.png | PNG  | P3       | Brand           | 1280 x 640 (2:1)          | docs/brand/github-social-preview.png          | Yes (can reuse LV-001 layout)          |
+| ID     | Asset Name                | Type | Priority | Feature         | Dimensions               | Upload Path                                   | Generation Required                    |
+| ------ | ------------------------- | ---- | -------- | --------------- | ------------------------ | --------------------------------------------- | -------------------------------------- |
+| LV-001 | og-default.png            | PNG  | P0       | Brand / sharing | 1200 x 630 (1.91:1)      | public/social/og-default.png                  | Yes                                    |
+| LV-002 | empty-questions.svg       | SVG  | P1       | Empty states    | 120 x 96 viewBox (5:4)   | src/assets/illustrations/empty-questions.svg  | Optional (can be authored in code)     |
+| LV-003 | empty-caught-up.svg       | SVG  | P1       | Empty states    | 120 x 96 viewBox (5:4)   | src/assets/illustrations/empty-caught-up.svg  | Optional (can be authored in code)     |
+| LV-004 | error-boundary.svg        | SVG  | P1       | Error states    | 120 x 96 viewBox (5:4)   | src/assets/illustrations/error-boundary.svg   | Optional (can be authored in code)     |
+| LV-005 | icon-192.png              | PNG  | P2       | PWA / install   | 192 x 192                | public/icon-192.png                           | No (export from the existing mark)     |
+| LV-006 | icon-512.png              | PNG  | P2       | PWA / install   | 512 x 512                | public/icon-512.png                           | No (export from the existing mark)     |
+| LV-007 | icon-maskable-512.png     | PNG  | P2       | PWA / install   | 512 x 512                | public/icon-maskable-512.png                  | No (export from the existing mark)     |
+| LV-008 | apple-touch-icon.png      | PNG  | P2       | PWA / install   | 180 x 180                | public/apple-touch-icon.png                   | No (export from the existing mark)     |
+| LV-009 | empty-insights.svg        | SVG  | P2       | Empty states    | 120 x 96 viewBox (5:4)   | src/assets/illustrations/empty-insights.svg   | Optional (can be authored in code)     |
+| LV-010 | empty-search.svg          | SVG  | P2       | Empty states    | 120 x 96 viewBox (5:4)   | src/assets/illustrations/empty-search.svg     | Optional (can be authored in code)     |
+| LV-011 | empty-saved.svg           | SVG  | P2       | Empty states    | 120 x 96 viewBox (5:4)   | src/assets/illustrations/empty-saved.svg      | Optional (can be authored in code)     |
+| LV-012 | empty-exams.svg           | SVG  | P2       | Empty states    | 120 x 96 viewBox (5:4)   | src/assets/illustrations/empty-exams.svg      | Optional (can be authored in code)     |
+| LV-013 | empty-flashcards.svg      | SVG  | P2       | Empty states    | 120 x 96 viewBox (5:4)   | src/assets/illustrations/empty-flashcards.svg | Optional (can be authored in code)     |
+| LV-014 | pwa-home-narrow.png       | PNG  | P2       | PWA / install   | 1080 x 1920 (9:16)       | public/pwa/pwa-home-narrow.png                | No (captured from the real app)        |
+| LV-015 | pwa-practice-narrow.png   | PNG  | P2       | PWA / install   | 1080 x 1920 (9:16)       | public/pwa/pwa-practice-narrow.png            | No (captured from the real app)        |
+| LV-016 | pwa-home-wide.png         | PNG  | P2       | PWA / install   | 1920 x 1080 (16:9)       | public/pwa/pwa-home-wide.png                  | No (captured from the real app)        |
+| LV-017 | logo-mark.svg             | SVG  | P2       | Brand           | 64 x 64 viewBox (1:1)    | public/brand/logo-mark.svg                    | No (extract from existing code)        |
+| LV-018 | logo-lockup.svg           | SVG  | P2       | Brand           | 140 x 48 viewBox (2.9:1) | public/brand/logo-lockup.svg                  | No (compose from existing mark + font) |
+| LV-019 | brand-logo-240.png        | PNG  | P2       | Brand           | 240 x 240 (1:1)          | public/brand/brand-logo-240.png               | No (export from the existing mark)     |
+| LV-020 | github-social-preview.png | PNG  | P3       | Brand           | 1280 x 640 (2:1)         | docs/brand/github-social-preview.png          | Yes (can reuse LV-001 layout)          |
 
 ### Totals
 
@@ -1200,28 +1200,28 @@ How to upload from a phone: GitHub app or github.com, repository, the directory,
 
 ## 14. Technical Specifications
 
-| ID     | Dimensions                | Ratio  | Format | Transparency | Background | Max size | Variants | Animation |
-| ------ | ------------------------- | ------ | ------ | ------------ | ---------- | -------- | -------- | --------- |
-| LV-001 | 1200 x 630 (1.91:1)       | 1.91:1 | PNG    | no           | solid      | 250 KB   | 1        | none      |
-| LV-002 | 120 x 96 viewBox (5:4)    | 5:4    | SVG    | yes          | none       | 2.5 KB   | 1        | none      |
-| LV-003 | 120 x 96 viewBox (5:4)    | 5:4    | SVG    | yes          | none       | 2.5 KB   | 1        | none      |
-| LV-004 | 120 x 96 viewBox (5:4)    | 5:4    | SVG    | yes          | none       | 2.5 KB   | 1        | none      |
-| LV-005 | 192 x 192                 | -      | PNG    | yes          | none       | 8 KB     | 1        | none      |
-| LV-006 | 512 x 512                 | -      | PNG    | yes          | none       | 25 KB    | 1        | none      |
-| LV-007 | 512 x 512                 | -      | PNG    | no           | solid      | 20 KB    | 1        | none      |
-| LV-008 | 180 x 180                 | -      | PNG    | no           | solid      | 8 KB     | 1        | none      |
-| LV-009 | 120 x 96 viewBox (5:4)    | 5:4    | SVG    | yes          | none       | 2.5 KB   | 1        | none      |
-| LV-010 | 120 x 96 viewBox (5:4)    | 5:4    | SVG    | yes          | none       | 2.5 KB   | 1        | none      |
-| LV-011 | 120 x 96 viewBox (5:4)    | 5:4    | SVG    | yes          | none       | 2.5 KB   | 1        | none      |
-| LV-012 | 120 x 96 viewBox (5:4)    | 5:4    | SVG    | yes          | none       | 2.5 KB   | 1        | none      |
-| LV-013 | 120 x 96 viewBox (5:4)    | 5:4    | SVG    | yes          | none       | 2.5 KB   | 1        | none      |
-| LV-014 | 1080 x 1920 (9:16)        | 9:16   | PNG    | no           | solid      | 200 KB   | 1        | none      |
-| LV-015 | 1080 x 1920 (9:16)        | 9:16   | PNG    | no           | solid      | 200 KB   | 1        | none      |
-| LV-016 | 1920 x 1080 (16:9)        | 16:9   | PNG    | no           | solid      | 260 KB   | 1        | none      |
-| LV-017 | 64 x 64 viewBox (1:1)     | 1:1    | SVG    | yes          | none       | 0.5 KB   | 1        | none      |
-| LV-018 | 180 x 48 viewBox (3.75:1) | 3.75:1 | SVG    | yes          | none       | 3 KB     | 1        | none      |
-| LV-019 | 240 x 240 (1:1)           | 1:1    | PNG    | yes          | none       | 15 KB    | 1        | none      |
-| LV-020 | 1280 x 640 (2:1)          | 2:1    | PNG    | no           | solid      | 250 KB   | 1        | none      |
+| ID     | Dimensions               | Ratio  | Format | Transparency | Background | Max size | Variants | Animation |
+| ------ | ------------------------ | ------ | ------ | ------------ | ---------- | -------- | -------- | --------- |
+| LV-001 | 1200 x 630 (1.91:1)      | 1.91:1 | PNG    | no           | solid      | 250 KB   | 1        | none      |
+| LV-002 | 120 x 96 viewBox (5:4)   | 5:4    | SVG    | yes          | none       | 2.5 KB   | 1        | none      |
+| LV-003 | 120 x 96 viewBox (5:4)   | 5:4    | SVG    | yes          | none       | 2.5 KB   | 1        | none      |
+| LV-004 | 120 x 96 viewBox (5:4)   | 5:4    | SVG    | yes          | none       | 2.5 KB   | 1        | none      |
+| LV-005 | 192 x 192                | -      | PNG    | yes          | none       | 8 KB     | 1        | none      |
+| LV-006 | 512 x 512                | -      | PNG    | yes          | none       | 25 KB    | 1        | none      |
+| LV-007 | 512 x 512                | -      | PNG    | no           | solid      | 20 KB    | 1        | none      |
+| LV-008 | 180 x 180                | -      | PNG    | no           | solid      | 8 KB     | 1        | none      |
+| LV-009 | 120 x 96 viewBox (5:4)   | 5:4    | SVG    | yes          | none       | 2.5 KB   | 1        | none      |
+| LV-010 | 120 x 96 viewBox (5:4)   | 5:4    | SVG    | yes          | none       | 2.5 KB   | 1        | none      |
+| LV-011 | 120 x 96 viewBox (5:4)   | 5:4    | SVG    | yes          | none       | 2.5 KB   | 1        | none      |
+| LV-012 | 120 x 96 viewBox (5:4)   | 5:4    | SVG    | yes          | none       | 2.5 KB   | 1        | none      |
+| LV-013 | 120 x 96 viewBox (5:4)   | 5:4    | SVG    | yes          | none       | 2.5 KB   | 1        | none      |
+| LV-014 | 1080 x 1920 (9:16)       | 9:16   | PNG    | no           | solid      | 200 KB   | 1        | none      |
+| LV-015 | 1080 x 1920 (9:16)       | 9:16   | PNG    | no           | solid      | 200 KB   | 1        | none      |
+| LV-016 | 1920 x 1080 (16:9)       | 16:9   | PNG    | no           | solid      | 260 KB   | 1        | none      |
+| LV-017 | 64 x 64 viewBox (1:1)    | 1:1    | SVG    | yes          | none       | 0.5 KB   | 1        | none      |
+| LV-018 | 140 x 48 viewBox (2.9:1) | 2.9:1  | SVG    | yes          | none       | 3 KB     | 1        | none      |
+| LV-019 | 240 x 240 (1:1)          | 1:1    | PNG    | yes          | none       | 15 KB    | 1        | none      |
+| LV-020 | 1280 x 640 (2:1)         | 2:1    | PNG    | no           | solid      | 250 KB   | 1        | none      |
 
 Colour: sRGB. PNG bit depth: 8. SVG: no embedded raster, no external references, no scripts. All SVG paint comes from `var(--lv-*)` except the brand masters (LV-017, LV-018), which use fixed #4F46E5 and #12142B.
 
@@ -1280,4 +1280,6 @@ Tests to add at implementation: a unit test that every EmptyState scene renders 
 | 3     | LV-003 | empty-caught-up.svg | P1       | Claude authors from section 8 (or owner with an AI SVG tool)              | src/assets/illustrations/ (new directory) |
 | 4     | LV-004 | error-boundary.svg  | P1       | Claude authors from section 8 (or owner with an AI SVG tool)              | src/assets/illustrations/ (new directory) |
 
-Nothing in this task generated, committed or implemented any asset. Implementation starts only when the owner says so.
+### Implementation status (updated 23 November 2026)
+
+All 20 assets have since been produced and committed: Stage 1 (LV-001 to LV-004), Stage 2 (LV-005 to LV-008), Stage 3 (LV-009 to LV-016) and Stage 4 (LV-017 to LV-020). Differences from this blueprint: the ten illustrations live as inline components in `src/ui-kit/illustrations/Scenes.tsx` (no separate .svg masters, to avoid duplicates); the lockup is 140 x 48 and about 9 KB; PNG sizes are far below the budgets. Everything except the SVG scenes is rebuilt by `node scripts/brand.mjs` and `node scripts/pwa-shots.mjs`. The audit sections above describe the state before this work.
