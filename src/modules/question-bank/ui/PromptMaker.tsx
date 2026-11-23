@@ -302,6 +302,22 @@ export function PromptMaker({
             set("difficulty", v === "mixed" ? "mixed" : (Number(v) as 1 | 2 | 3 | 4 | 5))
           }
         />
+        {!convert && (
+          <Picker
+            label="Question style"
+            value={spec.style}
+            options={[
+              {
+                value: "exam",
+                label: "Real exam mix",
+                description: "Mostly direct questions, some short cases, like a real paper",
+              },
+              { value: "recall", label: "Direct questions", description: "No patient cases" },
+              { value: "scenario", label: "Mostly cases", description: "Scenario based" },
+            ]}
+            onChange={(v) => set("style", v as PromptSpec["style"])}
+          />
+        )}
         <Segmented
           label="Explanations"
           value={spec.explanation}

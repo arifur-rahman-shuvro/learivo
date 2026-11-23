@@ -28,6 +28,11 @@ export interface PromptSpec {
   level: string;
   /** How many options each choice question has; "auto" lets the AI choose 2 to 5. */
   optionCount: "auto" | 2 | 3 | 4 | 5;
+  /**
+   * How the questions are worded. "exam": the mix a real professional paper uses (mostly direct,
+   * some short application, few long cases). "recall": direct questions only. "scenario": mostly cases.
+   */
+  style: "exam" | "recall" | "scenario";
   /** Anything else the student wants the AI to follow. */
   extra: string;
   /** Notes or text the questions must come from. Not remembered between visits. */
@@ -56,6 +61,7 @@ export const DEFAULT_SPEC: PromptSpec = {
   explanationLanguage: "English",
   level: "",
   optionCount: 5,
+  style: "exam",
   extra: "",
   material: "",
 };
@@ -176,6 +182,29 @@ function explanationRule(spec: PromptSpec): string {
     : 'Give every question a detailed "explanation": why the answer is right, why the main wrong options are wrong, and one point worth remembering.';
 }
 
+/** How questions are worded: real papers are mostly direct, so the default is not scenario-heavy. */
+function styleRules(spec: PromptSpec): string[] {
+  if (spec.style === "recall") {
+    return [
+      "- STYLE: direct questions only. Short stems that ask for a fact, a name, a value, a site, a cause, a feature, a classification or a mechanism. Do NOT write patient cases or long scenarios.",
+    ];
+  }
+  if (spec.style === "scenario") {
+    return [
+      "- STYLE: at least two thirds of the questions present a short scenario, case, data or problem and ask what follows from it. Keep the rest as direct questions.",
+    ];
+  }
+  return [
+    "- STYLE: copy the way REAL professional exam papers for this subject and level are written. They are NOT mostly case-based. Use this mix:",
+    '  * About 60 to 70 percent DIRECT questions with a short stem, written the way papers ask them, for example: "The nerve supply of ... is", "Which of the following is the most common ...", "Drug of choice for ...", "Investigation of choice in ...", "Characteristic feature of ...", "Which structure passes through ...", "The origin / insertion / relation of ... is", "Normal value of ...", "The earliest sign of ...", "Which of the following is true about ...", plus classifications, definitions, causes, features, mechanisms and sites.',
+    "  * About 20 to 30 percent SHORT application: one or two lines of data such as a lab value, a finding, a sign or a one-line patient description. Not a long vignette.",
+    "  * At most 10 percent full case vignettes (age, sex, presentation, findings), and only when the subject is clinical. For basic science subjects (anatomy, physiology, biochemistry and similar) write almost no patient cases: use direct factual and mechanism questions, with only an occasional short clinical correlation.",
+    "  * Vary the wording: do not start more than two questions in a row the same way, and do not use the same stem pattern for the whole set.",
+    '  * "All of the following are true EXCEPT" and "Which of the following is NOT ..." are normal exam wording. You may use them for up to one question in six; write NOT or EXCEPT in capitals.',
+    "  * If I named an exam or institution, match the style and depth that exam is known for. Never claim that a question was in a past paper.",
+  ];
+}
+
 /** What separates a real exam question from a weak practice question. Only used when writing new questions. */
 function qualityRules(spec: PromptSpec): string[] {
   const rules = [
@@ -183,8 +212,8 @@ function qualityRules(spec: PromptSpec): string[] {
     "QUALITY STANDARD",
     "Write like an experienced examiner who sets real papers for this exam, not like a textbook summary.",
     "- One question tests one clear point. The stem holds every fact needed, so a well-prepared student can answer without seeing the options.",
-    "- Prefer application over recall: at least half of the questions should present a short scenario, case, data or problem and ask what follows from it. Use plain recall only for essential facts.",
-    "- End the stem with a clear question or instruction. Word it positively; avoid NOT or EXCEPT unless the point really needs it, and then write the word in capitals.",
+    ...styleRules(spec),
+    "- End the stem with a clear question or instruction, or a lead-in that the options complete.",
     '- Every question has ONE defensible correct answer that a standard textbook or guideline supports. Do not invent facts, numbers, drug doses, names or studies. If you are not sure of an answer, either leave that question out or tag it "check-answer".',
     "- Wrong options (distractors) must be plausible to a student who half-knows the topic: real, related concepts that are wrong for this exact case. Make them similar in length, wording and detail to the correct option. Do not make the correct option the longest or most detailed one.",
     '- No clues: no grammar that gives the answer away, no repeated words from the stem only in the correct option, no overlapping or duplicate options, no "all of the above", "none of the above", "always" or "never". Put the correct option in a different position from question to question.',

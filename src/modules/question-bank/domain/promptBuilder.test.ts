@@ -173,3 +173,25 @@ describe("source material", () => {
     expect(long).not.toContain("x".repeat(MATERIAL_MAX + 1));
   });
 });
+
+describe("question style", () => {
+  it("defaults to the real exam mix: mostly direct, few full cases", () => {
+    const p = buildPrompt({ ...DEFAULT_SPEC, subject: "Anatomy" });
+    expect(p).toContain("REAL professional exam papers");
+    expect(p).toContain("60 to 70 percent DIRECT");
+    expect(p).toContain("At most 10 percent full case vignettes");
+    expect(p).toContain("The nerve supply of");
+    expect(p).not.toContain("at least half of the questions should present");
+  });
+
+  it("direct style forbids cases; scenario style asks for cases", () => {
+    expect(buildPrompt({ ...DEFAULT_SPEC, style: "recall" })).toContain(
+      "Do NOT write patient cases",
+    );
+    expect(buildPrompt({ ...DEFAULT_SPEC, style: "scenario" })).toContain("at least two thirds");
+  });
+
+  it("is not added when converting", () => {
+    expect(buildPrompt({ ...DEFAULT_SPEC, mode: "convert" })).not.toContain("STYLE:");
+  });
+});
