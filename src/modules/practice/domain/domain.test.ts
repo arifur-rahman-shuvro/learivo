@@ -239,3 +239,40 @@ describe("composeSmart", () => {
     ).toEqual(["x", "y"]);
   });
 });
+
+describe("exam focus", () => {
+  const ids = (p: string, n: number) => Array.from({ length: n }, (_, i) => `${p}${i}`);
+  const isE = (x: string) => x.startsWith("e");
+
+  it("draws about 70% from the focus subjects and still includes the others", async () => {
+    const { focusedDraw } = await import("./session.ts");
+    const out = focusedDraw([...ids("e", 50), ...ids("o", 50)], 20, isE);
+    expect(out).toHaveLength(20);
+    expect(out.filter(isE)).toHaveLength(14);
+    expect(out.filter((x) => !isE(x))).toHaveLength(6);
+  });
+
+  it("fills up from the other side when one side is short", async () => {
+    const { focusedDraw } = await import("./session.ts");
+    expect(focusedDraw([...ids("e", 3), ...ids("o", 50)], 20, isE).filter(isE)).toHaveLength(3);
+    const few = focusedDraw([...ids("e", 50), ...ids("o", 2)], 20, isE);
+    expect(few).toHaveLength(20);
+    expect(few.filter(isE)).toHaveLength(18);
+  });
+
+  it("keeps the Smart mix full and weighted, with no repeats", async () => {
+    const { composeSmartFocused } = await import("./session.ts");
+    const keep = <T>(xs: readonly T[]) => [...xs];
+    const all = [...ids("e", 40), ...ids("o", 40)];
+    const out = composeSmartFocused(
+      { due: all, weak: all, fresh: all, rest: all },
+      20,
+      isE,
+      0.7,
+      keep,
+    );
+    expect(out).toHaveLength(20);
+    expect(new Set(out).size).toBe(20);
+    expect(out.filter(isE)).toHaveLength(14);
+  });
+});

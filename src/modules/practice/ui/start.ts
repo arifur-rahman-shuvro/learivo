@@ -1,5 +1,5 @@
 import type { TaxonomyNode } from "../../question-bank/data/repo.ts";
-import type { QuestionRepo } from "../../question-bank/data/repo.ts";
+import type { QuestionRecord, QuestionRepo } from "../../question-bank/data/repo.ts";
 import { inGroup } from "../domain/groups.ts";
 import { pathOf } from "../../question-bank/data/repo.ts";
 import type { QuestionInput } from "../../question-bank/domain/model.ts";
@@ -7,6 +7,8 @@ import type { AttemptRepo, AttemptWithItems, Exam } from "../data/repo.ts";
 import {
   applyFilter,
   composeSmart,
+  composeSmartFocused,
+  focusedDraw,
   drawByRules,
   shuffled,
   snapshotOf,
@@ -16,6 +18,26 @@ import { isDue } from "../../workspace/domain/scheduler.ts";
 import { weakAreas } from "../../workspace/domain/insights.ts";
 import type { WorkspaceRepo } from "../../workspace/data/repo.ts";
 import { fetchPool, makeInside } from "./practice.tsx";
+import { daysUntil, liveSubjects } from "../../workspace/domain/examTarget.ts";
+
+/**
+ * When the student has a coming exam with chosen subjects, a test that tells whether a question is
+ * in those subjects. Null when there is no such exam, so nothing changes for everyone else.
+ */
+async function examFocus(
+  workspace: WorkspaceRepo | undefined,
+  nodes: readonly TaxonomyNode[],
+  now: Date,
+): Promise<((q: QuestionRecord) => boolean) | null> {
+  if (!workspace) return null;
+  const exam = await workspace.examTarget().catch(() => null);
+  if (!exam?.date || !(daysUntil(exam.date, now) >= 0)) return null;
+  const tops = nodes.filter((n) => n.parentId === null).map((n) => n.id);
+  const chosen = liveSubjects(exam.subjectIds, tops);
+  if (chosen.length === 0) return null;
+  const inside = makeInside(nodes);
+  return (q) => chosen.some((id) => inside(id, q));
+}
 
 export interface PracticeSetup {
   nodeId: string | null;
@@ -61,7 +83,15 @@ export async function startPractice(
       ? workspace.bookmarks()
       : Promise.resolve(new Set<string>()),
   ]);
-  const picked = shuffled(applyFilter(pool, s.filter, past, marks)).slice(0, s.count);
+  const eligible = applyFilter(pool, s.filter, past, marks);
+  // With no subject, tag or collection chosen, lean towards the subjects of the coming exam.
+  const focus =
+    s.nodeId === null && s.tagId === null && s.collectionId === null
+      ? await examFocus(workspace, nodes, new Date())
+      : null;
+  const picked = focus
+    ? focusedDraw(eligible, s.count, focus)
+    : shuffled(eligible).slice(0, s.count);
   if (picked.length === 0) throw new Error(NO_QUESTIONS);
   return attempts.create({
     kind: "practice",
@@ -224,7 +254,16 @@ async function smartPools(
     )
     .map((q) => q.id);
   const fresh = pool.filter((q) => !past.has(q.id)).map((q) => q.id);
-  return { due, weak, fresh, rest: pool.map((q) => q.id) };
+  const isFocus = await examFocus(workspace, nodes, now);
+  const focusIds = isFocus ? new Set(pool.filter(isFocus).map((q) => q.id)) : null;
+  return { due, weak, fresh, rest: pool.map((q) => q.id), focusIds };
+}
+
+function composeFor(p: Awaited<ReturnType<typeof smartPools>>, pick?: <T>(i: readonly T[]) => T[]) {
+  const { focusIds, ...pools } = p;
+  return focusIds
+    ? composeSmartFocused(pools, SMART_SIZE, (id) => focusIds.has(id), undefined, pick)
+    : composeSmart(pools, SMART_SIZE, pick);
 }
 
 /** What a Smart mix would draw on right now, for the line under its button. */
@@ -233,16 +272,16 @@ export async function smartPreview(
   attempts: AttemptRepo,
   workspace: WorkspaceRepo,
   now: Date = new Date(),
-): Promise<{ due: number; weak: number; fresh: number }> {
+): Promise<{ due: number; weak: number; fresh: number; focus: boolean }> {
   const p = await smartPools(questions, attempts, workspace, now);
-  const picked = composeSmart(p, SMART_SIZE, (items) => [...items]);
+  const picked = composeFor(p, (items) => [...items]);
   const set = new Set(picked);
   const within = (ids: readonly string[]) => ids.filter((id) => set.has(id)).length;
   // Counts of what is in the mix, in the order it fills: due first, then weak, then new.
   const due = within(p.due);
   const weak = within(p.weak.filter((id) => !p.due.includes(id)));
   const fresh = within(p.fresh.filter((id) => !p.due.includes(id) && !p.weak.includes(id)));
-  return { due, weak, fresh };
+  return { due, weak, fresh, focus: p.focusIds !== null };
 }
 
 /** A session mixing due revision, weak areas and new questions. */
@@ -252,7 +291,7 @@ export async function startSmart(
   workspace: WorkspaceRepo,
   now: Date = new Date(),
 ): Promise<string> {
-  const ids = composeSmart(await smartPools(questions, attempts, workspace, now), SMART_SIZE);
+  const ids = composeFor(await smartPools(questions, attempts, workspace, now));
   if (ids.length === 0) throw new Error(NO_QUESTIONS);
   return startFromQuestions(questions, attempts, ids, "Smart mix");
 }

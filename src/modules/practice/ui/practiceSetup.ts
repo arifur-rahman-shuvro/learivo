@@ -39,7 +39,7 @@ export function rememberedSetup(): PracticeSetup {
   }
 }
 
-/** One-tap ways to start. They always draw from every subject. */
+/** One-tap ways to start. They draw from every subject, with more from your exam's subjects when you have set them. */
 export const PRESETS: { id: string; label: string; hint: string; patch: Partial<PracticeSetup> }[] =
   [
     {

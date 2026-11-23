@@ -49,7 +49,12 @@ export default function PracticeHome({ onOpen }: { onOpen: (v: View) => void }) 
 
   const [setup, setSetup] = useState<PracticeSetup>(rememberedSetup);
   const [counts, setCounts] = useState<Record<string, number> | null>(null);
-  const [smart, setSmart] = useState<{ due: number; weak: number; fresh: number } | null>(null);
+  const [smart, setSmart] = useState<{
+    due: number;
+    weak: number;
+    fresh: number;
+    focus: boolean;
+  } | null>(null);
   const [available, setAvailable] = useState<number | null>(null);
   const [recent, setRecent] = useState<Attempt[] | null>(null);
   const [exams, setExams] = useState<Exam[] | null>(null);
@@ -202,7 +207,7 @@ export default function PracticeHome({ onOpen }: { onOpen: (v: View) => void }) 
             <span className="font-semibold">{busy === "smart" ? "Starting…" : "Smart mix"}</span>
             <span className="text-xs text-muted">
               {smart
-                ? `20 questions for today: ${smart.due} revision due, ${smart.weak} weak, ${smart.fresh} new`
+                ? `20 questions for today: ${smart.due} revision due, ${smart.weak} weak, ${smart.fresh} new${smart.focus ? ", mostly from your exam subjects" : ""}`
                 : "20 questions: revision that is due, your weak areas and new questions"}
             </span>
           </span>

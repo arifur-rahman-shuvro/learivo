@@ -165,3 +165,55 @@ export function composeSmart(
   }
   return pick(out);
 }
+
+/** Share of a mixed session that comes from the subjects of the student's coming exam. */
+export const EXAM_FOCUS_SHARE = 0.7;
+
+/**
+ * Picks `count` items so that about `share` of them satisfy `isFocus`. Other items still appear.
+ * When one side has too few, the other side fills the session, so it is as full as the pool allows.
+ */
+export function focusedDraw<T>(
+  items: readonly T[],
+  count: number,
+  isFocus: (item: T) => boolean,
+  share: number = EXAM_FOCUS_SHARE,
+  rand: () => number = Math.random,
+): T[] {
+  const focus = shuffled(items.filter(isFocus), rand);
+  const other = shuffled(
+    items.filter((x) => !isFocus(x)),
+    rand,
+  );
+  const want = Math.round(count * share);
+  const f = focus.slice(0, want);
+  const o = other.slice(0, count - f.length);
+  const out = [...f, ...o];
+  if (out.length < count) out.push(...focus.slice(f.length, f.length + count - out.length));
+  return shuffled(out, rand);
+}
+
+/** Like `composeSmart`, with about `share` of the session taken from the questions `isFocus` accepts. */
+export function composeSmartFocused(
+  pools: SmartPools,
+  count: number,
+  isFocus: (id: string) => boolean,
+  share: number = EXAM_FOCUS_SHARE,
+  pick: <T>(items: readonly T[]) => T[] = shuffled,
+): string[] {
+  const only = (keep: boolean): SmartPools => ({
+    due: pools.due.filter((id) => isFocus(id) === keep),
+    weak: pools.weak.filter((id) => isFocus(id) === keep),
+    fresh: pools.fresh.filter((id) => isFocus(id) === keep),
+    rest: pools.rest.filter((id) => isFocus(id) === keep),
+  });
+  const f = composeSmart(only(true), Math.round(count * share), pick);
+  const o = composeSmart(only(false), count - f.length, pick);
+  const out = [...f, ...o];
+  if (out.length < count) {
+    const used = new Set(out);
+    const more = composeSmart(only(true), count, pick).filter((id) => !used.has(id));
+    out.push(...more.slice(0, count - out.length));
+  }
+  return pick(out);
+}
