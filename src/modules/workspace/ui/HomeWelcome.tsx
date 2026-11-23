@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Badge, Button, PlusIcon, ProgressRing } from "../../../ui-kit/index.ts";
 import FeaturesDialog from "../../../help/FeaturesDialog.tsx";
 import { openGuide } from "../../../core/dialogs/guide.ts";
@@ -56,15 +56,28 @@ function ExampleCard() {
 export default function Home({
   onNavigate,
   onSamples,
+  shelf,
+  onCustomize,
 }: {
   onNavigate: (route: string) => void;
   /** Adds a few sample questions. Left out where there is no bank to add to. */
   onSamples?: () => Promise<void>;
+  /** The All features shelf; gets a function that opens the full feature list. */
+  shelf?: (browse: () => void) => ReactNode;
+  /** Opens Customize, so the student can choose what Home shows once there are questions. */
+  onCustomize?: () => void;
 }) {
   const [features, setFeatures] = useState(false);
   const [adding, setAdding] = useState(false);
   return (
     <div className="flex flex-col gap-5">
+      {onCustomize && (
+        <div className="flex justify-end">
+          <Button variant="secondary" size="sm" onClick={onCustomize}>
+            Customize
+          </Button>
+        </div>
+      )}
       <section className="lv-card grid gap-6 p-5 sm:p-7 md:grid-cols-[1.15fr_1fr] md:items-center">
         <div className="flex flex-col gap-4">
           <h1 id="module-title" className="m-0 text-3xl font-bold leading-tight sm:text-4xl">
@@ -124,6 +137,8 @@ export default function Home({
           </div>
         ))}
       </section>
+
+      {shelf?.(() => setFeatures(true))}
 
       <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
         <section aria-labelledby="start-title" className="lv-card p-5 sm:p-6">

@@ -141,13 +141,28 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
   if (total === null) return <div role="status" aria-label="Loading" className="min-h-40" />;
   if (total <= 0)
     return (
-      <Home
-        onNavigate={onNavigate}
-        onSamples={async () => {
-          await bank.create(SAMPLE_QUESTIONS);
-          refreshBank();
-        }}
-      />
+      <>
+        <Home
+          onNavigate={onNavigate}
+          onSamples={async () => {
+            await bank.create(SAMPLE_QUESTIONS);
+            refreshBank();
+          }}
+          onCustomize={() => setCustomizing(true)}
+          shelf={(browse) =>
+            visibleSections(layout).includes("features") ? (
+              <FeatureShelf onNavigate={onNavigate} onBrowse={browse} />
+            ) : null
+          }
+        />
+        {customizing && (
+          <CustomizeDialog
+            layout={layout}
+            onSave={saveLayout}
+            onClose={() => setCustomizing(false)}
+          />
+        )}
+      </>
     );
 
   const done = view?.today ?? 0;

@@ -363,6 +363,15 @@ describe("Home dashboard", () => {
     ).toBeTruthy();
   });
 
+  it("keeps the All features shelf and Customize on the starter page, and Customize opens", async () => {
+    await setup((n) => <HomeDashboard onNavigate={n} />);
+    await screen.findByRole("heading", { level: 1, name: "Your question bank starts here" });
+    expect(screen.getByRole("region", { name: "All features" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Customize" }));
+    const dialog = await screen.findByRole("dialog", { name: "Customize Home" });
+    expect(dialog).toBeTruthy();
+  });
+
   it("shows due cards, today's progress and lets the student change the goal", async () => {
     const { workspace, nav } = await setup(
       (n) => <HomeDashboard onNavigate={n} />,
