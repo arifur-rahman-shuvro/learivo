@@ -175,19 +175,22 @@ describe("source material", () => {
 });
 
 describe("question style", () => {
-  it("defaults to the real exam mix: mostly direct, few full cases", () => {
-    const p = buildPrompt({ ...DEFAULT_SPEC, subject: "Anatomy" });
-    expect(p).toContain("REAL professional exam papers");
-    expect(p).toContain("60 to 70 percent DIRECT");
-    expect(p).toContain("At most 10 percent full case vignettes");
-    expect(p).toContain("The nerve supply of");
+  it("defaults to exam simulation: the AI works out the real exam's mix and level", () => {
+    const p = buildPrompt({ ...DEFAULT_SPEC, subject: "Medicine", examName: "UKMLA AKT" });
+    expect(p).toContain("EXAM SIMULATION");
+    expect(p).toContain("UKMLA AKT and PLAB 1");
+    expect(p).toContain("Bangladesh MBBS professional");
+    expect(p).toContain("add one line after the code block starting with NOTE:");
+    expect(p).toContain("about 20% clearly harder");
+    expect(p).toContain("single best answer only, so use sba");
     expect(p).not.toContain("at least half of the questions should present");
   });
 
   it("direct style forbids cases; scenario style asks for cases", () => {
-    expect(buildPrompt({ ...DEFAULT_SPEC, style: "recall" })).toContain(
-      "Do NOT write patient cases",
-    );
+    const d = buildPrompt({ ...DEFAULT_SPEC, style: "recall" });
+    expect(d).toContain("Do NOT write patient cases");
+    expect(d).not.toContain("EXAM SIMULATION");
+    expect(d).toContain("Difficulty mix: about 20% easy");
     expect(buildPrompt({ ...DEFAULT_SPEC, style: "scenario" })).toContain("at least two thirds");
   });
 

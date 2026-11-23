@@ -195,13 +195,15 @@ function styleRules(spec: PromptSpec): string[] {
     ];
   }
   return [
-    "- STYLE: copy the way REAL professional exam papers for this subject and level are written. They are NOT mostly case-based. Use this mix:",
-    '  * About 60 to 70 percent DIRECT questions with a short stem, written the way papers ask them, for example: "The nerve supply of ... is", "Which of the following is the most common ...", "Drug of choice for ...", "Investigation of choice in ...", "Characteristic feature of ...", "Which structure passes through ...", "The origin / insertion / relation of ... is", "Normal value of ...", "The earliest sign of ...", "Which of the following is true about ...", plus classifications, definitions, causes, features, mechanisms and sites.',
-    "  * About 20 to 30 percent SHORT application: one or two lines of data such as a lab value, a finding, a sign or a one-line patient description. Not a long vignette.",
-    "  * At most 10 percent full case vignettes (age, sex, presentation, findings), and only when the subject is clinical. For basic science subjects (anatomy, physiology, biochemistry and similar) write almost no patient cases: use direct factual and mechanism questions, with only an occasional short clinical correlation.",
-    "  * Vary the wording: do not start more than two questions in a row the same way, and do not use the same stem pattern for the whole set.",
-    '  * "All of the following are true EXCEPT" and "Which of the following is NOT ..." are normal exam wording. You may use them for up to one question in six; write NOT or EXCEPT in capitals.',
-    "  * If I named an exam or institution, match the style and depth that exam is known for. Never claim that a question was in a past paper.",
+    "- STYLE: EXAM SIMULATION. Write the questions the way the REAL exam named above (or, if none is named, the real professional exam for this level and subject) writes them. First decide from the exam name, institution, level and subject what that exam is really like, then follow it:",
+    "  * Exams that are almost entirely clinical vignettes (for example UKMLA AKT and PLAB 1: single best answer, age, sex, presentation, findings, then the most likely diagnosis, the next best step or the best management, guided by current UK guidance such as NICE; USMLE Step 1 and Step 2 CK; MRCP Part 1): make nearly every question a vignette of that kind.",
+    '  * Exams that are mostly direct (for example Bangladesh MBBS professional exams in the basic science years: short stems, true/false items with several statements, single best answer): make about 60 to 70 percent direct questions such as "The nerve supply of ... is", "Drug of choice for ...", "Investigation of choice in ...", "Characteristic feature of ...", "Normal value of ..."; about 20 to 30 percent short application with one or two lines of data; and at most 10 percent full cases (almost none in anatomy, physiology or biochemistry).',
+    "  * Mixed exams (for example final professional, NEET-PG, INI-CET, FCPS part 1): roughly half direct or short-application and half clinical cases, leaning clinical for clinical subjects.",
+    "  * Use the question formats that exam really uses, within the allowed types: for example UKMLA AKT and PLAB 1 are single best answer only, so use sba and no other type; Bangladesh MBBS papers use true/false items with several statements as well as single best answer. This overrides the general advice to mix types.",
+    "  * If you are not sure what the exam is like, use a balanced mix and add one line after the code block starting with NOTE: saying what you assumed. Do not guess a style silently.",
+    "  * Set the depth to the exam level: a first-year paper tests core facts and mechanisms, a final or licensing paper tests integration, management and judgement. Never write below or above that level, except as the difficulty rule below says.",
+    '  * Vary the wording: do not start more than two questions in a row the same way. "All of the following are true EXCEPT" and "Which of the following is NOT ..." are normal exam wording; use them for at most one question in six, with NOT or EXCEPT in capitals.',
+    "  * Never claim that a question was in a past paper.",
   ];
 }
 
@@ -221,7 +223,9 @@ function qualityRules(spec: PromptSpec): string[] {
   ];
   if (spec.difficulty === "mixed") {
     rules.push(
-      "- Difficulty mix: about 20% easy (1 to 2), 50% medium (3), 30% hard (4 to 5). Hard means needs reasoning or several steps, not obscure trivia.",
+      spec.style === "exam"
+        ? "- Difficulty mix: most questions (about 65%) at the normal difficulty of the real exam at this level, about 15% easier openers, and about 20% clearly harder than that: the kind that separate the top candidates (several steps of reasoning, close distractors, an unusual presentation of a common topic), never obscure trivia. Rate each question 1 to 5 relative to this exam level, where 3 is the exam's normal level."
+        : "- Difficulty mix: about 20% easy (1 to 2), 50% medium (3), 30% hard (4 to 5). Hard means needs reasoning or several steps, not obscure trivia.",
     );
   }
   if (spec.types.length === 0 || spec.types.includes("true_false")) {

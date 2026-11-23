@@ -309,8 +309,9 @@ export function PromptMaker({
             options={[
               {
                 value: "exam",
-                label: "Real exam mix",
-                description: "Mostly direct questions, some short cases, like a real paper",
+                label: "Exam simulation",
+                description:
+                  "The AI matches the real exam you name (UKMLA = cases, MBBS = mostly direct)",
               },
               { value: "recall", label: "Direct questions", description: "No patient cases" },
               { value: "scenario", label: "Mostly cases", description: "Scenario based" },
