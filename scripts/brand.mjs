@@ -1,5 +1,6 @@
 // Builds the brand images from code, so they never drift from the app: the social preview
-// (public/social/og-default.png). Run: node scripts/brand.mjs. Needs Python Pillow to shrink the PNG.
+// (public/social/og-default.png) and the app icons (public/icon-*.png, apple-touch-icon.png) from public/favicon.svg.
+// Run: node scripts/brand.mjs. Needs Python Pillow to shrink the PNGs.
 import { chromium } from "playwright";
 import { mkdirSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
@@ -44,6 +45,28 @@ async function shot(name, w, h, lockup) {
     `from PIL import Image;i=Image.open("${name}").convert("RGB").quantize(256,method=Image.Quantize.MEDIANCUT,dither=Image.Dither.FLOYDSTEINBERG);i.save("${name}",optimize=True)`,
   ]);
 }
+const MARK = `<g fill="#fff"><path d="M17 10h10v30l-5-5-5 5z"/><path d="M17 44h30a4 4 0 0 1 4 4v2a4 4 0 0 1-4 4H21a4 4 0 0 1-4-4z"/><circle cx="47" cy="22" r="6"/></g>`;
+const GRAD = `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4F46E5"/><stop offset="1" stop-color="#0E7490"/></linearGradient></defs>`;
+/** rounded: the "any" icon with transparent corners. Otherwise full-bleed, with the mark scaled by k about its centre. */
+async function icon(name, size, rounded, k = 1) {
+  const bg = rounded
+    ? `<rect width="64" height="64" rx="16" fill="url(#g)"/>`
+    : `<rect width="64" height="64" fill="url(#g)"/>`;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 64 64">${GRAD}${bg}<g transform="translate(32 32) scale(${k}) translate(-34 -32)">${MARK}</g></svg>`;
+  const b = await chromium.launch();
+  const pg = await b.newPage({ viewport: { width: size, height: size } });
+  await pg.setContent(`<style>*{margin:0}body{background:transparent}</style>${svg}`);
+  await pg.screenshot({ path: name, omitBackground: true });
+  await b.close();
+  execFileSync("python3", [
+    "-c",
+    `from PIL import Image;i=Image.open("${name}");i=i.quantize(128,method=Image.Quantize.FASTOCTREE,dither=Image.Dither.NONE) if i.mode=="RGBA" else i.convert("RGB").quantize(128,dither=Image.Dither.NONE);i.save("${name}",optimize=True)`,
+  ]);
+}
+await icon("public/icon-192.png", 192, true);
+await icon("public/icon-512.png", 512, true);
+await icon("public/icon-maskable-512.png", 512, false, 0.9);
+await icon("public/apple-touch-icon.png", 180, false);
 mkdirSync("public/social", { recursive: true });
 await shot("public/social/og-default.png", 1200, 630, false);
-console.log("public/social/og-default.png written");
+console.log("brand images written");
