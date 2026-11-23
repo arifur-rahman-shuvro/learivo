@@ -264,6 +264,26 @@ function qualityRules(spec: PromptSpec): string[] {
   return rules;
 }
 
+/** How to write in batches without the quality dropping or the AI running on past the limit. */
+function batchRules(total: number): string[] {
+  const first = Math.min(total, BATCH_SIZE);
+  const rules = [
+    `QUALITY AND LIMITS (these rules stay in force for every reply, including after I say "continue"):`,
+    `- Write exactly ${first} question${first === 1 ? "" : "s"} in this reply, never more than ${BATCH_SIZE} in any reply. Then STOP. Do not carry on past the limit even if you could.`,
+    "- Quality beats quantity. Before you include a question, check it: the facts are correct, exactly one option is clearly best, the wrong options are plausible, the stem is clear, and it is not a repeat. If you cannot write a good question, write fewer and say why in the NOTE line. Never pad.",
+    "- Do not let quality fall in later batches: the last question must be as good as the first. Cover different sub-topics and angles, and never repeat or rephrase an earlier question.",
+  ];
+  if (total > BATCH_SIZE) {
+    rules.push(
+      `- I need ${total} questions in total, delivered in batches of ${BATCH_SIZE}. After each reply add one line after the code block: NOTE: Batch done, questions A to B of ${total}. Say continue for the next batch.`,
+      `- When I say "continue", write only the next batch (at most ${BATCH_SIZE}), then stop and add the same NOTE line. When all ${total} are done, add: NOTE: All ${total} questions done. Write nothing more unless I ask.`,
+    );
+  } else {
+    rules.push("- After the code block add one line: NOTE: Done. Write nothing more unless I ask.");
+  }
+  return rules;
+}
+
 /** The full prompt, ready to paste. Everything the student typed is quoted as plain text, never run. */
 export function buildPrompt(spec: PromptSpec): string {
   const lines: string[] = [];
@@ -341,7 +361,11 @@ export function buildPrompt(spec: PromptSpec): string {
     "Reply with JSON only: one list of question objects in a single code block, in exactly this shape:",
     example(spec),
     "",
-    `Put at most ${BATCH_SIZE} questions in one reply. If there are more, stop after ${BATCH_SIZE} and I will say "continue".`,
+    ...(spec.mode === "create"
+      ? batchRules(count)
+      : [
+          `Put at most ${BATCH_SIZE} questions in one reply. If there are more, stop after ${BATCH_SIZE} and I will say "continue".`,
+        ]),
     "Do not add any text inside the JSON. If you skipped or could not read something, add one line starting with NOTE: after the code block.",
   );
   return lines.join("\n");

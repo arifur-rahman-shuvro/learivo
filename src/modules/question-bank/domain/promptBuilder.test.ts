@@ -37,7 +37,7 @@ describe("buildPrompt", () => {
     expect(p).toContain('- "tags": ["high-yield","cardio"]');
     expect(p).toContain('- "difficulty": 3');
     expect(p).toContain('"exam_year": 2024');
-    expect(p).toContain(`at most ${BATCH_SIZE} questions`);
+    expect(p).toContain(`never more than ${BATCH_SIZE} in any reply`);
   });
 
   it("asks for the chosen number of options, or lets the AI choose 2 to 5", () => {
@@ -196,5 +196,30 @@ describe("question style", () => {
 
   it("is not added when converting", () => {
     expect(buildPrompt({ ...DEFAULT_SPEC, mode: "convert" })).not.toContain("STYLE:");
+  });
+});
+
+describe("batch rules", () => {
+  it("caps every reply, protects quality and numbers the batches", () => {
+    const p = buildPrompt({ ...DEFAULT_SPEC, count: 100 });
+    expect(p).toContain("I need 100 questions in total, delivered in batches of 25");
+    expect(p).toContain("Write exactly 25 questions in this reply, never more than 25");
+    expect(p).toContain("Quality beats quantity");
+    expect(p).toContain("last question must be as good as the first");
+    expect(p).toContain('When I say "continue", write only the next batch');
+    expect(p).toContain("NOTE: All 100 questions done");
+  });
+
+  it("a small request is one reply and then stops", () => {
+    const p = buildPrompt({ ...DEFAULT_SPEC, count: 10 });
+    expect(p).toContain("Write exactly 10 questions in this reply");
+    expect(p).toContain("NOTE: Done. Write nothing more");
+    expect(p).not.toContain("delivered in batches");
+  });
+
+  it("convert mode keeps its own rule", () => {
+    const p = buildPrompt({ ...DEFAULT_SPEC, mode: "convert" });
+    expect(p).toContain("Put at most 25 questions in one reply");
+    expect(p).not.toContain("QUALITY AND LIMITS");
   });
 });
