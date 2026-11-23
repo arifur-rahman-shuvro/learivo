@@ -167,7 +167,7 @@ export function composeSmart(
 }
 
 /** Share of a mixed session that comes from the subjects of the student's coming exam. */
-export const EXAM_FOCUS_SHARE = 0.7;
+export const EXAM_FOCUS_SHARE = 0.5;
 
 /**
  * Picks `count` items so that about `share` of them satisfy `isFocus`. Other items still appear.

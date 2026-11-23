@@ -48,8 +48,8 @@ describe("exam subjects lean the mix", () => {
     const attempts = new MemoryAttempts();
     const ws = new MemoryWorkspace();
     await bank.create([
-      ...Array.from({ length: 40 }, (_, i) => q(`A${i}`, ["Anatomy"])),
-      ...Array.from({ length: 40 }, (_, i) => q(`P${i}`, ["Physiology"])),
+      ...Array.from({ length: 20 }, (_, i) => q(`A${i}`, ["Anatomy"])),
+      ...Array.from({ length: 60 }, (_, i) => q(`P${i}`, ["Physiology"])),
     ]);
     const anatomy = (await bank.taxonomy()).find((n) => n.name === "Anatomy")!;
     if (date) await ws.setExamTarget({ title: "Final", date, subjectIds: [anatomy.id] });
@@ -68,13 +68,13 @@ describe("exam subjects lean the mix", () => {
     shuffleOptions: false,
   };
 
-  it("practice with no subject chosen takes about 70% from the exam subjects", async () => {
+  it("practice with no subject chosen takes about half from the exam subjects", async () => {
     const { bank, attempts, ws } = await world(day(10));
     const id = await startPractice(bank, attempts, setup, ws);
     const got = await stems(attempts, id);
     expect(got).toHaveLength(20);
-    expect(got.filter((x) => x.startsWith("A"))).toHaveLength(14);
-    expect(got.filter((x) => x.startsWith("P"))).toHaveLength(6);
+    expect(got.filter((x) => x.startsWith("A"))).toHaveLength(10);
+    expect(got.filter((x) => x.startsWith("P"))).toHaveLength(10);
   });
 
   it("a subject the student picks is never overridden", async () => {
@@ -92,9 +92,9 @@ describe("exam subjects lean the mix", () => {
         const got = await stems(attempts, await startPractice(bank, attempts, setup, ws));
         anatomy += got.filter((x) => x.startsWith("A")).length;
       }
-      // Fair mix: about half of 240, far from the 70% (168) a focus would give.
-      expect(anatomy).toBeGreaterThan(90);
-      expect(anatomy).toBeLessThan(150);
+      // Fair mix: Anatomy is a quarter of the bank (about 60 of 240), far from the 120 a focus gives.
+      expect(anatomy).toBeGreaterThan(30);
+      expect(anatomy).toBeLessThan(90);
     }
   });
 
@@ -103,6 +103,6 @@ describe("exam subjects lean the mix", () => {
     const id = await startSmart(bank, attempts, ws);
     const got = await stems(attempts, id);
     expect(got).toHaveLength(20);
-    expect(got.filter((x) => x.startsWith("A"))).toHaveLength(14);
+    expect(got.filter((x) => x.startsWith("A"))).toHaveLength(10);
   });
 });

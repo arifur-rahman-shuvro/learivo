@@ -244,12 +244,12 @@ describe("exam focus", () => {
   const ids = (p: string, n: number) => Array.from({ length: n }, (_, i) => `${p}${i}`);
   const isE = (x: string) => x.startsWith("e");
 
-  it("draws about 70% from the focus subjects and still includes the others", async () => {
+  it("draws about half from the focus subjects and still includes the others", async () => {
     const { focusedDraw } = await import("./session.ts");
     const out = focusedDraw([...ids("e", 50), ...ids("o", 50)], 20, isE);
     expect(out).toHaveLength(20);
-    expect(out.filter(isE)).toHaveLength(14);
-    expect(out.filter((x) => !isE(x))).toHaveLength(6);
+    expect(out.filter(isE)).toHaveLength(10);
+    expect(out.filter((x) => !isE(x))).toHaveLength(10);
   });
 
   it("fills up from the other side when one side is short", async () => {
@@ -268,11 +268,11 @@ describe("exam focus", () => {
       { due: all, weak: all, fresh: all, rest: all },
       20,
       isE,
-      0.7,
+      0.5,
       keep,
     );
     expect(out).toHaveLength(20);
     expect(new Set(out).size).toBe(20);
-    expect(out.filter(isE)).toHaveLength(14);
+    expect(out.filter(isE)).toHaveLength(10);
   });
 });
