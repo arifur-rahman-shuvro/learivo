@@ -1,6 +1,13 @@
 import GlossaryText from "./GlossaryText.tsx";
 import { useEffect, useState } from "react";
-import { Badge, Button, Dialog, EmptyState, ListSkeleton } from "../../../ui-kit/index.ts";
+import {
+  Badge,
+  Button,
+  CardsScene,
+  Dialog,
+  EmptyState,
+  ListSkeleton,
+} from "../../../ui-kit/index.ts";
 import { errorText } from "../../question-bank/ui/bank.tsx";
 import type { Flashcard } from "../domain/cards.ts";
 import {
@@ -74,6 +81,7 @@ export default function FlashcardsPanel() {
         <div className="lv-card">
           <EmptyState
             title="No flashcards yet"
+            art={<CardsScene />}
             description="Write a card with a question on the front and the answer on the back. Due cards come back on a schedule."
             action={<Button onClick={() => setEditing("new")}>Write your first card</Button>}
           />
@@ -81,7 +89,11 @@ export default function FlashcardsPanel() {
       )}
       {cards !== null && cards.length > 0 && !card && (
         <div className="lv-card">
-          <EmptyState title="No cards due" description="Come back later, or add more cards." />
+          <EmptyState
+            title="No cards due"
+            art={<CardsScene />}
+            description="Come back later, or add more cards."
+          />
         </div>
       )}
       {card && (

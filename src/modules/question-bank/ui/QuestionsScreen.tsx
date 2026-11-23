@@ -16,6 +16,7 @@ import {
   QuestionsIcon,
   SearchIcon,
   QuestionsScene,
+  SearchScene,
 } from "../../../ui-kit/index.ts";
 import { DEFAULT_QUERY, pathOf, type BulkAction, type QuestionQuery } from "../data/repo.ts";
 import { ImportDialog } from "./ImportExportDialogs.tsx";
@@ -334,6 +335,7 @@ export default function QuestionsScreen({ onNavigate }: { onNavigate: (route: st
           <EmptyState
             title="No questions match"
             icon={<SearchIcon size={36} />}
+            art={<SearchScene />}
             description="Try a different search or clear the filters."
             action={
               <Button variant="secondary" onClick={clearFilters}>

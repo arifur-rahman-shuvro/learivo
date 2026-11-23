@@ -88,3 +88,86 @@ export function ErrorScene() {
     </svg>
   );
 }
+
+/** A chart card with three bars, the middle one in the accent: what Insights will show. */
+export function InsightsScene() {
+  return (
+    <svg {...base}>
+      <rect x="22" y="14" width="76" height="62" rx="10" fill={card} stroke={line} />
+      <rect x="36" y="48" width="11" height="18" rx="3" fill={deep} stroke={line} />
+      <rect x="54.5" y="32" width="11" height="34" rx="3" fill={accent} stroke="none" />
+      <rect x="73" y="40" width="11" height="26" rx="3" fill={deep} stroke={line} />
+      <path d="M32 70h56" stroke={line} strokeDasharray="2 4" />
+      <path d="M34 26h22" stroke={line} />
+      <circle cx="98" cy="20" r="3" fill="var(--lv-chart-2)" stroke="none" />
+    </svg>
+  );
+}
+
+/** A magnifier over an empty dashed card: the filter found nothing. */
+export function SearchScene() {
+  return (
+    <svg {...base}>
+      <rect
+        x="20"
+        y="16"
+        width="64"
+        height="52"
+        rx="9"
+        fill={card}
+        stroke={line}
+        strokeDasharray="4 4"
+      />
+      <path d="M32 34h28M32 45h18" stroke={line} />
+      <circle cx="78" cy="56" r="17" fill="var(--lv-bg)" stroke={accent} strokeWidth={2.25} />
+      <path d="m90.5 68.5 12 12" stroke={accent} strokeWidth={3} />
+      <circle cx="102" cy="22" r="2.5" fill="var(--lv-chart-2)" stroke="none" />
+    </svg>
+  );
+}
+
+/** A bookmark ribbon (the brand ribbon) beside a small note card: saved things live here. */
+export function SavedScene() {
+  return (
+    <svg {...base}>
+      <rect x="46" y="26" width="54" height="46" rx="9" fill={card} stroke={line} />
+      <path d="M58 42h30M58 53h20" stroke={line} />
+      <path d="M22 14h24v48l-12-10-12 10z" fill={accent} stroke="none" />
+      <circle cx="104" cy="20" r="2.5" fill="var(--lv-chart-2)" stroke="none" />
+    </svg>
+  );
+}
+
+/** An exam paper with a clock badge: timed exams will appear here. */
+export function ExamsScene() {
+  return (
+    <svg {...base}>
+      <rect x="26" y="12" width="56" height="72" rx="9" fill={card} stroke={line} />
+      <path d="M38 30h32M38 42h32M38 54h20" stroke={line} />
+      <circle cx="84" cy="64" r="16" fill="var(--lv-bg)" stroke={accent} strokeWidth={2.25} />
+      <path d="M84 55v10l7 4" stroke={accent} />
+    </svg>
+  );
+}
+
+/** Two overlapping cards, the front one with a question mark: flashcards and glossary terms. */
+export function CardsScene() {
+  return (
+    <svg {...base}>
+      <rect
+        x="34"
+        y="14"
+        width="58"
+        height="52"
+        rx="9"
+        fill={deep}
+        stroke={line}
+        transform="rotate(8 63 40)"
+      />
+      <rect x="22" y="22" width="62" height="54" rx="9" fill={card} stroke={line} />
+      <path d="M47 42a8 8 0 1 1 11 7c-3 1.5-4 3-4 6" stroke={accent} strokeWidth={2.25} />
+      <circle cx="54" cy="64" r="1.75" fill={accent} stroke="none" />
+      <circle cx="100" cy="20" r="2.5" fill="var(--lv-chart-2)" stroke="none" />
+    </svg>
+  );
+}

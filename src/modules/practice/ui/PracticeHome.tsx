@@ -9,6 +9,7 @@ import {
   PlusIcon,
   PracticeIcon,
   ListSkeleton,
+  ExamsScene,
 } from "../../../ui-kit/index.ts";
 import { errorText, useBank, useLoad } from "../../question-bank/ui/bank.tsx";
 import type { Attempt, Exam } from "../data/repo.ts";
@@ -389,6 +390,7 @@ export default function PracticeHome({ onOpen }: { onOpen: (v: View) => void }) 
             <EmptyState
               title="No exams yet"
               icon={<PracticeIcon size={36} />}
+              art={<ExamsScene />}
               description="Build an exam from your subjects with a time limit and marking, then sit it whenever you like."
               action={<Button onClick={() => setBuilder("new")}>Create an exam</Button>}
             />

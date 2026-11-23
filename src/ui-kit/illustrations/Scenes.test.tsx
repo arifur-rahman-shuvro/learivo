@@ -2,11 +2,29 @@ import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import { EmptyState } from "../feedback/EmptyState.tsx";
 import { ThemeProvider } from "../themes/ThemeProvider.tsx";
-import { CaughtUpScene, ErrorScene, QuestionsScene } from "./Scenes.tsx";
+import {
+  CardsScene,
+  CaughtUpScene,
+  ErrorScene,
+  ExamsScene,
+  InsightsScene,
+  QuestionsScene,
+  SavedScene,
+  SearchScene,
+} from "./Scenes.tsx";
 
 describe("scenes", () => {
   it("are decorative and use only theme colours", () => {
-    for (const Scene of [QuestionsScene, CaughtUpScene, ErrorScene]) {
+    for (const Scene of [
+      QuestionsScene,
+      CaughtUpScene,
+      ErrorScene,
+      InsightsScene,
+      SearchScene,
+      SavedScene,
+      ExamsScene,
+      CardsScene,
+    ]) {
       const { container } = render(<Scene />);
       const svg = container.querySelector("svg");
       expect(svg?.getAttribute("aria-hidden")).toBe("true");

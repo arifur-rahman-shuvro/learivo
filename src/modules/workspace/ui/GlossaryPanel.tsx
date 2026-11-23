@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Button, Dialog, EmptyState, ListSkeleton } from "../../../ui-kit/index.ts";
+import { Button, CardsScene, Dialog, EmptyState, ListSkeleton } from "../../../ui-kit/index.ts";
 import { errorText } from "../../question-bank/ui/bank.tsx";
 import { searchTerms, type GlossaryTerm } from "../domain/cards.ts";
 import { useWorkspace } from "./workspace.tsx";
@@ -56,6 +56,7 @@ export default function GlossaryPanel() {
         <div className="lv-card">
           <EmptyState
             title="Your glossary is empty"
+            art={<CardsScene />}
             description="Add terms and what they mean. They get underlined in explanations and notes so you can recall them quickly."
             action={<Button onClick={() => setEditing("new")}>Add your first term</Button>}
           />

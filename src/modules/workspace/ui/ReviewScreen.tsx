@@ -11,6 +11,7 @@ import {
   ReviewIcon,
   PanelSkeleton,
   CaughtUpScene,
+  SavedScene,
 } from "../../../ui-kit/index.ts";
 import { errorText, useBank } from "../../question-bank/ui/bank.tsx";
 import { usePractice, handoff } from "../../practice/ui/practice.tsx";
@@ -297,6 +298,7 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
               <EmptyState
                 title="No bookmarks yet"
                 icon={<ReviewIcon size={36} />}
+                art={<SavedScene />}
                 description="Tap Bookmark on a question while you practise to keep it here."
               />
             </div>
@@ -341,6 +343,7 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
             <EmptyState
               title="No notes yet"
               icon={<QuestionsIcon size={36} />}
+              art={<SavedScene />}
               description="Write a note on a question while you practise, or start a free note here."
               action={
                 <Button onClick={() => setNoteFor({ questionId: null, note: null })}>

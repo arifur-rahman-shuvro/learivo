@@ -11,6 +11,7 @@ import {
   ProgressBar,
   ProgressRing,
   PanelSkeleton,
+  InsightsScene,
 } from "../../../ui-kit/index.ts";
 import { clock } from "../../practice/ui/practice.tsx";
 import { useInsightsData } from "./useInsightsData.ts";
@@ -129,6 +130,7 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
           <EmptyState
             title="Nothing to show yet"
             icon={<InsightsIcon size={36} />}
+            art={<InsightsScene />}
             description="Finish a practice session or an exam and your results appear here."
             action={<Button onClick={() => onNavigate("#/practice")}>Start practising</Button>}
           />
