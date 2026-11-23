@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { describeError } from "../../core/errors.ts";
 import { reportError } from "../../core/monitoring.ts";
+import { ErrorScene } from "../illustrations/Scenes.tsx";
 import { Button } from "../primitives/Button.tsx";
 
 interface Props {
@@ -52,6 +53,7 @@ export class ErrorBoundary extends Component<Props, State> {
               : "lv-card p-5"
         }`}
       >
+        <ErrorScene />
         <h2 className="m-0 text-xl font-bold">{d.title}</h2>
         <p className="m-0 text-muted">{d.advice}</p>
         <div className="flex flex-wrap gap-2">

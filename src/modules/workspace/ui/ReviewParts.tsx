@@ -1,6 +1,6 @@
 import GlossaryText from "./GlossaryText.tsx";
 import { useState } from "react";
-import { Button, CheckIcon, EmptyState } from "../../../ui-kit/index.ts";
+import { Button, CaughtUpScene, CheckIcon, EmptyState } from "../../../ui-kit/index.ts";
 import type { QuestionRecord } from "../../question-bank/data/repo.ts";
 import { TYPE_LABELS } from "../../question-bank/domain/model.ts";
 import ResponseInput from "../../practice/ui/ResponseInput.tsx";
@@ -72,6 +72,7 @@ export function DueNow({
         <EmptyState
           title="You are all caught up"
           icon={<CheckIcon size={36} />}
+          art={<CaughtUpScene />}
           description={
             next
               ? `Next card is due ${new Date(next.due).toLocaleString(undefined, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}. Questions you miss in a session join the queue by themselves.`

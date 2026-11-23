@@ -10,6 +10,7 @@ import {
   QuestionsIcon,
   ReviewIcon,
   PanelSkeleton,
+  CaughtUpScene,
 } from "../../../ui-kit/index.ts";
 import { errorText, useBank } from "../../question-bank/ui/bank.tsx";
 import { usePractice, handoff } from "../../practice/ui/practice.tsx";
@@ -244,6 +245,7 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
               <EmptyState
                 title={group === "wrong" ? "No mistakes to review" : "Nothing in this group"}
                 icon={<CheckIcon size={36} />}
+                art={group === "wrong" ? <CaughtUpScene /> : undefined}
                 description={
                   group === "wrong"
                     ? "Questions you last answered wrong in a session appear here."

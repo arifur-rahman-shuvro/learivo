@@ -10,6 +10,7 @@ export { ProgressRing } from "./feedback/ProgressRing.tsx";
 export { ProgressBar } from "./feedback/ProgressBar.tsx";
 export { Spinner } from "./feedback/Spinner.tsx";
 export { EmptyState } from "./feedback/EmptyState.tsx";
+export { CaughtUpScene, ErrorScene, QuestionsScene } from "./illustrations/Scenes.tsx";
 export { ErrorBoundary } from "./feedback/ErrorBoundary.tsx";
 export { ListSkeleton, PanelSkeleton } from "./feedback/Skeletons.tsx";
 export { Dialog } from "./overlays/Dialog.tsx";

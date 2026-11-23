@@ -15,6 +15,7 @@ import {
   PlusIcon,
   QuestionsIcon,
   SearchIcon,
+  QuestionsScene,
 } from "../../../ui-kit/index.ts";
 import { DEFAULT_QUERY, pathOf, type BulkAction, type QuestionQuery } from "../data/repo.ts";
 import { ImportDialog } from "./ImportExportDialogs.tsx";
@@ -308,6 +309,7 @@ export default function QuestionsScreen({ onNavigate }: { onNavigate: (route: st
           <EmptyState
             title={archive ? "The archive is empty" : "Add your first questions"}
             icon={<QuestionsIcon size={36} />}
+            art={archive ? undefined : <QuestionsScene />}
             description={
               archive
                 ? "Questions you archive appear here. You can restore them at any time."
