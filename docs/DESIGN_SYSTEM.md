@@ -1,6 +1,6 @@
 # Learivo design system and theme architecture
 
-Status: Phase 2. Code lives in `src/ui-kit/themes/` and `src/ui-kit/`. Run `pnpm dev` and open the Design Lab to see every component in the active theme.
+Code lives in `src/ui-kit/themes/` and `src/ui-kit/`. The Design Lab (`src/App.tsx`) shows every core component in the active theme.
 
 ## Principles
 
@@ -40,6 +40,8 @@ A mode a theme does not support falls back to its default mode (Space is dark on
 | Loader          | spinning ring                         | swaying sprout                | orbiting node                  |
 | Empty-state art | card with check                       | sprout                        | planet with ring               |
 
+The per-theme empty-state art is the fallback. The common empty and error screens use the shared scenes in `src/ui-kit/illustrations/Scenes.tsx` (questions, caught up, insights, search, saved, exams, cards, error). They are drawn only with `var(--lv-*)` colours, so they recolour in every theme, are `aria-hidden`, and are passed to `EmptyState` through its `art` prop.
+
 ## The three themes
 
 |                       | Default              | Forest                                           | Space                       |
@@ -52,7 +54,7 @@ A mode a theme does not support falls back to its default mode (Space is dark on
 | Progress ring         | round cap            | round cap                                        | flat cap with glow          |
 | Motion                | 120ms and 220ms      | 160ms and 320ms (slower, organic)                | 100ms and 200ms (snappy)    |
 
-Fonts are self-hosted through `@fontsource-variable/*` packages, so they work offline and do not call third-party servers.
+Fonts are self-hosted Latin-only variable files in `src/ui-kit/themes/fonts/` (loaded by `fonts.css`), so they work offline and call no third-party server. Bangla text falls back to the system font.
 
 ## Accessibility rules (enforced in `src/ui-kit/themes/themes.test.ts`)
 
@@ -66,14 +68,15 @@ For every theme and mode:
 
 Also: visible focus ring on all interactive elements, labelled inputs with linked hints and errors, `role="progressbar"` with values, and 44px touch targets.
 
-Not yet verified: screen-reader behaviour, full keyboard flows, and contrast of text placed on gradient or textured backgrounds. These are covered in Phase 8.
+Also checked in a real browser by `pnpm a11y` and `pnpm design` (axe, tap targets, focus return). Not verified: screen-reader behaviour and contrast of text placed on gradient or textured backgrounds.
 
 ## Brand
 
 - Mark: an L whose upright stroke is a notched bookmark ribbon, with a node dot suggesting a learning path. Code-generated SVG in `src/ui-kit/brand/Logo.tsx` and `public/favicon.svg`.
 - Icons: a small custom stroke icon set in `src/ui-kit/icons/icons.tsx` (stroke width adjustable per theme with `--lv-icon-stroke`).
-- Known gap: the mark reads well as a favicon but the node-and-foot arrangement can look face-like on the app-icon tile. A refinement pass is scheduled for Phase 7.
+- Brand files: `public/favicon.svg`, app icons (`icon-192`, `icon-512`, `icon-maskable-512`, `apple-touch-icon`), `public/brand/` (mark, lockup, 240 px logo), `public/social/og-default.png` and `docs/brand/github-social-preview.png`. They are built by `scripts/brand.mjs`; do not edit them by hand.
+- Art direction for any new picture: flat shapes, 1.75 px round-cap line, theme colours only, no gradients (except the icon tile), no text, people, photos or clinical imagery. See `docs/reports/`.
 
 ## Persistence
 
-Theme and mode are stored in `localStorage` (`learivo.theme`, `learivo.mode`) and applied before first paint by an inline script in `index.html`. Cloud persistence in `user_preferences` arrives in Phase 3 so the choice follows the student across devices.
+Theme and mode are stored in `localStorage` (`learivo.theme`, `learivo.mode`) and applied before first paint by `public/theme-init.js`. The choice is not saved to the account.

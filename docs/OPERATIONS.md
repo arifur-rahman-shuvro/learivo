@@ -82,9 +82,9 @@ Account > Change email. The student enters the new address and their password (c
 
 ## 5. Release checklist
 
-1. `pnpm format:check`, `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`, `pnpm smoke` all pass locally.
+1. `pnpm format:check`, `pnpm typecheck`, `pnpm lint`, `pnpm test`, `pnpm build`, `pnpm envcheck`, `pnpm e2e`, `pnpm a11y`, `pnpm design` and `pnpm paper` all pass locally.
 2. Push; wait for CI (format, lint, audit, typecheck, SQL checks including the schema audit, tests, build, smoke) to be green.
-3. New migration: add it to the CI list and to `docs/`, apply to production (Supabase), then run the security and performance advisors and read any new warning.
+3. New migration: add it to the CI list and to `docs/MIGRATIONS.md`, apply to production (Supabase), then run the security and performance advisors and read any new warning.
 4. Open https://learivo.pages.dev on a phone after Cloudflare finishes; sign in; check Home, Questions, Practice, Saved.
 5. Download a backup and open it with "Choose backup file" (look for "Checked").
 6. If something is wrong: in Cloudflare Pages > Deployments choose the last good deployment and Rollback. Database changes are not rolled back automatically: write a reverse migration.

@@ -15,7 +15,7 @@ A folder may only import from layers to its left. `pnpm lint` fails if a lower l
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `core/`     | No UI. Config, Supabase client, monitoring, `createStore`, toast, intents, focus mode, dialog open/close stores, backup reminder rule                                             |
 | `motion/`   | All animation: tokens, CSS, origin morph, grow-in                                                                                                                                 |
-| `ui-kit/`   | Presentational building blocks. `primitives/`, `feedback/`, `overlays/`, `icons/`, `brand/`, `themes/`                                                                            |
+| `ui-kit/`   | Presentational building blocks. `primitives/`, `feedback/`, `overlays/`, `icons/`, `brand/`, `illustrations/` (empty and error scenes), `themes/`                                 |
 | `landing/`  | The introduction page signed-out visitors see first (its own chunk; may import core, motion, ui-kit)                                                                              |
 | `auth/`     | Sign-in screen and auth provider                                                                                                                                                  |
 | `help/`     | The "All features" list, its icons and data                                                                                                                                       |
@@ -28,21 +28,24 @@ A folder may only import from layers to its left. `pnpm lint` fails if a lower l
 
 ## "I want to change..."
 
-| Change                                                    | Edit                                        |
-| --------------------------------------------------------- | ------------------------------------------- |
-| Sidebar, top bar, bottom bar, content width and spacing   | `shell/AppFrame.tsx` (layout only, no data) |
-| Which screen shows for a tab, and the providers around it | `shell/ModuleHost.tsx`                      |
-| The five tabs, their order and routes                     | `shell/navigation/registry.ts`              |
-| Tab bar look and sliding highlight                        | `shell/navigation/BottomNav.tsx`            |
-| Loading, sign-in or app, and wiring the services          | `shell/AppShell.tsx`                        |
-| Toast look                                                | `shell/chrome/ToastHost.tsx`                |
-| How fast or bouncy anything is                            | `motion/tokens.ts` (single source)          |
-| Keyframes, loaders, reduced-motion rules                  | `motion/motion.css`                         |
-| Panels growing out of the tapped control                  | `motion/origin.ts`                          |
-| Colours, fonts, radius, shadows per theme                 | `ui-kit/themes/<theme>/tokens.ts`           |
-| Buttons, cards, inputs, focus ring                        | `styles/components.css`, `styles/base.css`  |
-| Dialog, Picker, Segmented, Button, Field and so on        | `ui-kit/` (import from `ui-kit/index.ts`)   |
-| Backup file format and restore                            | `account/backup/backupData.ts`              |
+| Change                                                     | Edit                                                                  |
+| ---------------------------------------------------------- | --------------------------------------------------------------------- |
+| Sidebar, top bar, bottom bar, content width and spacing    | `shell/AppFrame.tsx` (layout only, no data)                           |
+| Which screen shows for a tab, and the providers around it  | `shell/ModuleHost.tsx`                                                |
+| The five tabs, their order and routes                      | `shell/navigation/registry.ts`                                        |
+| Tab bar look and sliding highlight                         | `shell/navigation/BottomNav.tsx`                                      |
+| Loading, sign-in or app, and wiring the services           | `shell/AppShell.tsx`                                                  |
+| Toast look                                                 | `shell/chrome/ToastHost.tsx`                                          |
+| How fast or bouncy anything is                             | `motion/tokens.ts` (single source)                                    |
+| Keyframes, loaders, reduced-motion rules                   | `motion/motion.css`                                                   |
+| Panels growing out of the tapped control                   | `motion/origin.ts`                                                    |
+| Colours, fonts, radius, shadows per theme                  | `ui-kit/themes/<theme>/tokens.ts`                                     |
+| Buttons, cards, inputs, focus ring                         | `styles/components.css`, `styles/base.css`                            |
+| Dialog, Picker, Segmented, Button, Field and so on         | `ui-kit/` (import from `ui-kit/index.ts`)                             |
+| Backup file format and restore                             | `account/backup/backupData.ts`                                        |
+| Empty-state and error pictures                             | `ui-kit/illustrations/Scenes.tsx`                                     |
+| The AI prompt text                                         | `modules/question-bank/domain/promptBuilder.ts`                       |
+| Social preview, app icons, logo files, install screenshots | `scripts/brand.mjs`, `scripts/pwa-shots.mjs` (then commit the images) |
 
 ## Rules of thumb
 
@@ -58,4 +61,4 @@ A folder may only import from layers to its left. `pnpm lint` fails if a lower l
 
 ## Other
 
-- `supabase/migrations/`: database changes. `scripts/`: smoke test and checks. `docs/`: plans and specs.
+- `supabase/migrations/`: database changes. `scripts/`: smoke test, browser checks and brand image builders. `docs/`: see the table in the README. `public/`: static files served as they are (`social/`, `brand/`, `pwa/`; never `public/assets/`, which the build uses for hashed files that are cached for a year).

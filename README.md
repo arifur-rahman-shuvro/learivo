@@ -1,30 +1,43 @@
 # Learivo
 
-Learivo is a private, cloud-synced academic workspace. Every student owns a private question bank, practises from it, sits exams built from it, and sees what to revise next.
+Learivo is a private, cloud-synced question bank and exam app. Each student owns a private bank of questions, practises from it, sits timed exams built from it, and sees what to revise next. It works offline and installs on a phone.
 
-## Status
+Live: https://learivo.pages.dev
 
-Phases 2 and 3 done (Sentry, Go database connection and staging still open). Phase 4 (question bank) built: six question types, subjects, editor, search, bulk actions, history, import and export. See `docs/ROADMAP.md`.
+## What it does
 
-## Chosen stack
+Write or import questions (including with an AI prompt maker), practise and sit exams, revise with spaced repetition, keep notes, flashcards and a glossary, and see insights on weak areas. Backup and restore, three themes, and an introduction page for new visitors. The full list is in `docs/FEATURES.md`.
 
-- Frontend: React 19, TypeScript, Vite, Tailwind CSS v4 on design tokens (PWA)
-- Backend: Go API service (chi, pgx, sqlc)
-- Database and sign-in: Postgres and Auth hosted on Supabase, with row-level security
-- Hosting: Cloudflare for the frontend; Fly.io or Google Cloud Run for the Go service (to be confirmed)
+## Stack
 
-## Roadmap
-
-See `docs/ROADMAP.md`.
+- Frontend: React 19, TypeScript, Vite, Tailwind CSS v4 on design tokens, installable PWA
+- Database and sign-in: Postgres and Auth on Supabase, with row-level security on every table. The browser talks to Supabase directly; there is no separate server
+- Hosting: Cloudflare Pages. CI and a weekly database backup: GitHub Actions
 
 ## Run it
 
 ```bash
 pnpm install
-pnpm dev        # open the Design Lab
-pnpm test       # unit and accessibility-contrast tests
-pnpm typecheck
-pnpm build
+pnpm dev            # the app (Supabase address and publishable key go in .env.local, see below)
+pnpm test           # unit and component tests
+pnpm typecheck && pnpm lint && pnpm build
 ```
 
-Docs: `docs/STRUCTURE.md` (where to edit what), `docs/DESIGN_SYSTEM.md` (themes and tokens), `docs/SCREENS.md` (MVP screen specs), `docs/ROADMAP.md`.
+Checks that use a real browser: `pnpm e2e` (end-to-end flows), `pnpm a11y` (axe scan), `pnpm design` (screens and dialogs in every theme at 360 px), `pnpm paper` (exam PDF, including Bangla). `pnpm envcheck` checks the built site's headers and that no secret is in it; `pnpm coverage` enforces the coverage floor.
+
+Environment: `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` (public values), optional `VITE_SENTRY_DSN`. No secret belongs in the repository.
+
+Brand images are built from code, not edited by hand: `node scripts/brand.mjs` (social preview, app icons, logo files) and `node scripts/pwa-shots.mjs` (install screenshots from the real app).
+
+## Docs
+
+| File                    | What it covers                                                                       |
+| ----------------------- | ------------------------------------------------------------------------------------ |
+| `docs/STATUS.md`        | What is done, what has been proven, what is open, decisions on record                |
+| `docs/FEATURES.md`      | How each part works and the rules behind it                                          |
+| `docs/STRUCTURE.md`     | Where files live and what to edit for a given change                                 |
+| `docs/DESIGN_SYSTEM.md` | Themes, tokens, slots, brand and accessibility rules                                 |
+| `docs/OPERATIONS.md`    | Backup and restore, sign-in setup, offline behaviour, security, release and rollback |
+| `docs/RUNBOOK.md`       | Backup job secrets, restore steps, drill and load-test results                       |
+| `docs/MIGRATIONS.md`    | Every database migration and how to undo it                                          |
+| `docs/reports/`         | The visual asset audit and production blueprint (PDF and Markdown)                   |
