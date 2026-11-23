@@ -245,7 +245,7 @@ export default function GuideDialog({ onNavigate }: { onNavigate: (route: string
             </ol>
             <p className="m-0">
               Learivo does not store pictures. A question that needs a picture is described in words
-              and tagged had-image so you can find it.
+              and starts with [Picture: so you can find it.
             </p>
           </Section>
           <Section title="Revision and flashcards">

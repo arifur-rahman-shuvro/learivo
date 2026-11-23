@@ -66,8 +66,8 @@ describe("buildPrompt", () => {
     const p = buildPrompt(spec({ mode: "convert", subject: "Physiology" }));
     expect(p).toContain("I attached photos, screenshots, PDF pages");
     expect(p).toContain("Do not write new questions");
-    expect(p).toContain('"check-answer"');
-    expect(p).toContain('"had-image"');
+    expect(p).toContain("NOTE: answer worked out by me");
+    expect(p).toContain('starting with "[Picture: "');
     expect(p).not.toContain("exam-style questions");
   });
 
@@ -256,5 +256,25 @@ describe("AI decides the number", () => {
     expect(p).toContain("Final Prof");
     expect(p).toContain('{"plan": [');
     expect(p).toContain("from 1 to 5");
+  });
+});
+
+describe("tags come only from the student", () => {
+  it("lists the student's tags as the only ones, or an empty list when none are given", () => {
+    const withTags = buildPrompt({ ...DEFAULT_SPEC, tags: "midterm, heart" });
+    expect(withTags).toContain("use exactly these tags and add no others");
+    expect(withTags).toContain("Never add, invent or suggest any other tag");
+    expect(withTags).not.toContain("you may add more tags");
+    const none = buildPrompt({ ...DEFAULT_SPEC, tags: "" });
+    expect(none).toContain("never invent tags");
+    expect(none).not.toContain('"tags": [\n      "tag"');
+  });
+
+  it("convert mode reports problems in a NOTE line instead of adding tags", () => {
+    const p = buildPrompt({ ...DEFAULT_SPEC, mode: "convert", optionCount: 4 });
+    expect(p).not.toContain("check-answer");
+    expect(p).not.toContain("check-options");
+    expect(p).not.toContain("had-image");
+    expect(p).toContain("NOTE: answer worked out by me");
   });
 });

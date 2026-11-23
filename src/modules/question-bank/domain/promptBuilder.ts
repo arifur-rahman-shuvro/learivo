@@ -159,7 +159,11 @@ function context(spec: PromptSpec): string[] {
   ];
   const out = rows.filter(([, v]) => v !== "").map(([k, v]) => `- "${k}": ${JSON.stringify(v)}`);
   const tags = tagList(spec.tags);
-  if (tags.length > 0) out.push(`- "tags": ${JSON.stringify(tags)} (you may add more tags)`);
+  out.push(
+    tags.length > 0
+      ? `- "tags": ${JSON.stringify(tags)} (use exactly these tags and add no others)`
+      : '- "tags": [] (I gave no tags: write an empty list and never invent tags)',
+  );
   if (spec.difficulty !== "mixed") out.push(`- "difficulty": ${spec.difficulty}`);
   return out;
 }
@@ -187,7 +191,7 @@ function example(spec: PromptSpec): string {
     ...(spec.explanation === "none" ? {} : { explanation: "Why the answer is right" }),
     difficulty: diff,
     ...shared,
-    tags: tags.length > 0 ? tags : ["tag"],
+    tags,
   };
   return JSON.stringify([sba], null, 2);
 }
@@ -280,7 +284,7 @@ function qualityRules(spec: PromptSpec): string[] {
     "- One question tests one clear point. The stem holds every fact needed, so a well-prepared student can answer without seeing the options.",
     ...styleRules(spec),
     "- End the stem with a clear question or instruction, or a lead-in that the options complete.",
-    '- Every question has ONE defensible correct answer that a standard textbook or guideline supports. Do not invent facts, numbers, drug doses, names or studies. If you are not sure of an answer, either leave that question out or tag it "check-answer".',
+    "- Every question has ONE defensible correct answer that a standard textbook or guideline supports. Do not invent facts, numbers, drug doses, names or studies. If you are not sure of an answer, either leave that question out and say why in the NOTE line.",
     "- Wrong options (distractors) must be plausible to a student who half-knows the topic: real, related concepts that are wrong for this exact case. Make them similar in length, wording and detail to the correct option. Do not make the correct option the longest or most detailed one.",
     '- No clues: no grammar that gives the answer away, no repeated words from the stem only in the correct option, no overlapping or duplicate options, no "all of the above", "none of the above", "always" or "never". Put the correct option in a different position from question to question.',
     "- Cover the topic widely: no two questions may test the same point or give away each other's answer. Spread them across the subtopics.",
@@ -397,11 +401,11 @@ export function buildPrompt(spec: PromptSpec): string {
     lines.push(...qualityRules(spec));
   } else {
     lines.push(
-      '- If the source shows the answer key, use it. If it does not, work out the most likely answer yourself and add the tag "check-answer".',
+      "- If the source shows the answer key, use it. If it does not, work out the most likely answer yourself and list its question number in a NOTE line after the code block (NOTE: answer worked out by me for questions 3, 7), because you must not add tags.",
       spec.optionCount === "auto"
         ? "- Keep the number of options the source has (2 to 5). Do not add or remove options."
-        : `- If a question has fewer than ${spec.optionCount} options, add plausible options to reach exactly ${spec.optionCount} and add the tag "check-options". If it has more, keep the correct option(s) and the ${spec.optionCount} most plausible in total, and add the tag "check-options".`,
-      '- My app cannot store pictures. If a question depends on a picture, diagram or graph, describe what it shows in words inside the question, starting with "[Picture: " and ending with "]", and add the tag "had-image".',
+        : `- If a question has fewer than ${spec.optionCount} options, add plausible options to reach exactly ${spec.optionCount} and list its question number in the NOTE line (options added). If it has more, keep the correct option(s) and the ${spec.optionCount} most plausible in total, and list its question number in the NOTE line (options removed).`,
+      '- My app cannot store pictures. If a question depends on a picture, diagram or graph, describe what it shows in words inside the question, starting with "[Picture: " and ending with "]".',
       "- True/false is several statements under one lead-in. If the source has single statements, group related ones under a short lead-in.",
     );
   }
@@ -436,6 +440,7 @@ export function buildPrompt(spec: PromptSpec): string {
         : [
             `Put at most ${BATCH_SIZE} questions in one reply. If there are more, stop after ${BATCH_SIZE} and I will say "continue".`,
           ]),
+    'TAGS: use only the tags I listed above, exactly as written. Never add, invent or suggest any other tag (no topic tags, no difficulty tags, no "ai" tags). If I listed none, "tags" is an empty list.',
     "Do not add any text inside the JSON. If you skipped or could not read something, add one line starting with NOTE: after the code block.",
   );
   return lines.join("\n");
