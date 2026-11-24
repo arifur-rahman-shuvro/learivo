@@ -34,6 +34,7 @@ Brand images are built from code, not edited by hand: `node scripts/brand.mjs` (
 | File                    | What it covers                                                                       |
 | ----------------------- | ------------------------------------------------------------------------------------ |
 | `docs/STATUS.md`        | What is done, what has been proven, what is open, decisions on record                |
+| `docs/LAUNCH.md`        | Launch audit: what passed, what is accepted, what the owner still has to do          |
 | `docs/FEATURES.md`      | How each part works and the rules behind it                                          |
 | `docs/STRUCTURE.md`     | Where files live and what to edit for a given change                                 |
 | `docs/DESIGN_SYSTEM.md` | Themes, tokens, slots, brand and accessibility rules                                 |

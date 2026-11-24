@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://learivo.pages.dev/sitemap.xml

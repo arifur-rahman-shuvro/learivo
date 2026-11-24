@@ -7,6 +7,8 @@ import { join } from "node:path";
 const REF = "vmtbqoqyplsfmxyjcoiy";
 const problems = [];
 
+for (const f of ["robots.txt", "sitemap.xml", "privacy.html", "terms.html"])
+  if (!existsSync(`dist/${f}`)) problems.push(`dist/${f} is missing`);
 if (!existsSync("dist/index.html"))
   problems.push("dist/index.html is missing (run the build first)");
 const headers = existsSync("dist/_headers") ? readFileSync("dist/_headers", "utf8") : "";
