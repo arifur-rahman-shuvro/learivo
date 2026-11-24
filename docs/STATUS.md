@@ -1,6 +1,6 @@
 # Status, verification and open items
 
-Last updated 2026-11-24 (interactive landing tour). This is the one place that says what is done, what has been proven, and what is still open. Behaviour is in `FEATURES.md`; running and recovery in `OPERATIONS.md` and `RUNBOOK.md`.
+Last updated 2026-11-24 (textbook-size exam PDF). This is the one place that says what is done, what has been proven, and what is still open. Behaviour is in `FEATURES.md`; running and recovery in `OPERATIONS.md` and `RUNBOOK.md`.
 
 ## Where the project stands
 

@@ -169,7 +169,9 @@ li.wrong > .bub, .bub.wrong { background: #c53030 !important; border-color: #c53
 .whypage .ans { font: 700 10pt system-ui, sans-serif; color: var(--ink); }
 .why { display: block; white-space: pre-wrap; font-size: 12pt; color: #374151; }
 @media screen { body { max-width: 820px; margin: 0 auto; background: #f3f4f8; padding: 0 14px 40px; } .page { background: #fff; padding: 4px 4px 8px; } .keypage, .whypage { margin-top: 28px; padding-top: 14px; border-top: 3px dashed var(--rule); } .q.live:hover { border-color: var(--ink); } }
-@media print { .bar, .noprint { display: none !important; } body { background: #fff; padding: 0; max-width: none; } }
+@media print { .bar, .noprint { display: none !important; } body { background: #fff; padding: 0; max-width: none; font-size: 10pt; line-height: 1.4; }
+  .instr, .cell { font-size: 10pt; } .why { font-size: 9.5pt; } .hint { font-size: 9.5pt; } .opts { gap: 2px; } .stem { margin: 1px 0 4px; }
+  .q { padding: 5px 0 7px; gap: 7px; } .q .num { min-width: 22px; height: 22px; font-size: 9.5pt; } .bub { width: 20px; height: 20px; font-size: 9pt; } .opts .tl { font-size: 9.5pt; } .opts li { gap: 7px; padding: 1px 3px; } }
 @media screen and (max-width: 640px) { .cols { column-count: 1; column-rule: 0; } }
 @media (max-width: 520px) { .info { grid-template-columns: 1fr; } .cover h1 { font-size: 18pt; } .sec { flex-wrap: wrap; } }
 `;

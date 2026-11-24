@@ -74,7 +74,10 @@ ok(
   await p.$eval(".cols", (e) => getComputedStyle(e).columnRuleStyle === "solid"),
   "a divider line sits between the columns",
 );
-ok(await p.$eval(".stem", (e) => getComputedStyle(e).fontSize === "16px"), "question text is 12pt");
+ok(
+  await p.$eval(".stem", (e) => getComputedStyle(e).fontSize === "13.3333px"),
+  "question text is 10pt, textbook size",
+);
 await p.pdf({ path: pdf, format: "A4", preferCSSPageSize: true, printBackground: true });
 await b.close();
 
