@@ -19,6 +19,7 @@ import {
   SearchScene,
 } from "../../../ui-kit/index.ts";
 import { DEFAULT_QUERY, pathOf, type BulkAction, type QuestionQuery } from "../data/repo.ts";
+import { SAMPLE_QUESTIONS } from "../domain/samplePack.ts";
 import { ImportDialog } from "./ImportExportDialogs.tsx";
 import { ExportDialog } from "./ExportDialog.tsx";
 import { ManageDialog } from "./ManageDialog.tsx";
@@ -324,6 +325,22 @@ export default function QuestionsScreen({ onNavigate }: { onNavigate: (route: st
                   </Button>
                   <Button variant="secondary" onClick={() => setPanel("import")}>
                     Import a file
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() =>
+                      repo.create(SAMPLE_QUESTIONS).then(
+                        () => {
+                          showToast(
+                            "Added 12 sample questions, tagged sample. Delete them any time.",
+                          );
+                          refresh();
+                        },
+                        (e) => setError(errorText(e)),
+                      )
+                    }
+                  >
+                    Try 12 sample questions
                   </Button>
                 </div>
               )

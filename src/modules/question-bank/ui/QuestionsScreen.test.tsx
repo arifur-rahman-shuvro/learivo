@@ -130,6 +130,17 @@ describe("QuestionsScreen", () => {
     expect(screen.getByRole("button", { name: "Import a file" })).toBeTruthy();
   });
 
+  it("adds the 12 sample questions from the empty state, tagged so they can be found", async () => {
+    const repo = new MemoryRepo();
+    renderScreen(repo);
+    fireEvent.click(await screen.findByRole("button", { name: "Try 12 sample questions" }));
+    await waitFor(async () => expect((await repo.list({ ...DEFAULT_QUERY })).total).toBe(12));
+    const all = (await repo.list({ ...DEFAULT_QUERY, limit: 50 })).items;
+    expect(all.every((q) => q.tags.includes("sample"))).toBe(true);
+    await waitFor(() => expect(screen.queryByText("Add your first questions")).toBeNull());
+    expect(await screen.findByText(/Which nerve is compressed in carpal tunnel/)).toBeTruthy();
+  });
+
   it("lists questions, searches, and shows a clear-filters state when nothing matches", async () => {
     const repo = new MemoryRepo();
     await repo.create([tf("The aorta is an artery"), tf("The vena cava is a vein")]);

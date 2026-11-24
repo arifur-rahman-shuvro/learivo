@@ -227,6 +227,12 @@ export default function AuthScreen({
           >
             Terms
           </a>
+          <a
+            className="inline-flex min-h-10 min-w-10 items-center justify-center px-1 text-muted underline"
+            href="mailto:learivo.official@gmail.com"
+          >
+            Contact
+          </a>
         </nav>
       </div>
     </>

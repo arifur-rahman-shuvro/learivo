@@ -1,4 +1,5 @@
 import { config } from "./config.ts";
+import { noteError } from "./support.ts";
 
 /** Strips anything that could identify the student or hold question content before it is sent. */
 export function scrub<T extends { user?: unknown; request?: unknown; breadcrumbs?: unknown }>(
@@ -14,6 +15,7 @@ let sentry: typeof import("@sentry/browser") | null = null;
 
 /** Sends one handled failure to crash reporting, when it is on. Never throws. */
 export function reportError(e: unknown): void {
+  noteError(e);
   try {
     sentry?.captureException(e);
   } catch {

@@ -26,10 +26,31 @@ Audit of 2026-11-24. What was checked, what was found, what is still the owner's
 
 ## Owner actions before telling people
 
-1. **Give a support email.** The Privacy page currently points to the GitHub issues page and "the person who invited you". Send the address you want shown (a new address made just for Learivo is best) and it goes into Privacy and Terms.
-2. **Decide a licence for the GitHub repository.** The repo is public and has no licence file, so by default others may read it but not reuse it. Say "all rights reserved" (keep as is) or pick one (MIT is the common open choice).
-3. **Turn on crash reporting (optional, free):** make a free account at https://sentry.io, create a Browser JavaScript project, copy its DSN, then in Cloudflare Pages open Settings, Environment variables and add `VITE_SENTRY_DSN` with that value for Production, and redeploy. A DSN is not a secret. Reports have names, emails and question text stripped.
-4. **Upload the social preview:** GitHub, Settings, General, Social preview, upload `docs/brand/github-social-preview.png`.
-5. **Google sign-in screen:** in Google Cloud, OAuth consent screen, set the app name Learivo, add the Privacy and Terms links (`https://learivo.pages.dev/privacy.html` and `/terms.html`), and the logo `public/brand/brand-logo-240.png`. Move the app from Testing to In production, otherwise only listed test users can sign in.
-6. **Custom domain (optional):** if you buy one, add it in Cloudflare Pages, Custom domains, then tell Claude so the canonical link, sitemap, social tags and Supabase redirect URLs are changed.
-7. **Real-phone pass (15 minutes):** on your Android phone, open the live site signed out, sign up, add 3 questions, practise, install to the home screen, turn on aeroplane mode and practise again, then turn it off and check it syncs.
+Done on 2026-11-24 or 25: the support email `learivo.official@gmail.com` is in Privacy, Terms, the landing footer, the sign-in page and Settings; the licence is decided (see below); the real-phone pass was done and reported by the owner (not seen by Claude).
+
+1. **Crash reporting (free, 10 minutes, still open):** make a free account at https://sentry.io, create a Browser JavaScript project, copy its DSN, then in Cloudflare Pages open Settings, Environment variables and add `VITE_SENTRY_DSN` with that value for Production, and redeploy. A DSN is not a secret. Reports have names, emails and question text stripped. Until then, problems reach us only through the Report a problem email.
+2. **Social preview:** GitHub, Settings, General, Social preview, upload `docs/brand/github-social-preview.png`.
+3. **Google sign-in screen:** in Google Cloud, OAuth consent screen, set the app name Learivo, add the Privacy and Terms links (`https://learivo.pages.dev/privacy.html` and `/terms.html`), the support email, and the logo `public/brand/brand-logo-240.png`. Move the app from Testing to In production, otherwise only listed test users can sign in.
+4. **Custom domain (optional):** add it in Cloudflare Pages, Custom domains, then tell Claude so the canonical link, sitemap, social tags and Supabase redirect URLs are changed.
+
+## Licence
+
+`LICENSE` says all rights reserved: the code is public to read, not to copy or reuse. This was chosen because Learivo is a product, not a library. To open it up later, replace the file with MIT or similar.
+
+## Road to 9.5
+
+Scores are Claude's own engineering ratings (see `STATUS.md`). A 9.5 needs evidence from real people, which no amount of code can supply, so the list is split by who can move the score.
+
+| Area                 | Was       | Now       | To reach 9.5                                                                                                                            | Who                |
+| -------------------- | --------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| Code quality         | 9         | 9         | Hold the line: every change keeps tests, lint, layer rules and docs green                                                               | Claude             |
+| Security and privacy | 8.5       | 9         | Sentry on (step 1). Leaked-password protection needs Supabase Pro, worth it once real users sign up                                     | Owner              |
+| Speed                | 9.5       | 9.5       | Already 99 on Lighthouse mobile                                                                                                         | none               |
+| Accessibility        | 9         | 9         | Test with TalkBack (Android screen reader) for 15 minutes: open Home, practise one question, open Settings. Report what is read wrongly | Owner              |
+| Features             | 8.5       | 9         | Sample questions for a new student (done). Next: only what real students ask for                                                        | Both               |
+| Design and UX        | 8         | 8.5       | Real-phone pass done by owner. Next: watch two students use it without help and fix where they stop                                     | Owner, then Claude |
+| Reliability and data | 8.5       | 9         | Problem reports now carry technical details (done). Keep a weekly backup habit; use Backup before big imports                           | Owner              |
+| Launch readiness     | 7         | 9         | Support email, licence, privacy, robots and sitemap done. Left: Sentry, Google In production                                            | Owner              |
+| Market proof         | not rated | not rated | 5 real students use it for a week and send feedback through Send feedback in Settings. Their top three complaints become the next phase | Owner              |
+
+What changed in this phase: support email everywhere, Report a problem and Send feedback (Settings and the error screen, with browser details and the last eight error names, never question text), a LICENSE file, 12 original sample questions a new student can add in one tap (tagged `sample`, easy to delete), and a check that the Bangla exam paper prints correctly.

@@ -1,5 +1,6 @@
 import { describeError, isQuiet } from "./errors.ts";
 import { reportError } from "./monitoring.ts";
+import { noteError } from "./support.ts";
 import { showToast } from "./toast.ts";
 
 /**
@@ -17,6 +18,11 @@ export function installGlobalErrorHandlers(target: Window = window): () => void 
     const d = describeError(ev.reason);
     showToast(`${d.title} ${d.advice}`);
   };
+  const onError = (ev: ErrorEvent) => noteError(ev.error ?? ev.message);
   target.addEventListener("unhandledrejection", onRejection);
-  return () => target.removeEventListener("unhandledrejection", onRejection);
+  target.addEventListener("error", onError);
+  return () => {
+    target.removeEventListener("unhandledrejection", onRejection);
+    target.removeEventListener("error", onError);
+  };
 }

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Button, LogoWordmark, ThemeBackground, ThemeSwitcher } from "../ui-kit/index.ts";
 import { ConfidenceMatrix, PaceDemo, PaperPreview, TryQuestion } from "./demos.tsx";
 import { Faq, Tour } from "./tour.tsx";
+import { SUPPORT_EMAIL } from "../core/support.ts";
 import "./landing.css";
 
 interface Props {
@@ -241,6 +242,12 @@ export default function Landing({ onSignIn, onCreate }: Props) {
               href="/terms.html"
             >
               Terms
+            </a>
+            <a
+              className="inline-flex min-h-10 min-w-10 items-center justify-center underline"
+              href={`mailto:${SUPPORT_EMAIL}`}
+            >
+              Contact
             </a>
           </nav>
         </div>

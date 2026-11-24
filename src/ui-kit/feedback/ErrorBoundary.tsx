@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { describeError } from "../../core/errors.ts";
 import { reportError } from "../../core/monitoring.ts";
+import { supportMailto } from "../../core/support.ts";
 import { ErrorScene } from "../illustrations/Scenes.tsx";
 import { Button } from "../primitives/Button.tsx";
 
@@ -73,6 +74,11 @@ export class ErrorBoundary extends Component<Props, State> {
           >
             {d.kind === "session" ? "Sign in again" : "Reload the app"}
           </Button>
+          {d.kind !== "session" && (
+            <a className="lv-btn lv-btn-ghost" href={supportMailto("problem")}>
+              Report this problem
+            </a>
+          )}
         </div>
       </div>
     );

@@ -29,6 +29,8 @@ What each part does and the rules behind it, written from the code. For where fi
 - Untimed practice counts time only while the screen is open; timed sessions use the wall clock.
 - A confidence mark per answer and a mistake reason are stored. "Partly correct" counts as not fully correct in Insights and revision.
 - Options can be chosen with the 1 to 9 keys.
+- **Help and feedback:** Settings, Help and feedback, and the error screen, open an email to the support address with browser details and the last eight error names filled in, never question text or passwords. The landing and sign-in pages link Contact.
+- **Sample questions:** an empty question bank offers Try 12 sample questions (all five types, tagged `sample`, original text) so a new student can try practice at once and delete them later.
 - **Printed exam paper (PDF):** text prints at textbook size (10 pt for questions and options, 9.5 pt for explanations) in two columns on A4. On screen the paper keeps a larger, easier-to-tap size. `pnpm paper` checks the print size.
 
 ## Review and Insights

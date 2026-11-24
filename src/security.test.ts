@@ -29,8 +29,17 @@ describe("code that could let text run as script", () => {
 
   it("only builds links to addresses written in the code, never from student content", () => {
     const hits = sources.filter(([, text]) => /<a\s[^>]*href=\{/.test(text)).map(([file]) => file);
-    // The AI connection dialog links to each provider's key page from a fixed table.
-    expect(hits).toEqual(["./modules/ai/AiConnectionDialog.tsx"]);
+    // The AI connection dialog links to each provider's key page from a fixed table. The three
+    // others write to the support address in `core/support.ts` (fixed address; the body holds
+    // technical facts only, never student content).
+    expect(hits.sort()).toEqual(
+      [
+        "./account/AccountDialogs.tsx",
+        "./landing/Landing.tsx",
+        "./modules/ai/AiConnectionDialog.tsx",
+        "./ui-kit/feedback/ErrorBoundary.tsx",
+      ].sort(),
+    );
   });
 });
 

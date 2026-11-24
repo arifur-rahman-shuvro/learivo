@@ -1,6 +1,7 @@
 import { openAiConnection } from "../core/dialogs/ai.ts";
 import { openBackup } from "../core/dialogs/backup.ts";
 import { Button, Dialog, ThemeSwitcher } from "../ui-kit/index.ts";
+import { SUPPORT_EMAIL, supportMailto } from "../core/support.ts";
 import { useDataRepo } from "../platform/offline/OfflineProvider.tsx";
 
 export function AppearanceDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -96,6 +97,21 @@ export function SettingsDialog({
             >
               Back up and restore
             </Button>
+          </div>
+        </section>
+        <section className="flex flex-col gap-2">
+          <h3 className="m-0 text-base font-semibold">Help and feedback</h3>
+          <p className="m-0 text-sm text-muted">
+            Something broken, or an idea? Write to {SUPPORT_EMAIL}. The email opens with technical
+            details filled in, never your questions or password.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <a className="lv-btn lv-btn-secondary lv-btn-sm" href={supportMailto("problem")}>
+              Report a problem
+            </a>
+            <a className="lv-btn lv-btn-secondary lv-btn-sm" href={supportMailto("feedback")}>
+              Send feedback
+            </a>
           </div>
         </section>
         <section className="flex flex-col gap-2">

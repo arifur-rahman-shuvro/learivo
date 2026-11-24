@@ -42,3 +42,7 @@ Brand images are built from code, not edited by hand: `node scripts/brand.mjs` (
 | `docs/RUNBOOK.md`       | Backup job secrets, restore steps, drill and load-test results                       |
 | `docs/MIGRATIONS.md`    | Every database migration and how to undo it                                          |
 | `docs/reports/`         | The visual asset audit and production blueprint (PDF and Markdown)                   |
+
+## Licence
+
+All rights reserved. The code is public so it can be read and checked, not copied or reused. See `LICENSE`. Contact: learivo.official@gmail.com.
