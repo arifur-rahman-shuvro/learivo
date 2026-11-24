@@ -52,7 +52,7 @@ What each part does and the rules behind it, written from the code. For where fi
 
 ## Pages for visitors
 
-- A signed-out visitor sees the introduction page first (`src/landing`): a question to answer, a daily-pace slider, an explorer of the four kinds of answer, an exam paper preview and a theme switcher. Someone who has signed in on the device goes straight to sign-in.
+- A signed-out visitor sees the introduction page first (`src/landing`): a sticky menu with Sign in and Create account, a question to answer, four short facts, a **tour** of four working sample screens (build a test, sit an exam with a question navigator, find weak areas with a sortable chart, revise with cards; all sample data, nothing saved), a confidence explorer, a daily-pace slider, an exam paper preview, a theme switcher and a questions-and-answers list. Everything is drawn in code (no images) and recolours in every theme. Someone who has signed in on the device goes straight to sign-in.
 - `/privacy.html` and `/terms.html` are written for the Google consent screen.
 - Link previews use `public/social/og-default.png` and the tags in `index.html`.
 

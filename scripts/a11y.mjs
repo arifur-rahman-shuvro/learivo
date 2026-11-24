@@ -83,6 +83,15 @@ try {
     await page.getByText(/Not quite: the answer is the right coronary artery/).waitFor();
     await page.waitForTimeout(400);
     await checkScreen(page, `${theme}/${mode} landing, answered`);
+    // The tour's four screens, each opened and checked.
+    for (const name of [/Build a test/, /Sit an exam/, /Find weak areas/, /Revise/]) {
+      await page.getByRole("tab", { name }).click();
+      await page.waitForTimeout(350);
+      await checkScreen(page, `${theme}/${mode} landing tour, ${name.source}`);
+    }
+    await page.getByRole("button", { name: "Show answer" }).click();
+    await page.getByRole("button", { name: "Good" }).click();
+    await checkScreen(page, `${theme}/${mode} landing tour, card rated`);
     await page.getByRole("button", { name: "Sign in" }).first().click();
     await page.getByRole("button", { name: "Continue with Google" }).waitFor();
     await checkScreen(page, `${theme}/${mode} sign-in`);

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Button, LogoWordmark, ThemeBackground, ThemeSwitcher } from "../ui-kit/index.ts";
 import { ConfidenceMatrix, PaceDemo, PaperPreview, TryQuestion } from "./demos.tsx";
+import { Faq, Tour } from "./tour.tsx";
 import "./landing.css";
 
 interface Props {
@@ -37,6 +38,13 @@ function Section({
   );
 }
 
+const TRUST: { title: string; text: string }[] = [
+  { title: "Offline", text: "Practise on the train, sync later" },
+  { title: "Private", text: "Only you can read your questions" },
+  { title: "Your questions", text: "Five question types, your own words" },
+  { title: "On your phone", text: "Installs to the home screen" },
+];
+
 const FACTS: { title: string; text: string }[] = [
   {
     title: "Works without a connection",
@@ -64,11 +72,24 @@ export default function Landing({ onSignIn, onCreate }: Props) {
   return (
     <>
       <ThemeBackground />
-      <header className={`${WRAP} flex items-center justify-between gap-3 py-4`}>
-        <LogoWordmark size={30} />
-        <Button variant="secondary" onClick={onSignIn}>
-          Sign in
-        </Button>
+      <header className="lp-bar-top">
+        <div className={`${WRAP} flex items-center justify-between gap-3 py-2`}>
+          <LogoWordmark size={30} />
+          <nav aria-label="Page sections" className="lp-links hidden md:flex">
+            <a href="#lp-tour">Tour</a>
+            <a href="#lp-pace">Plan</a>
+            <a href="#lp-look">Themes</a>
+            <a href="#lp-faq">Questions</a>
+          </nav>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" onClick={onSignIn} className="whitespace-nowrap">
+              Sign in
+            </Button>
+            <span className="hidden sm:inline-flex">
+              <Button onClick={onCreate}>Create account</Button>
+            </span>
+          </div>
+        </div>
       </header>
 
       <main>
@@ -98,6 +119,30 @@ export default function Landing({ onSignIn, onCreate }: Props) {
             </p>
           </div>
           <TryQuestion />
+        </section>
+
+        <div className={WRAP}>
+          <dl className="lp-trust m-0">
+            {TRUST.map((t) => (
+              <div key={t.title}>
+                <dt className="font-semibold">{t.title}</dt>
+                <dd className="m-0 text-sm text-muted">{t.text}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
+        <section aria-labelledby="lp-tour" className={`${WRAP} py-14 lg:py-20`}>
+          <div className="mb-8 flex max-w-[40rem] flex-col gap-3">
+            <h2 id="lp-tour" className="lp-h2 m-0">
+              Try the app before you sign up
+            </h2>
+            <p className="m-0 text-base leading-relaxed text-muted sm:text-lg">
+              Four screens you can use here: build a test, sit an exam, find your weak areas and
+              revise. They show sample data, and your own questions work the same way.
+            </p>
+          </div>
+          <Tour onCreate={onCreate} />
         </section>
 
         <div className="border-y border-line bg-surface-2">
@@ -153,6 +198,13 @@ export default function Landing({ onSignIn, onCreate }: Props) {
             </div>
           </Section>
         </div>
+
+        <section aria-labelledby="lp-faq" className={`${WRAP} py-14 lg:py-20`}>
+          <h2 id="lp-faq" className="lp-h2 m-0 mb-6 max-w-[40rem]">
+            Questions before you start
+          </h2>
+          <Faq />
+        </section>
 
         <section
           aria-labelledby="lp-start"
