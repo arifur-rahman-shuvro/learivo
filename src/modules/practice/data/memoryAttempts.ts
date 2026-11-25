@@ -191,6 +191,20 @@ export class MemoryAttempts implements AttemptRepo {
     return out;
   }
 
+  async skipped() {
+    const last = new Map<string, boolean>();
+    const done = [...this.attempts.values()]
+      .filter((a) => a.status === "submitted")
+      .sort((a, b) => a.startedAt.localeCompare(b.startedAt));
+    for (const a of done) {
+      a.items.forEach((item, i) => {
+        const qid = a.questionIds[i];
+        if (qid) last.set(qid, item.verdict === "unanswered");
+      });
+    }
+    return new Set([...last].filter(([, skipped]) => skipped).map(([id]) => id));
+  }
+
   async exams() {
     return [...this.examMap.values()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }

@@ -36,7 +36,7 @@ What each part does and the rules behind it, written from the code. For where fi
 ## Review and Insights
 
 - **Due now:** spaced-repetition cards (Again, Hard, Good, Easy). The scheduler follows the published FSRS-4.5 memory model with default parameters, not tuned to the student. After Again a card returns in 10 minutes. Questions answered wrong join the queue by themselves.
-- **Mistakes** (grouped by reason), **Bookmarks**, **Notes** (one per question plus free notes, searchable), **Flashcards** (own front/back cards, same scheduler) and **Glossary** (own terms; matching words are underlined in explanations, notes and cards).
+- **Mistakes** (grouped by reason, plus a **Skipped** group for questions left unanswered last time; each group can be practised again), **Bookmarks**, **Notes** (one per question plus free notes, searchable), **Flashcards** (own front/back cards, same scheduler) and **Glossary** (own terms; matching words are underlined in explanations, notes and cards).
 - **Insights:** overview with a 30-day accuracy trend, accuracy by subject or chapter (weakest first, tap to practise), exam scores, study time, and 11 achievements. Every chart has a table view. Figures use the latest 5000 answers and 200 finished sessions.
 - **Home:** today's focus, due cards, daily goal (1 to 500), streak, weak areas (under 70 percent after 5 or more answers), recent sessions, exam countdown with a daily pace and a study calendar for the days left (the student ticks the subjects the exam covers, or leaves All subjects; the pace, progress and calendar count only those, and a deleted subject is ignored; the day before the exam is revision only). While the exam date is today or later, Smart mix and any practice with no subject, tag or collection chosen draw about half of their questions from the exam's subjects and the rest from the others (a subject the student picks is never overridden; the Smart mix line says so), an All features shelf, and Customize (show, hide and order sections, saved to the account). A student with no questions sees the starter page, which keeps the All features shelf and Customize.
 
@@ -65,3 +65,9 @@ What each part does and the rules behind it, written from the code. For where fi
 - Offline edits are last-change-wins, with a clash screen for questions and a notice for notes.
 - Signing out while offline with unsent changes asks what to do; the device copy is wiped at sign-out for privacy.
 - AI helpers use the student's own key; there is no Learivo-run AI and no sharing between students.
+
+## Skipped, shuffling and automatic flashcards
+
+- Practice has a **Skipped last time** filter. A question counts as skipped when its latest finished appearance was left unanswered; answering it later removes it. Skipped questions also feed the Smart mix's weak pool.
+- Options are shuffled for every choice type, including true/false and multi-select (when "shuffle options" is on).
+- Questions you miss or skip in Practice or Exams become flashcards automatically (front = question, back = answer and explanation; duplicates are skipped by front text). Turn this off in Settings → Revision. They also go to the revision queue as before.

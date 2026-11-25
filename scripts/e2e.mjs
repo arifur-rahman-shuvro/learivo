@@ -160,7 +160,9 @@ try {
   await dialog.locator("textarea").nth(0).fill("Which nerve supplies the deltoid?");
   await dialog.locator("textarea").nth(1).fill("The axillary nerve");
   await dialog.getByRole("button", { name: "Save card" }).click();
-  await expectText("1 card");
+  // The question missed in the exam above was turned into a flashcard automatically.
+  await expectText("2 cards");
+  await expectText("Imported question 2");
   await expectText("Which nerve supplies the deltoid?");
   await page.getByRole("tab", { name: /^Notes/ }).click();
   await page.getByRole("button", { name: "New note" }).first().click();

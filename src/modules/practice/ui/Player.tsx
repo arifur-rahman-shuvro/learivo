@@ -4,6 +4,9 @@ import { useRequestFocus } from "../../../core/focus.ts";
 import GlossaryText from "../../workspace/ui/GlossaryText.tsx";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button, Dialog, ProgressBar, Spinner } from "../../../ui-kit/index.ts";
+import { autoFlashcardsOn } from "../../../core/autoCards.ts";
+import { newAutoCards } from "../domain/autoCards.ts";
+import type { WorkspaceRepo } from "../../workspace/data/repo.ts";
 import { errorText } from "../../question-bank/ui/bank.tsx";
 import { TYPE_LABELS } from "../../question-bank/domain/model.ts";
 import type { AttemptWithItems } from "../data/repo.ts";
@@ -18,6 +21,19 @@ interface Props {
   attemptId: string;
   onLeave: () => void;
   onSubmitted: (attemptId: string) => void;
+}
+
+/** Writes the flashcards for questions that do not have one yet, a few at a time. Never throws. */
+async function addFlashcards(repo: WorkspaceRepo, snapshots: Parameters<typeof newAutoCards>[0]) {
+  try {
+    const have = new Set((await repo.flashcards()).map((c) => c.front));
+    const cards = newAutoCards(snapshots, have);
+    for (let i = 0; i < cards.length; i += 5) {
+      await Promise.all(cards.slice(i, i + 5).map((c) => repo.saveFlashcard(c)));
+    }
+  } catch {
+    /* The flashcards are a bonus; the result is already saved. */
+  }
 }
 
 export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
@@ -130,15 +146,20 @@ export default function Player({ attemptId, onLeave, onSubmitted }: Props) {
           })),
           { ...t, secondsSpent: Math.max(0, spent) },
         );
-        // Missed questions join the revision queue. A failure here must not lose the result.
-        const missed = a.items.flatMap((i, k) =>
-          verdicts[k]!.verdict !== "correct" &&
-          verdicts[k]!.verdict !== "unanswered" &&
-          i.questionId
-            ? [i.questionId]
-            : [],
+        // Missed and skipped questions join the revision queue, and (unless switched off) become
+        // flashcards. A failure here must not lose the result.
+        const needWork = a.items.flatMap((i, k) =>
+          verdicts[k]!.verdict !== "correct" && i.questionId ? [{ item: i, k }] : [],
         );
-        if (missed.length > 0) await ws.repo.addCards(missed).catch(() => undefined);
+        if (needWork.length > 0) {
+          await ws.repo.addCards(needWork.map((n) => n.item.questionId!)).catch(() => undefined);
+          if (autoFlashcardsOn()) {
+            void addFlashcards(
+              ws.repo,
+              needWork.map((n) => n.item.snapshot),
+            ).then(() => ws.refresh());
+          }
+        }
         ws.refresh();
         refresh();
         onSubmitted(a.id);

@@ -26,6 +26,14 @@ import { useWorkspace } from "./workspace.tsx";
 import { List, DueNow, type Data } from "./ReviewParts.tsx";
 import { inGroup, MISTAKE_GROUPS, type MistakeGroup } from "../../practice/domain/groups.ts";
 
+/** The mistake groups plus the questions the student skipped. */
+type Group = MistakeGroup | "skipped";
+const GROUPS: readonly { id: Group; label: string }[] = [
+  MISTAKE_GROUPS[0]!,
+  { id: "skipped", label: "Skipped" },
+  ...MISTAKE_GROUPS.slice(1),
+];
+
 type Tab = "due" | "mistakes" | "bookmarks" | "notes" | "flashcards" | "glossary";
 const TABS: [Tab, string][] = [
   ["due", "Due now"],
@@ -37,7 +45,11 @@ const TABS: [Tab, string][] = [
 ];
 
 /** The active questions in one mistake group, from the loaded data. */
-function questionsIn(data: Data | null, group: MistakeGroup): QuestionRecord[] {
+function questionsIn(data: Data | null, group: Group): QuestionRecord[] {
+  if (group === "skipped")
+    return [...(data?.skipped ?? [])]
+      .filter((id) => data?.questions.get(id)?.status === "active")
+      .map((id) => data!.questions.get(id)!);
   return [...(data?.past.entries() ?? [])]
     .filter(([id, p]) => inGroup(p, group) && data?.questions.get(id)?.status === "active")
     .map(([id]) => data!.questions.get(id)!);
@@ -48,7 +60,7 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
   const { attempts } = usePractice();
   const ws = useWorkspace();
   const [tab, setTab] = useState<Tab>("due");
-  const [group, setGroup] = useState<MistakeGroup>("wrong");
+  const [group, setGroup] = useState<Group>("wrong");
   useIntent((i) => {
     if (i.kind === "open" && TABS.some(([k]) => k === i.target)) setTab(i.target as Tab);
   });
@@ -63,11 +75,12 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
   useEffect(() => {
     let alive = true;
     (async () => {
-      const [cards, marks, notes, past] = await Promise.all([
+      const [cards, marks, notes, past, skipped] = await Promise.all([
         ws.repo.cards(),
         ws.repo.bookmarks(),
         ws.repo.notes(),
         attempts.past(),
+        attempts.skipped().catch(() => new Set<string>()),
       ]);
       const wrong = [...past.entries()]
         .filter(([, p]) => inGroup(p, "wrong") || inGroup(p, "shaky"))
@@ -76,10 +89,18 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
         ...cards.map((c) => c.questionId),
         ...marks,
         ...wrong,
+        ...skipped,
         ...notes.flatMap((n) => (n.questionId ? [n.questionId] : [])),
       ]);
       const records = await bank.getMany([...ids]);
-      return { cards, marks, notes, past, questions: new Map(records.map((q) => [q.id, q])) };
+      return {
+        cards,
+        marks,
+        notes,
+        past,
+        skipped,
+        questions: new Map(records.map((q) => [q.id, q])),
+      };
     })().then(
       (d) => {
         if (!alive) return;
@@ -103,11 +124,17 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
     [data, now],
   );
   const groupCounts = useMemo(
-    () => new Map(MISTAKE_GROUPS.map((g) => [g.id, questionsIn(data, g.id).length])),
+    () => new Map(GROUPS.map((g) => [g.id, questionsIn(data, g.id).length])),
     [data],
   );
   const mistakes = useMemo(() => questionsIn(data, group), [data, group]);
-  const mistakeTotal = groupCounts.get("wrong") ?? 0;
+  // Missed and skipped questions, each counted once.
+  const mistakeTotal = useMemo(
+    () =>
+      new Set([...questionsIn(data, "wrong"), ...questionsIn(data, "skipped")].map((q) => q.id))
+        .size,
+    [data],
+  );
   const marked = useMemo(
     () =>
       [...(data?.marks ?? [])].flatMap((id) =>
@@ -225,7 +252,7 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
         <>
           {[...groupCounts.values()].some((n) => n > 0) && (
             <div role="tablist" aria-label="Group mistakes by" className="flex flex-wrap gap-2">
-              {MISTAKE_GROUPS.map((g) => (
+              {GROUPS.map((g) => (
                 <button
                   key={g.id}
                   role="tab"
@@ -244,13 +271,21 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
           {mistakes.length === 0 ? (
             <div className="lv-card">
               <EmptyState
-                title={group === "wrong" ? "No mistakes to review" : "Nothing in this group"}
+                title={
+                  group === "wrong"
+                    ? "No mistakes to review"
+                    : group === "skipped"
+                      ? "Nothing skipped"
+                      : "Nothing in this group"
+                }
                 icon={<CheckIcon size={36} />}
                 art={group === "wrong" ? <CaughtUpScene /> : undefined}
                 description={
                   group === "wrong"
                     ? "Questions you last answered wrong in a session appear here."
-                    : "Tag why you missed a question in Results, or rate how sure you are while you practise, to fill these groups."
+                    : group === "skipped"
+                      ? "Questions you left unanswered the last time they came up appear here. Answer one and it leaves the list."
+                      : "Tag why you missed a question in Results, or rate how sure you are while you practise, to fill these groups."
                 }
               />
             </div>
@@ -262,7 +297,7 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
                   onClick={() =>
                     void practise(
                       mistakes.map((q) => q.id),
-                      `Practice: ${MISTAKE_GROUPS.find((g) => g.id === group)?.label.toLowerCase() ?? "mistakes"}`,
+                      `Practice: ${GROUPS.find((g) => g.id === group)?.label.toLowerCase() ?? "mistakes"}`,
                     )
                   }
                 >

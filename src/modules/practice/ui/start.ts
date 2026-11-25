@@ -62,11 +62,12 @@ export async function countAvailable(
 ): Promise<number> {
   const pool = await fetchPool(questions, s);
   if (s.filter === "all") return pool.length;
-  const [past, marks] = await Promise.all([
+  const [past, marks, skipped] = await Promise.all([
     attempts.past(),
     workspace ? workspace.bookmarks() : Promise.resolve(new Set<string>()),
+    s.filter === "skipped" ? attempts.skipped() : Promise.resolve(new Set<string>()),
   ]);
-  return applyFilter(pool, s.filter, past, marks).length;
+  return applyFilter(pool, s.filter, past, marks, skipped).length;
 }
 
 export async function startPractice(
@@ -75,15 +76,16 @@ export async function startPractice(
   s: PracticeSetup,
   workspace?: WorkspaceRepo,
 ): Promise<string> {
-  const [pool, nodes, past, marks] = await Promise.all([
+  const [pool, nodes, past, marks, skipped] = await Promise.all([
     fetchPool(questions, s),
     questions.taxonomy(),
     s.filter === "all" ? Promise.resolve(new Map()) : attempts.past(),
     workspace && s.filter === "bookmarked"
       ? workspace.bookmarks()
       : Promise.resolve(new Set<string>()),
+    s.filter === "skipped" ? attempts.skipped() : Promise.resolve(new Set<string>()),
   ]);
-  const eligible = applyFilter(pool, s.filter, past, marks);
+  const eligible = applyFilter(pool, s.filter, past, marks, skipped);
   // With no subject, tag or collection chosen, lean towards the subjects of the coming exam.
   const focus =
     s.nodeId === null && s.tagId === null && s.collectionId === null
@@ -234,23 +236,25 @@ async function smartPools(
   workspace: WorkspaceRepo,
   now: Date,
 ) {
-  const [pool, nodes, past, cards, facts] = await Promise.all([
+  const [pool, nodes, past, cards, facts, skipped] = await Promise.all([
     fetchPool(questions, { nodeId: null, tagId: null, collectionId: null }),
     questions.taxonomy(),
     attempts.past(),
     workspace.cards(),
     attempts.facts(2000),
+    attempts.skipped().catch(() => new Set<string>()),
   ]);
   const byId = new Map(pool.map((q) => [q.id, q]));
   const due = cards.filter((c) => isDue(c, now) && byId.has(c.questionId)).map((c) => c.questionId);
   const weakNames = new Set(weakAreas(facts).map((a) => a.name));
-  // Weak means a weak area, or a question answered sure-but-wrong or right-but-unsure last time.
+  // Weak means a weak area, a question skipped last time, or one answered sure-but-wrong or right-but-unsure.
   const weak = pool
     .filter(
       (q) =>
         weakNames.has(pathOf(q.nodeId, nodes).slice(0, 2).join(" › ")) ||
         inGroup(past.get(q.id), "overconfident") ||
-        inGroup(past.get(q.id), "shaky"),
+        inGroup(past.get(q.id), "shaky") ||
+        skipped.has(q.id),
     )
     .map((q) => q.id);
   const fresh = pool.filter((q) => !past.has(q.id)).map((q) => q.id);

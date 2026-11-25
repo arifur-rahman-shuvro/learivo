@@ -382,6 +382,18 @@ export class SupabaseAttempts implements AttemptRepo {
     return out;
   }
 
+  async skipped() {
+    const out = new Set<string>();
+    for (let from = 0; ; from += 1000) {
+      const rows = ok(await this.db.rpc("question_skipped").range(from, from + 999)) as unknown as {
+        question_id: string;
+      }[];
+      for (const r of rows) out.add(r.question_id);
+      if (rows.length < 1000) break;
+    }
+    return out;
+  }
+
   async exams() {
     const rows = ok(
       await this.db

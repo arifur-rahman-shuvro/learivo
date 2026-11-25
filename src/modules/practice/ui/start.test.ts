@@ -106,3 +106,78 @@ describe("exam subjects lean the mix", () => {
     expect(got.filter((x) => x.startsWith("A"))).toHaveLength(10);
   });
 });
+
+describe("practice from skipped questions", () => {
+  const q = (stem: string) => ({
+    ...blankQuestion("true_false"),
+    stem,
+    explanation: "x",
+    answer: TF_ANSWER,
+    path: ["Anatomy"],
+  });
+  const setup = {
+    nodeId: null,
+    tagId: null,
+    collectionId: null,
+    filter: "skipped" as const,
+    count: 20,
+    minutes: null,
+    instantFeedback: true,
+    shuffleOptions: true,
+  };
+  /** A finished session in which each question is either answered (right) or left unanswered. */
+  async function session(attempts: MemoryAttempts, items: { id: string; skipped: boolean }[]) {
+    const id = await attempts.create({
+      kind: "practice",
+      examId: null,
+      title: "s",
+      instantFeedback: false,
+      timeLimitSec: null,
+      marksCorrect: 1,
+      marksWrong: 0,
+      items: items.map((x) => ({
+        questionId: x.id,
+        snapshot: {
+          qtype: "true_false",
+          stem: x.id,
+          explanation: "",
+          answer: TF_ANSWER,
+          difficulty: null,
+          path: [],
+        },
+      })),
+    });
+    await attempts.submit(
+      id,
+      items.map((x, position) => ({
+        position,
+        verdict: x.skipped ? "unanswered" : "correct",
+        credit: x.skipped ? 0 : 1,
+        marks: x.skipped ? 0 : 1,
+      })),
+      { score: 0, correct: 0, partial: 0, wrong: 0, unanswered: 0, secondsSpent: 1 },
+    );
+  }
+
+  it("draws only the questions whose latest appearance was skipped", async () => {
+    const bank = new MemoryRepo();
+    const attempts = new MemoryAttempts();
+    const [a, b, c] = await bank.create([q("A"), q("B"), q("C")]);
+    await session(attempts, [
+      { id: a!, skipped: true },
+      { id: b!, skipped: true },
+      { id: c!, skipped: false },
+    ]);
+    // B is answered in a later session, so it is no longer skipped.
+    await session(attempts, [{ id: b!, skipped: false }]);
+    expect(await attempts.skipped()).toEqual(new Set([a!]));
+    const id = await startPractice(bank, attempts, setup);
+    expect((await attempts.get(id))!.items.map((i) => i.snapshot.stem)).toEqual(["A"]);
+  });
+
+  it("says so when nothing was skipped", async () => {
+    const bank = new MemoryRepo();
+    await bank.create([q("A")]);
+    await expect(startPractice(bank, new MemoryAttempts(), setup)).rejects.toThrow();
+  });
+});

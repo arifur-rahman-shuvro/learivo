@@ -289,6 +289,7 @@ export default function PracticeHome({ onOpen }: { onOpen: (v: View) => void }) 
                 { value: "unattempted", label: "Not attempted yet" },
                 { value: "bookmarked", label: "Bookmarked" },
                 { value: "incorrect", label: "Last answered wrong" },
+                { value: "skipped", label: "Skipped last time" },
                 ...MISTAKE_GROUPS.filter((g) => g.id !== "wrong").map((g) => ({
                   value: g.id,
                   label: REASONS.some((r) => r.id === g.id) ? `Missed: ${g.label}` : g.label,

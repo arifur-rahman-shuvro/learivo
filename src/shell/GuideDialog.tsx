@@ -250,9 +250,10 @@ export default function GuideDialog({ onNavigate }: { onNavigate: (route: string
           </Section>
           <Section title="Revision and flashcards">
             <p className="m-0">
-              Questions you miss are added to revision. Rate each card Again, Hard, Good or Easy and
-              it comes back later or sooner. Flashcards and glossary terms work the same way for
-              facts you write yourself.
+              Questions you miss or skip are added to revision and turned into flashcards (switch
+              this off in Settings). Rate each card Again, Hard, Good or Easy and it comes back
+              later or sooner. Flashcards and glossary terms work the same way for facts you write
+              yourself.
             </p>
           </Section>
           <Section title="Offline and syncing">

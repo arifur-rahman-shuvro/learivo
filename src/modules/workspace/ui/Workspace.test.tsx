@@ -55,7 +55,7 @@ async function setup<T = void>(
 /** A finished session in which each given question was answered right or wrong. */
 async function finished(
   attempts: MemoryAttempts,
-  items: { id: string; stem: string; path?: string[]; right: boolean }[],
+  items: { id: string; stem: string; path?: string[]; right: boolean; skipped?: boolean }[],
   kind: "practice" | "exam" = "practice",
 ) {
   const id = await attempts.create({
@@ -79,16 +79,17 @@ async function finished(
     })),
   });
   for (const [i, x] of items.entries())
-    await attempts.patchItem(id, i, {
-      response: {
-        marks: x.right ? [true, false, true, false, false] : [false, true, false, true, true],
-      },
-    });
+    if (!x.skipped)
+      await attempts.patchItem(id, i, {
+        response: {
+          marks: x.right ? [true, false, true, false, false] : [false, true, false, true, true],
+        },
+      });
   await attempts.submit(
     id,
     items.map((x, position) => ({
       position,
-      verdict: x.right ? "correct" : "wrong",
+      verdict: x.skipped ? "unanswered" : x.right ? "correct" : "wrong",
       credit: x.right ? 1 : 0,
       marks: x.right ? 1 : 0,
     })),
@@ -96,8 +97,8 @@ async function finished(
       score: items.filter((x) => x.right).length,
       correct: items.filter((x) => x.right).length,
       partial: 0,
-      wrong: items.filter((x) => !x.right).length,
-      unanswered: 0,
+      wrong: items.filter((x) => !x.right && !x.skipped).length,
+      unanswered: items.filter((x) => x.skipped).length,
       secondsSpent: 120,
     },
   );
@@ -168,6 +169,36 @@ describe("Review: mistakes, bookmarks, notes", () => {
     fireEvent.click(screen.getByRole("button", { name: /Practise these/ }));
     await waitFor(() => expect(nav).toHaveBeenCalledWith("#/practice"));
     expect(handoff.attemptId).not.toBeNull();
+  });
+
+  it("lists skipped questions as their own group and practises them like mistakes", async () => {
+    const { nav, attempts, seeded } = await setup(
+      (n) => <ReviewScreen onNavigate={n} />,
+      async ({ bank, attempts }) => {
+        const [a, b, c] = await bank.create([tf("Skipped one"), tf("Missed one"), tf("Fine one")]);
+        await finished(attempts, [
+          { id: a!, stem: "Skipped one", right: false, skipped: true },
+          { id: b!, stem: "Missed one", right: false },
+          { id: c!, stem: "Fine one", right: true },
+        ]);
+        return a!;
+      },
+    );
+    fireEvent.click(await screen.findByRole("tab", { name: /Mistakes/ }));
+    // The tab counts the missed and the skipped question once each.
+    expect(screen.getByRole("tab", { name: /Mistakes/ }).textContent).toContain("2");
+    fireEvent.click(await screen.findByRole("tab", { name: /Skipped/ }));
+    expect(await screen.findByText("Skipped one")).toBeTruthy();
+    expect(screen.queryByText("Missed one")).toBeNull();
+    expect(screen.queryByText("Fine one")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Practise these 1/ }));
+    await waitFor(() => expect(nav).toHaveBeenCalledWith("#/practice"));
+    expect((await attempts.get(handoff.attemptId!))!.items.map((i) => i.snapshot.stem)).toEqual([
+      "Skipped one",
+    ]);
+    // Answering it later takes it off the list.
+    await finished(attempts, [{ id: seeded, stem: "Skipped one", right: true }]);
+    expect((await attempts.skipped()).size).toBe(0);
   });
 
   it("removes a bookmark", async () => {

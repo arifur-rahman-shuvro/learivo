@@ -285,6 +285,20 @@ export class SyncedAttempts implements AttemptRepo {
     return theirs;
   }
 
+  async skipped(): Promise<Set<string>> {
+    await this.ready();
+    let theirs = new Set<string>();
+    try {
+      theirs = await this.remote.skipped();
+    } catch (e) {
+      if (this.pending.length === 0) throw e;
+    }
+    // Sessions waiting to be sent are newer: what they answered is no longer skipped.
+    for (const qid of (await this.local.past()).keys()) theirs.delete(qid);
+    for (const qid of await this.local.skipped()) theirs.add(qid);
+    return theirs;
+  }
+
   /** Exams are kept on the device after each successful read, so they can be taken offline. */
   async exams(): Promise<Exam[]> {
     await this.ready();

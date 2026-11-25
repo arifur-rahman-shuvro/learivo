@@ -24,6 +24,7 @@ export function rememberedSetup(): PracticeSetup {
       "all",
       "unattempted",
       "bookmarked",
+      "skipped",
       ...MISTAKE_GROUPS.map((g) => (g.id === "wrong" ? "incorrect" : g.id) as PracticeFilter),
     ];
     return {

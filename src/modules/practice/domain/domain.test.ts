@@ -276,3 +276,48 @@ describe("exam focus", () => {
     expect(out.filter(isE)).toHaveLength(10);
   });
 });
+
+describe("shuffling true/false statements and multiple-select options", () => {
+  const rec = (qtype: "true_false" | "multi_select") =>
+    ({
+      id: "q",
+      qtype,
+      stem: "s",
+      explanation: "",
+      difficulty: null,
+      answer: {
+        options: ["A", "B", "C", "D", "E"].map((text, i) => ({ text, correct: i % 2 === 0 })),
+      },
+    }) as never;
+
+  it("mixes the order for both types and keeps each item's right/wrong mark with its text", async () => {
+    const { snapshotOf } = await import("./session.ts");
+    for (const t of ["true_false", "multi_select"] as const) {
+      let moved = false;
+      for (let i = 0; i < 20; i++) {
+        const snap = snapshotOf(rec(t), [], true);
+        const opts = "options" in snap.answer ? snap.answer.options : [];
+        expect(opts.map((o) => o.text).sort()).toEqual(["A", "B", "C", "D", "E"]);
+        for (const o of opts) expect(o.correct).toBe(["A", "C", "E"].includes(o.text));
+        if (opts.map((o) => o.text).join("") !== "ABCDE") moved = true;
+      }
+      expect(moved, t).toBe(true);
+      const kept = snapshotOf(rec(t), [], false);
+      expect("options" in kept.answer && kept.answer.options.map((o) => o.text).join("")).toBe(
+        "ABCDE",
+      );
+    }
+  });
+});
+
+describe("the skipped filter", () => {
+  it("keeps only the questions in the skipped set", async () => {
+    const { applyFilter } = await import("./session.ts");
+    const pool = ["a", "b", "c"].map((id) => ({ id })) as never[];
+    expect(
+      applyFilter(pool, "skipped", new Map(), new Set(), new Set(["b"])).map(
+        (q: { id: string }) => q.id,
+      ),
+    ).toEqual(["b"]);
+  });
+});

@@ -45,7 +45,10 @@ function setup(questions = [tf("Q one"), tf("Q two"), tf("Q three")]) {
   return { bank, attempts, workspace, ready };
 }
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  localStorage.clear();
+});
 
 async function startPractice(count = 3) {
   const input = await screen.findByLabelText("Number of questions");
@@ -142,6 +145,38 @@ describe("Practice", () => {
       const [a] = await attempts.list(1);
       expect((await attempts.get(a!.id))!.items[0]!.mistakeReason).toBeNull();
     });
+  });
+
+  it("turns skipped questions into revision cards and flashcards, and remembers what was skipped", async () => {
+    const { workspace, attempts, ready } = setup();
+    await ready;
+    await startPractice();
+    await screen.findByText(/Question 1 of 3/);
+    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+    fireEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", { name: "Submit" }),
+    );
+    await screen.findByRole("heading", { name: "Results" });
+    await waitFor(async () => expect(await workspace.flashcards()).toHaveLength(3));
+    expect(await workspace.cards()).toHaveLength(3);
+    const first = (await workspace.flashcards()).find((c) => c.front === "Q one")!;
+    expect(first.back).toBe("Answer: Right answer\n\nBecause Q one");
+    expect((await attempts.skipped()).size).toBe(3);
+  });
+
+  it("makes no flashcards when the student turned that off, but still queues revision", async () => {
+    localStorage.setItem("learivo.autoFlashcards", "off");
+    const { workspace, ready } = setup();
+    await ready;
+    await startPractice();
+    await screen.findByText(/Question 1 of 3/);
+    fireEvent.click(screen.getByRole("button", { name: "Submit" }));
+    fireEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", { name: "Submit" }),
+    );
+    await screen.findByRole("heading", { name: "Results" });
+    await waitFor(async () => expect(await workspace.cards()).toHaveLength(3));
+    expect(await workspace.flashcards()).toHaveLength(0);
   });
 
   it("offers to resume an unfinished session and can retry missed questions", async () => {
@@ -242,12 +277,13 @@ describe("Practice", () => {
     await ready;
     await startPractice(1);
     await screen.findByText(/Question 1 of 1/);
-    const statements = screen.getAllByRole("group");
-    expect(statements).toHaveLength(5);
-    // statements 1, 2 and 3 are answered correctly; 4 and 5 are left alone
-    fireEvent.click(within(statements[0]!).getByLabelText("False"));
-    fireEvent.click(within(statements[1]!).getByLabelText("True"));
-    fireEvent.click(within(statements[2]!).getByLabelText("False"));
+    expect(screen.getAllByRole("group")).toHaveLength(5);
+    // The statements come in a shuffled order, so find each by its text.
+    const row = (text: string) => screen.getByText(text).closest("fieldset") as HTMLElement;
+    // "5 chambers", "Pumps blood" and "Is 2 in number" are answered correctly; the other two are left alone
+    fireEvent.click(within(row("5 chambers")).getByLabelText("False"));
+    fireEvent.click(within(row("Pumps blood")).getByLabelText("True"));
+    fireEvent.click(within(row("Is 2 in number")).getByLabelText("False"));
     fireEvent.click(screen.getByRole("button", { name: "Finish" }));
     fireEvent.click(
       within(await screen.findByRole("dialog")).getByRole("button", { name: "Submit" }),

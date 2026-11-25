@@ -1,6 +1,8 @@
 import { openAiConnection } from "../core/dialogs/ai.ts";
 import { openBackup } from "../core/dialogs/backup.ts";
 import { Button, Dialog, ThemeSwitcher } from "../ui-kit/index.ts";
+import { useState } from "react";
+import { autoFlashcardsOn, setAutoFlashcards } from "../core/autoCards.ts";
 import { SUPPORT_EMAIL, supportMailto } from "../core/support.ts";
 import { useDataRepo } from "../platform/offline/OfflineProvider.tsx";
 
@@ -30,6 +32,7 @@ export function SettingsDialog({
   onOpenAccount: () => void;
 }) {
   const hasData = useDataRepo() !== null;
+  const [autoCards, setAutoCards] = useState(autoFlashcardsOn);
   return (
     <Dialog
       open={open}
@@ -98,6 +101,26 @@ export function SettingsDialog({
               Back up and restore
             </Button>
           </div>
+        </section>
+        <section className="flex flex-col gap-2">
+          <h3 className="m-0 text-base font-semibold">Revision</h3>
+          <label className="flex items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={autoCards}
+              onChange={(e) => {
+                setAutoCards(e.target.checked);
+                setAutoFlashcards(e.target.checked);
+              }}
+            />
+            <span>
+              Make flashcards from questions I miss or skip
+              <span className="block text-muted">
+                After a session, each one gets a front-and-back card in Review, Flashcards.
+              </span>
+            </span>
+          </label>
         </section>
         <section className="flex flex-col gap-2">
           <h3 className="m-0 text-base font-semibold">Help and feedback</h3>

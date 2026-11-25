@@ -21,6 +21,8 @@ export interface Data {
   marks: Set<string>;
   notes: Note[];
   past: Map<string, Past>;
+  /** Questions whose latest appearance in a session was left unanswered. */
+  skipped: Set<string>;
   questions: Map<string, QuestionRecord>;
 }
 

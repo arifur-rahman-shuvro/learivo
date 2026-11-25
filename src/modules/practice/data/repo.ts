@@ -123,6 +123,9 @@ export interface AttemptRepo {
   /** Result of the latest graded answer for each question that was ever answered. */
   past(): Promise<Map<string, Past>>;
 
+  /** Questions whose latest appearance in a finished session was left unanswered. */
+  skipped(): Promise<Set<string>>;
+
   exams(): Promise<Exam[]>;
   saveExam(id: string | null, input: ExamInput): Promise<string>;
   deleteExam(id: string): Promise<void>;

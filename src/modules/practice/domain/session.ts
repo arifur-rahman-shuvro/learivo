@@ -25,7 +25,7 @@ export function shuffled<T>(items: readonly T[], rand: () => number = Math.rando
   return out;
 }
 
-/** Copies a question for a session. Options may be shuffled, except true/false statements, which keep their order. */
+/** Copies a question for a session. Options, and true/false statements, may be shuffled. */
 export function snapshotOf(
   q: QuestionRecord,
   path: string[],
@@ -33,7 +33,7 @@ export function snapshotOf(
   rand: () => number = Math.random,
 ): Snapshot {
   const answer =
-    shuffleOptions && q.qtype !== "true_false" && "options" in q.answer
+    shuffleOptions && "options" in q.answer
       ? { options: shuffled(q.answer.options, rand) }
       : q.answer;
   return {
@@ -48,7 +48,7 @@ export function snapshotOf(
 
 /** Which questions a practice session may draw from, beyond the subject, tag or collection. */
 export type PracticeFilter =
-  "all" | "unattempted" | "bookmarked" | "incorrect" | Exclude<MistakeGroup, "wrong">;
+  "all" | "unattempted" | "bookmarked" | "skipped" | "incorrect" | Exclude<MistakeGroup, "wrong">;
 
 export interface Past {
   /** Result of the most recent graded answer to this question. */
@@ -65,8 +65,10 @@ export function applyFilter(
   filter: PracticeFilter,
   past: ReadonlyMap<string, Past>,
   bookmarks: ReadonlySet<string> = new Set(),
+  skipped: ReadonlySet<string> = new Set(),
 ): QuestionRecord[] {
   if (filter === "bookmarked") return pool.filter((q) => bookmarks.has(q.id));
+  if (filter === "skipped") return pool.filter((q) => skipped.has(q.id));
   if (filter === "unattempted") return pool.filter((q) => !past.has(q.id));
   if (filter === "all") return [...pool];
   const group = filter === "incorrect" ? "wrong" : filter;
