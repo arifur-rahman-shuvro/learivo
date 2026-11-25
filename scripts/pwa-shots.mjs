@@ -121,7 +121,7 @@ async function session(w, h, scale, shots) {
     .first()
     .click();
   await page.getByRole("button", { name: "Submit", exact: true }).last().click();
-  await page.getByText("Accuracy").first().waitFor();
+  await page.getByText("Percentage").first().waitFor();
   await page.evaluate(() => (location.hash = "#/home"));
   await page.waitForSelector("h1");
   await page.waitForTimeout(900);

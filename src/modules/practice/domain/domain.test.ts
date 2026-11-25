@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { grade, isAnswered, marksFor, normalizeAnswer, tally } from "./grading.ts";
+import {
+  formatMarks,
+  grade,
+  isAnswered,
+  marksFor,
+  normalizeAnswer,
+  percentOfTotal,
+  tally,
+} from "./grading.ts";
 import { applyFilter, checkRules, drawByRules, mulberry32, shuffled } from "./session.ts";
 import type { QuestionRecord } from "../../question-bank/data/repo.ts";
 import { blankQuestion } from "../../question-bank/domain/model.ts";
@@ -319,5 +327,23 @@ describe("the skipped filter", () => {
         (q: { id: string }) => q.id,
       ),
     ).toEqual(["b"]);
+  });
+});
+
+describe("marks display and percentage", () => {
+  it("shows at most two decimals", () => {
+    expect(formatMarks(13.333333334)).toBe("13.33");
+    expect(formatMarks(13.335)).toBe("13.34");
+    expect(formatMarks(13.25)).toBe("13.25");
+    expect(formatMarks(15)).toBe("15");
+    expect(formatMarks(13.5)).toBe("13.5");
+    expect(formatMarks(null)).toBe("0");
+  });
+  it("takes the percentage out of all questions, not only the answered ones", () => {
+    // 20 questions, 16 answered, 12 right: 60%, not 75%.
+    expect(percentOfTotal(12, 20, 1)).toBe(60);
+    expect(percentOfTotal(10, 20, 0.5)).toBe(100);
+    expect(percentOfTotal(5, 0, 1)).toBe(0);
+    expect(percentOfTotal(-3, 10, 1)).toBe(0);
   });
 });

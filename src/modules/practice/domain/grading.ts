@@ -132,6 +132,28 @@ export interface Tally {
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+/** Marks for display: at most two decimals (13.3333 shows as 13.33, 13.25 stays 13.25, 15 stays 15). */
+export function formatMarks(n: number | null | undefined): string {
+  const v = Math.round((n ?? 0) * 100) / 100;
+  return String(Object.is(v, -0) ? 0 : v);
+}
+
+/**
+ * Percentage of everything the session was worth: marks earned out of the marks for ALL the
+ * questions, so skipped questions count against it. 12 right of 20 is 60%, even if only 16 were
+ * answered. Returns 0 to 100, one decimal at most.
+ */
+export function percentOfTotal(
+  score: number | null | undefined,
+  count: number,
+  marksEach: number,
+): number {
+  const max = count * marksEach;
+  if (max <= 0) return 0;
+  const p = ((score ?? 0) / max) * 100;
+  return Math.round(Math.min(100, Math.max(0, p)) * 10) / 10;
+}
+
 /** Marks earned by one question, before the total is kept above zero. */
 export function marksFor(o: Outcome, marksCorrect: number, marksWrong: number): number {
   return round2(o.credit * marksCorrect - o.penalty * marksWrong);

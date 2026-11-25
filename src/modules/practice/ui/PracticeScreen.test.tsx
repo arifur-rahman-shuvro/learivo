@@ -81,8 +81,10 @@ describe("Practice", () => {
     expect(within(dialog).getByText(/2 questions are not answered/)).toBeTruthy();
     fireEvent.click(within(dialog).getByRole("button", { name: "Submit" }));
     expect(await screen.findByRole("heading", { name: "Results" })).toBeTruthy();
-    // One answered, two skipped: accuracy is based on answered questions only.
+    // One right, two skipped: the percentage counts every question (1 of 3), not only the answered one.
     const summary = screen.getByRole("region", { name: "Summary" });
+    expect(within(summary).getByText("Percentage").nextSibling?.textContent).toBe("33.3%");
+    expect(within(summary).getByText("Answered").nextSibling?.textContent).toBe("1 of 3");
     expect(within(summary).getByText("Skipped").nextSibling?.textContent).toBe("2");
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(await screen.findByText(/correct ·/)).toBeTruthy();

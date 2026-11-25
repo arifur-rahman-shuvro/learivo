@@ -1,3 +1,4 @@
+import { percentOfTotal } from "./grading.ts";
 import { shortTime } from "./pace.ts";
 
 export interface Scored {
@@ -8,10 +9,7 @@ export interface Scored {
   submittedAt: string | null;
 }
 
-const percentOf = (a: Scored) =>
-  a.questionCount === 0 || a.marksCorrect === 0
-    ? 0
-    : ((a.score ?? 0) / (a.questionCount * a.marksCorrect)) * 100;
+const percentOf = (a: Scored) => percentOfTotal(a.score, a.questionCount, a.marksCorrect);
 
 /** The most recent earlier finished attempt in the list, or null. */
 export function previousAttempt<T extends Scored>(current: T, others: readonly T[]): T | null {

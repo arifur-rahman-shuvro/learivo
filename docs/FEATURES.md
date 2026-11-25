@@ -23,7 +23,7 @@ What each part does and the rules behind it, written from the code. For where fi
 
 ## Practice and exams
 
-- Practice sessions (Quick 10, by subject or topic, from bookmarks, Smart mix with a preview line) and timed exams built from the bank, with an exam player and results (accuracy, by subject, time).
+- Practice sessions (Quick 10, by subject or topic, from bookmarks, Smart mix with a preview line) and timed exams built from the bank, with an exam player and results (score, percentage, answered count, by subject, time).
 - Marking happens in the browser on submit; each question is stored as a frozen snapshot in the attempt, so results stay correct if the question is later edited or deleted.
 - Marking rules: multiple answer with k correct gives 1/k per correct pick and a wrong pick cancels one correct pick; true/false gives 1/n per statement marked correctly; fill in the blank ignores case, spacing and trailing punctuation; negative marking uses the same units and never takes a score below zero.
 - Untimed practice counts time only while the screen is open; timed sessions use the wall clock.
@@ -71,3 +71,9 @@ What each part does and the rules behind it, written from the code. For where fi
 - Practice has a **Skipped last time** filter. A question counts as skipped when its latest finished appearance was left unanswered; answering it later removes it. Skipped questions also feed the Smart mix's weak pool.
 - Options are shuffled for every choice type, including true/false and multi-select (when "shuffle options" is on).
 - Questions you miss or skip in Practice or Exams become flashcards automatically (front = question, back = answer and explanation; duplicates are skipped by front text). Turn this off in Settings → Revision. They also go to the revision queue as before.
+
+## Marks display and percentage
+
+- Marks always show with at most two decimals (13.3333 shows as 13.33, 13.25 stays 13.25, 15 stays 15), on Results, per question and in the exam score.
+- The percentage is marks earned out of the marks for **all** questions, so a skipped question counts against it: 12 right out of 20 is 60% even if only 16 were answered. Results shows Score, Percentage and "Answered x of y". "Up/Down x points from last time" uses the same percentage.
+- Insights "accuracy" is still about answered questions only (it measures how well you know what you attempt); exam scores in Insights use full marks.

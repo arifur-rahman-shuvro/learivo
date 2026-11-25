@@ -2,6 +2,7 @@ import { compareSentence, previousAttempt } from "../domain/compare.ts";
 import { paceNote, paceOf, shortTime } from "../domain/pace.ts";
 import GlossaryText from "../../workspace/ui/GlossaryText.tsx";
 import { useEffect, useMemo, useState } from "react";
+import { formatMarks, percentOfTotal } from "../domain/grading.ts";
 import { Badge, Button, ProgressRing, PanelSkeleton } from "../../../ui-kit/index.ts";
 import { errorText } from "../../question-bank/ui/bank.tsx";
 import { TYPE_LABELS } from "../../question-bank/domain/model.ts";
@@ -102,13 +103,8 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
       .map((i) => ({ correct: i.verdict === "correct", confidence: i.confidence })),
   );
   const answered = (a.correct ?? 0) + (a.partial ?? 0) + (a.wrong ?? 0);
-  const earned = a.items.reduce((n, i) => n + (i.credit ?? (i.verdict === "correct" ? 1 : 0)), 0);
-  const percent = a.questionCount === 0 ? 0 : (earned / a.questionCount) * 100;
-  const answeredCredit = a.items.reduce(
-    (n, i) =>
-      i.verdict === "unanswered" ? n : n + (i.credit ?? (i.verdict === "correct" ? 1 : 0)),
-    0,
-  );
+  // Out of ALL the questions, so a skipped question counts against the percentage.
+  const percent = percentOfTotal(a.score, a.questionCount, a.marksCorrect);
   const missed = a.items.some((i) => i.verdict !== "correct" && i.questionId !== null);
 
   async function setReason(position: number, reason: Reason | null) {
@@ -162,7 +158,7 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
       </header>
 
       <section aria-label="Summary" className="lv-card flex flex-wrap items-center gap-6 p-5">
-        <ProgressRing value={percent} label="Correct answers" size={112} />
+        <ProgressRing value={percent} label="Percentage of total marks" size={112} />
         {versus && (
           <p role="status" className="m-0 w-full text-sm font-semibold sm:order-last">
             {versus}
@@ -170,15 +166,13 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
         )}
         <dl className="m-0 grid grid-cols-2 gap-x-8 gap-y-2 sm:grid-cols-4">
           {[
-            ["Score", `${a.score ?? 0} / ${a.questionCount * a.marksCorrect}`],
+            ["Score", `${formatMarks(a.score)} / ${formatMarks(a.questionCount * a.marksCorrect)}`],
+            ["Percentage", `${formatMarks(percent)}%`],
             ["Correct", String(a.correct ?? 0)],
             ["Partly correct", String(a.partial ?? 0)],
             ["Wrong", String(a.wrong ?? 0)],
             ["Skipped", String(a.unanswered ?? 0)],
-            [
-              "Accuracy",
-              answered === 0 ? "-" : `${Math.round((answeredCredit / answered) * 100)}%`,
-            ],
+            ["Answered", `${answered} of ${a.questionCount}`],
             ["Time", clock(a.secondsSpent)],
             ...(pace ? [["Per question", shortTime(pace.average)]] : []),
           ].map(([k, v]) => (
@@ -321,7 +315,9 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
                         : i.verdict === "wrong"
                           ? "Wrong"
                           : "Skipped"}
-                    {i.verdict !== "unanswered" && i.marks !== null ? ` · ${i.marks}` : ""}
+                    {i.verdict !== "unanswered" && i.marks !== null
+                      ? ` · ${formatMarks(i.marks)}`
+                      : ""}
                   </Badge>
                   {i.mistakeReason && <Badge tone="neutral">{reasonLabel(i.mistakeReason)}</Badge>}
                   {calibration(i.verdict === "correct", i.confidence) === "overconfident" &&

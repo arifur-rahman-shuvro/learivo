@@ -78,9 +78,9 @@ try {
   }
   await page.getByRole("button", { name: "Submit", exact: true }).click();
   await page.waitForTimeout(800);
-  await expectText("Accuracy");
+  await expectText("Percentage");
   const result = await page.locator("main").innerText();
-  if (!/3 \/ 3\s+Correct/.test(result) || !/Accuracy\s+100%/.test(result)) {
+  if (!/Score\s+3 \/ 3/.test(result) || !/Percentage\s+100%/.test(result)) {
     throw new Error(`Result screen did not show 3 of 3 correct: ${result.slice(0, 200)}`);
   }
 
@@ -145,9 +145,9 @@ try {
     .first()
     .click();
   await page.getByRole("button", { name: "Submit", exact: true }).click();
-  await expectText("Accuracy");
+  await expectText("Percentage");
   const exam = await page.locator("main").innerText();
-  if (!/75%\s+Score\s+3 \/ 4/.test(exam) || !/Wrong\s+1\b/.test(exam)) {
+  if (!/Score\s+3 \/ 4\s+Percentage\s+75%/.test(exam) || !/Wrong\s+1\b/.test(exam)) {
     throw new Error(`Exam result was not 3 of 4 with 1 wrong: ${exam.slice(0, 200)}`);
   }
   await page.getByRole("button", { name: "Practice missed questions" }).waitFor();

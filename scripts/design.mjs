@@ -131,7 +131,7 @@ try {
         .first()
         .click();
       await page.getByRole("button", { name: "Submit", exact: true }).click();
-      await page.getByText("Accuracy").first().waitFor();
+      await page.getByText("Percentage").first().waitFor();
       await check(page, `${tag} results`);
 
       // Main screens with data.

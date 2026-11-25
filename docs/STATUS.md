@@ -1,6 +1,6 @@
 # Status, verification and open items
 
-Last updated 2026-11-25 (skipped questions in Review and Practice, shuffle for true/false and multi-select, automatic flashcards). This is the one place that says what is done, what has been proven, and what is still open. Behaviour is in `FEATURES.md`; running and recovery in `OPERATIONS.md` and `RUNBOOK.md`.
+Last updated 2026-11-25 (marks shown to two decimals, percentage out of all questions). This is the one place that says what is done, what has been proven, and what is still open. Behaviour is in `FEATURES.md`; running and recovery in `OPERATIONS.md` and `RUNBOOK.md`.
 
 ## Where the project stands
 
