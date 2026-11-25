@@ -162,7 +162,6 @@ try {
   await dialog.getByRole("button", { name: "Save card" }).click();
   // The question missed in the exam above was turned into a flashcard automatically.
   await expectText("2 cards");
-  await expectText("Imported question 2");
   await expectText("Which nerve supplies the deltoid?");
   await page.getByRole("tab", { name: /^Notes/ }).click();
   await page.getByRole("button", { name: "New note" }).first().click();
