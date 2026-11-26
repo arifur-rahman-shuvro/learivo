@@ -6,12 +6,12 @@ Live: https://learivo.pages.dev
 
 ## What it does
 
-Write or import questions (including with an AI prompt maker), practise and sit exams, revise with spaced repetition, keep notes, flashcards and a glossary, and see insights on weak areas. Backup and restore, three themes, and an introduction page for new visitors. The full list is in `docs/FEATURES.md`.
+Write or import questions (including with an AI prompt maker), practise and sit exams, revise with spaced repetition, keep notes, flashcards and a glossary, and see insights on weak areas. Optional push notifications from a "Coach" (streak, revision, exam countdown; funny, warm or firm). Backup and restore, three themes, and an introduction page for new visitors. The full list is in `docs/FEATURES.md`.
 
 ## Stack
 
 - Frontend: React 19, TypeScript, Vite, Tailwind CSS v4 on design tokens, installable PWA
-- Database and sign-in: Postgres and Auth on Supabase, with row-level security on every table. The browser talks to Supabase directly; there is no separate server
+- Database and sign-in: Postgres and Auth on Supabase, with row-level security on every table. The browser talks to Supabase directly. The only server code is one small Edge Function, `supabase/functions/push`, that sends push notifications (see `docs/PUSH.md`)
 - Hosting: Cloudflare Pages. CI and a weekly database backup: GitHub Actions
 
 ## Run it

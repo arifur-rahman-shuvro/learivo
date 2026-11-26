@@ -25,11 +25,13 @@ export function SettingsDialog({
   onClose,
   onOpenData,
   onOpenAccount,
+  onOpenNotifications,
 }: {
   open: boolean;
   onClose: () => void;
   onOpenData: () => void;
   onOpenAccount: () => void;
+  onOpenNotifications?: () => void;
 }) {
   const hasData = useDataRepo() !== null;
   const [autoCards, setAutoCards] = useState(autoFlashcardsOn);
@@ -102,6 +104,19 @@ export function SettingsDialog({
             </Button>
           </div>
         </section>
+        {onOpenNotifications && (
+          <section className="flex flex-col gap-2">
+            <h3 className="m-0 text-base font-semibold">Notifications</h3>
+            <p className="m-0 text-sm text-muted">
+              Reminders from your Coach: study time, streak, revision and your exam countdown.
+            </p>
+            <div>
+              <Button variant="secondary" size="sm" onClick={onOpenNotifications}>
+                Notifications
+              </Button>
+            </div>
+          </section>
+        )}
         <section className="flex flex-col gap-2">
           <h3 className="m-0 text-base font-semibold">Revision</h3>
           <label className="flex items-start gap-2 text-sm">

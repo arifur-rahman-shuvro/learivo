@@ -7,6 +7,7 @@ import type { ProfileRepo } from "../modules/profile/data/repo.ts";
 import { openGuide } from "../core/dialogs/guide.ts";
 import { useProfile } from "../modules/profile/ui/useProfile.ts";
 import { AppearanceDialog, SettingsDialog } from "./AccountDialogs.tsx";
+import { NotificationsDialog } from "./NotificationsDialog.tsx";
 import { AccountDialog } from "./AccountDialog.tsx";
 import { useClearDeviceData } from "./clearDeviceData.ts";
 import { saveTextFile } from "../core/saveFile.ts";
@@ -14,7 +15,7 @@ import { useOfflineControls } from "../platform/offline/OfflineProvider.tsx";
 import { UnsentChangesError } from "../platform/offline/pack.ts";
 import DataDialog from "./DataDialog.tsx";
 
-type Panel = "account" | "appearance" | "settings" | "data" | null;
+type Panel = "account" | "appearance" | "settings" | "data" | "notifications" | null;
 
 function Item({
   onClick,
@@ -207,7 +208,9 @@ export default function AccountMenu({ repo }: { repo: ProfileRepo }) {
         onClose={() => setPanel(null)}
         onOpenData={() => setPanel("data")}
         onOpenAccount={() => setPanel("account")}
+        onOpenNotifications={() => setPanel("notifications")}
       />
+      <NotificationsDialog open={panel === "notifications"} onClose={() => setPanel(null)} />
       <DataDialog open={panel === "data"} onClose={() => setPanel(null)} />
       <Dialog
         open={unsent !== null}

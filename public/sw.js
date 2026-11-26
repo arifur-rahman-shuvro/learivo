@@ -69,3 +69,55 @@ self.addEventListener("fetch", (event) => {
     })(),
   );
 });
+
+// ---- Push notifications from the Learivo Coach (supabase/functions/push) ----
+self.addEventListener("push", (event) => {
+  let data;
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { title: "Learivo", body: event.data ? event.data.text() : "" };
+  }
+  const buttons = Array.isArray(data.buttons) ? data.buttons.slice(0, 2) : [];
+  event.waitUntil(
+    self.registration.showNotification(data.title || "Learivo", {
+      body: data.body || "",
+      // A newer message of the same kind replaces an older one that is still showing.
+      tag: data.tag || data.kind || "learivo",
+      icon: "/brand/brand-logo-240.png",
+      badge: "/brand/notification-badge-96.png",
+      actions: buttons.map((b) => ({ action: String(b.action), title: String(b.title) })),
+      data: { go: data.go || "quick", id: data.id || null, act: data.act || null },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  const note = event.notification;
+  const data = note.data || {};
+  note.close();
+  // "Later" silences the Coach for an hour, without opening the app.
+  if (event.action === "later" && data.act) {
+    event.waitUntil(fetch(`${data.act}&do=later`, { method: "POST" }).catch(() => undefined));
+    return;
+  }
+  const go = event.action === "start" || !event.action ? data.go : "quick";
+  const url = `/#/notify?go=${encodeURIComponent(go || "quick")}${data.id ? `&n=${data.id}` : ""}`;
+  event.waitUntil(
+    (async () => {
+      const open = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const client of open) {
+        if (!client.url.startsWith(self.location.origin)) continue;
+        await client.focus();
+        try {
+          await client.navigate(url);
+        } catch {
+          /* The page can still be reached by opening a window below. */
+          await self.clients.openWindow(url);
+        }
+        return;
+      }
+      await self.clients.openWindow(url);
+    })(),
+  );
+});

@@ -97,6 +97,14 @@ Account > Change email. The student enters the new address and their password (c
 - **Crash and failure reports:** go to Sentry only when a DSN is set at build time (it is not set yet). Reported: unexpected screen crashes, unhandled failures, a refused offline change (only its kind), unreadable saved changes, a backup that could not be created, a restore that stopped part way. Never reported: question text, notes, the database's message, the student's identity.
 - **Not monitored:** how long syncs take, how many students have waiting changes (nothing is collected from devices), database size and load (see the Supabase dashboard), email alerts from Sentry (needs a DSN and an alert rule).
 
+## 6b. Push notifications
+
+- Runs by itself: a schedule (`learivo-push-tick`, every 10 minutes) calls the `push` Edge Function, which reads each student's numbers with `push_facts()`, decides, and sends. The signing key is created by the function on first use and kept in `private.push_secrets`; nobody sees it.
+- Check it: Supabase dashboard > Edge Functions > push > Logs; `select * from cron.job_run_details order by start_time desc limit 5;`; `select count(*), max(sent_at) from public.push_log;`.
+- Stop everything: `select cron.unschedule('learivo-push-tick');` Start again by re-running `supabase/migrations/20261125200000_push_schedule.sql`.
+- The deployed function files are the repo files with comments removed. After changing `supabase/functions/push/*`, redeploy all four files together.
+- A student cannot get messages if the browser blocked notifications, battery saver killed the app's background work, or (iPhone) the app is not on the Home Screen. Settings > Notifications explains each case.
+
 ## 7. Rollback in detail
 
 1. Site: Cloudflare Pages > the learivo project > Deployments > pick the last deployment that worked > Rollback. Takes about a minute. Students get the older version after their next reload (the service worker checks for updates).

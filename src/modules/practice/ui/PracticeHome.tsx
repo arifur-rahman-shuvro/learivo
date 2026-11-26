@@ -24,6 +24,7 @@ import { ExamPaperDialog } from "./ExamPaperDialog.tsx";
 import {
   countAvailable,
   startExam,
+  startForArea,
   startPractice,
   smartPreview,
   startSmart,
@@ -62,6 +63,20 @@ export default function PracticeHome({ onOpen }: { onOpen: (v: View) => void }) 
   const [paperOf, setPaperOf] = useState<Exam | null>(null);
   useIntent((i) => {
     if (i.kind === "open" && i.target === "exam") setBuilder("new");
+    // From a notification button: a short session, or one on the weak subject it named.
+    if (i.kind === "start" && i.plan === "quick") {
+      void begin("notify", () =>
+        startPractice(
+          repo,
+          attempts,
+          { ...DEFAULT_SETUP, filter: "all", count: 5, instantFeedback: true },
+          workspace,
+        ),
+      );
+    }
+    if (i.kind === "start" && i.plan === "weak") {
+      void begin("notify", () => startForArea(repo, attempts, i.subject, workspace, 8));
+    }
   });
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string>();

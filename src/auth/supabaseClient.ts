@@ -1,6 +1,7 @@
 import type { Session } from "@supabase/supabase-js";
 import { config } from "../core/config.ts";
 import { supabase } from "../core/supabase.ts";
+import { removeThisDeviceForCurrentUser } from "../core/push.ts";
 import type { AuthClient, AuthUser } from "./types.ts";
 
 /** An account made with Google has no password until the student adds one. */
@@ -199,6 +200,8 @@ export function createSupabaseAuth(): AuthClient {
       return { ok: true };
     },
     async signOut() {
+      // This device stops getting this account's notifications (the next person may use it).
+      await removeThisDeviceForCurrentUser();
       await supabase.auth.signOut();
     },
   };

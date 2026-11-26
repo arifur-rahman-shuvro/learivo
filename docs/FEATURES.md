@@ -72,6 +72,15 @@ What each part does and the rules behind it, written from the code. For where fi
 - Options are shuffled for every choice type, including true/false and multi-select (when "shuffle options" is on).
 - Questions you miss or skip in Practice or Exams become flashcards automatically (front = question, back = answer and explanation; duplicates are skipped by front text). Turn this off in Settings → Revision. They also go to the revision queue as before.
 
+## Push notifications: the Coach
+
+- Settings > Notifications. Off until the student turns it on; the first ask comes after a finished session, never on load. Works on Android Chrome and installed PWAs; an iPhone needs the app on the Home Screen.
+- Messages are built from the student's real numbers: daily study reminder, streak guard (evening, streak of 2+ days), revision due (8+ cards), exam countdown (30, 14, 7, 3, 1 days and the day itself, with the weakest exam subject), weak-spot challenge (every other day, subject under 60%), welcome back (after 3, 7, 14 days away, then stops), Sunday summary.
+- Voice: Mix, Motivating, Funny or Firm. Each kind has three variants per voice and never repeats the same words two days running. No fake urgency, no shaming, no comparing with others (a test enforces this).
+- Controls: study time (the app suggests the hour the student usually studies), quiet hours (default 22:00 to 07:00), at most 1 to 3 a day, each kind on or off, "Send me a test".
+- On the notification: tap opens the right place (a 5 question session, a weak-subject session, revision, Insights); **Later** snoozes for an hour without opening the app.
+- Protection: one message per kind per day, 3 hours between messages, half the rate after 5 ignored messages and a pause after 10 until the app is opened, dead devices removed. Details and design: `docs/PUSH.md`.
+
 ## Marks display and percentage
 
 - Marks always show with at most two decimals (13.3333 shows as 13.33, 13.25 stays 13.25, 15 stays 15), on Results, per question and in the exam score.

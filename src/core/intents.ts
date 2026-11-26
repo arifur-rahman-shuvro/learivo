@@ -6,7 +6,10 @@ export type Intent =
   | { kind: "add" }
   | { kind: "import" }
   /** Open a named part of a screen: a Review or Insights tab, or a Questions panel. */
-  | { kind: "open"; target: string };
+  | { kind: "open"; target: string }
+  /** Start a practice session right away (from a notification button). */
+  | { kind: "start"; plan: "quick" }
+  | { kind: "start"; plan: "weak"; subject: string };
 
 let pending: Intent | null = null;
 const listeners = new Set<() => void>();

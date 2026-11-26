@@ -50,6 +50,7 @@ export default function QuestionsScreen({ onNavigate }: { onNavigate: (route: st
     if (i.kind === "search") setSearchText(i.text);
     else if (i.kind === "add") setEditing("new");
     else if (i.kind === "import") choose("paste");
+    else if (i.kind !== "open") return;
     else if (i.target === "hub") setPanel("hub");
     else if (i.target === "prompt") choose("prompt");
     else if (i.target === "subjects") choose("subject");

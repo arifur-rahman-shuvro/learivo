@@ -92,6 +92,11 @@ export function AuthProvider({ client, children }: { client: AuthClient; childre
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
+/** The signed-in person, or null when there is none or no AuthProvider (such as in a small test). */
+export function useOptionalUser(): AuthUser | null {
+  return useContext(AuthContext)?.user ?? null;
+}
+
 export function useAuth(): AuthValue {
   const v = useContext(AuthContext);
   if (!v) throw new Error("useAuth must be used inside AuthProvider");

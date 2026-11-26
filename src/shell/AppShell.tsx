@@ -25,6 +25,9 @@ import { SupabaseAttempts } from "../modules/practice/data/supabaseAttempts.ts";
 import type { AttemptRepo } from "../modules/practice/data/repo.ts";
 import { SupabaseWorkspace } from "../modules/workspace/data/supabaseWorkspace.ts";
 import type { WorkspaceRepo } from "../modules/workspace/data/repo.ts";
+import { landingFor, parseNotifyHash } from "../modules/notifications/domain/link.ts";
+import { markNotificationOpened, markRecentSeen } from "../core/push.ts";
+import { sendIntent } from "../core/intents.ts";
 
 export interface Repos {
   makeRepo?: (userId: string) => QuestionRepo;
@@ -83,7 +86,19 @@ export default function AppShell({
     markReturning();
     // Leave the sign-in address behind, so the app opens on Home.
     if (hash === SIGN_IN_ROUTE || hash === CREATE_ROUTE) go("");
+    // A tapped notification: note it, then open the screen it points to.
+    const link = parseNotifyHash(hash);
+    if (link) {
+      void markNotificationOpened(link.id);
+      const to = landingFor(link.go);
+      if (to.intent) sendIntent(to.intent);
+      go(to.route);
+    }
   }, [status, hash, go]);
+  // Opening the app by hand also counts as having seen the latest messages.
+  useEffect(() => {
+    if (status === "signed-in" && !parseNotifyHash(window.location.hash)) void markRecentSeen();
+  }, [status]);
   if (hash === LAB_ROUTE) return <App />;
   if (status === "loading") return <div role="status" aria-label="Loading" className="min-h-dvh" />;
   if (status === "signed-in" && recovering) return <SetNewPassword />;

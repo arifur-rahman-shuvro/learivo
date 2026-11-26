@@ -47,7 +47,7 @@ where n.nspname = 'public';
 -- 5. Functions that run with the owner's rights are an allow-list; a new one must be added here on purpose.
 insert into check_results
 select 'security definer function is expected: ' || p.proname,
-  p.proname in ('delete_my_account', 'handle_new_user', 'questions_after_write')
+  p.proname in ('delete_my_account', 'handle_new_user', 'questions_after_write', 'push_secret', 'push_secret_init')
 from pg_proc p join pg_namespace n on n.oid = p.pronamespace
 where n.nspname = 'public' and p.prosecdef;
 

@@ -11,20 +11,20 @@ core, motion   <   ui-kit, auth, help, landing   <   modules   <   platform, acc
 A folder may only import from layers to its left. `pnpm lint` fails if a lower layer reaches up
 (for example `ui-kit` importing `shell`). Tests are exempt. The rule is in `eslint.config.js`.
 
-| Folder      | What it is                                                                                                                                                                        |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `core/`     | No UI. Config, Supabase client, monitoring, `createStore`, toast, intents, focus mode, dialog open/close stores, backup reminder rule                                             |
-| `motion/`   | All animation: tokens, CSS, origin morph, grow-in                                                                                                                                 |
-| `ui-kit/`   | Presentational building blocks. `primitives/`, `feedback/`, `overlays/`, `icons/`, `brand/`, `illustrations/` (empty and error scenes), `themes/`                                 |
-| `landing/`  | The introduction page signed-out visitors see first (its own chunk; may import core, motion, ui-kit)                                                                              |
-| `auth/`     | Sign-in screen and auth provider                                                                                                                                                  |
-| `help/`     | The "All features" list, its icons and data                                                                                                                                       |
-| `modules/`  | The features: `question-bank`, `practice`, `workspace` (home, review, insights), `ai`, `profile`, `data`. Each has `domain/` (rules, no React), `data/` (stores), `ui/` (screens) |
-| `platform/` | Offline cache, background sync, installable-app code. Wraps the feature stores                                                                                                    |
-| `account/`  | Account menu, profile, settings, data and backup dialogs                                                                                                                          |
-| `shell/`    | The app skeleton: `AppShell`, `AppFrame`, `ModuleHost`, `Gates`, `navigation/`, `chrome/`                                                                                         |
-| `styles/`   | `index.css` loads `theme`, motion, `base`, `components`                                                                                                                           |
-| `testing/`  | Test fakes and fixtures                                                                                                                                                           |
+| Folder      | What it is                                                                                                                                                                                                                          |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `core/`     | No UI. Config, Supabase client, monitoring, `createStore`, toast, intents, focus mode, dialog open/close stores, backup reminder rule                                                                                               |
+| `motion/`   | All animation: tokens, CSS, origin morph, grow-in                                                                                                                                                                                   |
+| `ui-kit/`   | Presentational building blocks. `primitives/`, `feedback/`, `overlays/`, `icons/`, `brand/`, `illustrations/` (empty and error scenes), `themes/`                                                                                   |
+| `landing/`  | The introduction page signed-out visitors see first (its own chunk; may import core, motion, ui-kit)                                                                                                                                |
+| `auth/`     | Sign-in screen and auth provider                                                                                                                                                                                                    |
+| `help/`     | The "All features" list, its icons and data                                                                                                                                                                                         |
+| `modules/`  | The features: `question-bank`, `practice`, `workspace` (home, review, insights), `ai`, `profile`, `data`, `notifications` (settings screen and invitation). Each has `domain/` (rules, no React), `data/` (stores), `ui/` (screens) |
+| `platform/` | Offline cache, background sync, installable-app code. Wraps the feature stores                                                                                                                                                      |
+| `account/`  | Account menu, profile, settings, data and backup dialogs                                                                                                                                                                            |
+| `shell/`    | The app skeleton: `AppShell`, `AppFrame`, `ModuleHost`, `Gates`, `navigation/`, `chrome/`                                                                                                                                           |
+| `styles/`   | `index.css` loads `theme`, motion, `base`, `components`                                                                                                                                                                             |
+| `testing/`  | Test fakes and fixtures                                                                                                                                                                                                             |
 
 ## "I want to change..."
 
@@ -61,4 +61,5 @@ A folder may only import from layers to its left. `pnpm lint` fails if a lower l
 
 ## Other
 
+- `supabase/functions/push/`: the push notification server (Deno Edge Function: `index.ts` routes, `coach.ts` decisions, `messages.ts` wording, `webpush.ts` encryption). Its pure files are unit tested from `src/modules/notifications/server/`. `src/core/push.ts` is the phone side (permission, subscribe).
 - `supabase/migrations/`: database changes. `scripts/`: smoke test, browser checks and brand image builders. `docs/`: see the table in the README. `public/`: static files served as they are (`social/`, `brand/`, `pwa/`; never `public/assets/`, which the build uses for hashed files that are cached for a year).

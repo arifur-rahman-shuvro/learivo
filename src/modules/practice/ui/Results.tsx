@@ -10,6 +10,8 @@ import type { AttemptWithItems } from "../data/repo.ts";
 import { clock, usePractice } from "./practice.tsx";
 import ResponseInput from "./ResponseInput.tsx";
 import { startRetry } from "./start.ts";
+import { useOptionalUser } from "../../../auth/AuthProvider.tsx";
+import { PushInvite } from "../../notifications/ui/PushInvite.tsx";
 import { REASONS, reasonLabel, type Reason } from "../domain/reasons.ts";
 import { calibration, countCalibration } from "../domain/confidence.ts";
 
@@ -27,6 +29,7 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
   const [error, setError] = useState<string>();
   const [show, setShow] = useState<Show>("all");
   const [open, setOpen] = useState<number | null>(null);
+  const user = useOptionalUser();
   const [busy, setBusy] = useState(false);
   const [versus, setVersus] = useState<string | null>(null);
 
@@ -156,6 +159,8 @@ export default function Results({ attemptId, onClose, onStarted }: Props) {
           </Button>
         </div>
       </header>
+
+      {user && <PushInvite userId={user.id} />}
 
       <section aria-label="Summary" className="lv-card flex flex-wrap items-center gap-6 p-5">
         <ProgressRing value={percent} label="Percentage of total marks" size={112} />
