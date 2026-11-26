@@ -32,6 +32,7 @@ const combos = [
   ["forest", "light"],
   ["forest", "dark"],
   ["space", "dark"],
+  ["amoled", "dark"],
 ];
 const problems = [];
 const browser = await chromium.launch();
@@ -135,7 +136,7 @@ try {
       await check(page, `${tag} results`);
 
       // Main screens with data.
-      for (const route of ["home", "questions", "practice", "review", "insights"]) {
+      for (const route of ["home", "questions", "practice", "study", "review", "insights"]) {
         step = route;
         await page.evaluate((r) => (location.hash = `#/${r}`), route);
         await page.waitForSelector("h1");

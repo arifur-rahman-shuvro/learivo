@@ -33,6 +33,7 @@ const combos = [
   ["forest", "light"],
   ["forest", "dark"],
   ["space", "dark"],
+  ["amoled", "dark"],
 ];
 const user = {
   id: "11111111-1111-1111-1111-111111111111",
@@ -127,12 +128,29 @@ try {
       .first()
       .click();
     await page.getByRole("navigation", { name: "Primary" }).waitFor();
-    for (const route of ["home", "questions", "practice", "review", "insights"]) {
+    for (const route of ["home", "questions", "practice", "study", "review", "insights"]) {
       await page.evaluate((r) => (location.hash = `#/${r}`), route);
       await page.waitForSelector("h1");
       await page.waitForTimeout(600);
       await checkScreen(page, `${theme}/${mode} ${route}`);
     }
+    // Study: a running timer, the stats and history views, and the settings dialog.
+    await page.evaluate(() => (location.hash = "#/study"));
+    await page.getByRole("button", { name: "Start", exact: true }).click();
+    await page.getByRole("timer").waitFor();
+    await page.waitForTimeout(900); // let tab and dialog animations finish
+    await checkScreen(page, `${theme}/${mode} study timer running`);
+    await page.getByRole("radio", { name: "Stats" }).click();
+    await page.waitForTimeout(900); // let tab and dialog animations finish
+    await checkScreen(page, `${theme}/${mode} study stats`);
+    await page.getByRole("radio", { name: "History" }).click();
+    await page.waitForTimeout(900); // let tab and dialog animations finish
+    await checkScreen(page, `${theme}/${mode} study history`);
+    await page.getByRole("radio", { name: "Timer" }).click();
+    await page.getByRole("button", { name: "Timer settings" }).click();
+    await page.getByRole("dialog").waitFor();
+    await page.waitForTimeout(900); // let tab and dialog animations finish
+    await checkScreen(page, `${theme}/${mode} study settings`);
     await ctx.close();
   }
 } finally {
@@ -178,5 +196,5 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  `Accessibility passed: landing, sign-in and 5 signed-in screens in ${combos.length} theme/mode combinations at 360 px`,
+  `Accessibility passed: landing, sign-in and 6 signed-in screens in ${combos.length} theme/mode combinations at 360 px`,
 );

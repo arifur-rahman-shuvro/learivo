@@ -8,8 +8,8 @@ const modes = themeList.flatMap((theme) =>
 );
 
 describe("theme registry", () => {
-  it("registers the three launch themes", () => {
-    expect(themeList.map((t) => t.id).sort()).toEqual(["default", "forest", "space"]);
+  it("registers the launch themes", () => {
+    expect(themeList.map((t) => t.id).sort()).toEqual(["amoled", "default", "forest", "space"]);
   });
 
   it("every theme supports at least one mode and its default mode exists", () => {
@@ -24,8 +24,9 @@ describe("theme registry", () => {
     expect(getTheme(null).id).toBe("default");
   });
 
-  it("falls back to a supported mode (Space has no light mode)", () => {
+  it("falls back to a supported mode (Space and AMOLED have no light mode)", () => {
     expect(resolveMode(getTheme("space"), "light")).toBe("dark");
+    expect(resolveMode(getTheme("amoled"), "light")).toBe("dark");
     expect(resolveMode(getTheme("forest"), "light")).toBe("light");
   });
 
@@ -99,5 +100,12 @@ describe("theme CSS generation", () => {
     expect(css).toContain("--lv-bg:#F8F9FC;");
     expect(css).toContain("--lv-font-heading:");
     expect(css).toContain("--lv-surface-1:");
+  });
+});
+
+describe("AMOLED theme", () => {
+  it("is pure black so OLED pixels are off", () => {
+    const c = getTokens(getTheme("amoled"), "dark").colors;
+    expect(c.bg).toBe("#000000");
   });
 });

@@ -164,4 +164,5 @@ export const slots: Record<ThemeId, ThemeSlots> = {
   default: DefaultSlots,
   forest: ForestSlots,
   space: SpaceSlots,
+  amoled: DefaultSlots,
 };

@@ -6,7 +6,7 @@ Live: https://learivo.pages.dev
 
 ## What it does
 
-Write or import questions (including with an AI prompt maker), practise and sit exams, revise with spaced repetition, keep notes, flashcards and a glossary, and see insights on weak areas. Optional push notifications from a "Coach" (streak, revision, exam countdown; funny, warm or firm). Backup and restore, three themes, and an introduction page for new visitors. The full list is in `docs/FEATURES.md`.
+Write or import questions (including with an AI prompt maker), practise and sit exams, revise with spaced repetition, keep notes, flashcards and a glossary, and see insights on weak areas. Optional push notifications from a "Coach" (streak, revision, exam countdown; funny, warm or firm). A Study tab with a Focus Timer (Pomodoro, stopwatch, countdown) and study-time statistics. Backup and restore, four themes (including pure-black AMOLED), and an introduction page for new visitors. The full list is in `docs/FEATURES.md`.
 
 ## Stack
 

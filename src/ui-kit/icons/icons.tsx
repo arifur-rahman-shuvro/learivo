@@ -54,6 +54,12 @@ export const InsightsIcon = (p: IconProps) => (
     <path d="M5 20V10M12 20V4M19 20v-7" />
   </Icon>
 );
+export const StudyIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="13" r="7.5" />
+    <path d="M12 9.5V13l2.5 1.5M9.5 3h5" />
+  </Icon>
+);
 export const SettingsIcon = (p: IconProps) => (
   <Icon {...p}>
     <circle cx="12" cy="12" r="3" />

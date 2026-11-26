@@ -5,18 +5,20 @@ import {
   PracticeIcon,
   QuestionsIcon,
   ReviewIcon,
+  StudyIcon,
 } from "../../ui-kit/icons/icons.tsx";
 
 const items: Array<{ id: string; label: string; icon: ReactNode }> = [
   { id: "home", label: "Home", icon: <HomeIcon /> },
   { id: "questions", label: "Questions", icon: <QuestionsIcon /> },
   { id: "practice", label: "Practice", icon: <PracticeIcon /> },
+  { id: "study", label: "Study", icon: <StudyIcon /> },
   { id: "review", label: "Review", icon: <ReviewIcon /> },
   { id: "insights", label: "Insights", icon: <InsightsIcon /> },
 ];
 
 /**
- * Primary navigation: the same five destinations on every device.
+ * Primary navigation: the same six destinations on every device.
  * Bottom tab bar on phones; becomes a vertical sidebar list from the `lg` breakpoint
  * when the parent gives it room (the shell places it inside the sidebar).
  */
@@ -28,7 +30,7 @@ export function BottomNav({
   /** Controlled mode: the shell owns the active module. Omit for a self-contained demo. */
   activeId?: string;
   onSelect?: (id: string) => void;
-  /** Which destinations to show, in order. Defaults to all five. */
+  /** Which destinations to show, in order. Defaults to all six. */
   ids?: readonly string[];
 } = {}) {
   const [local, setLocal] = useState("home");
