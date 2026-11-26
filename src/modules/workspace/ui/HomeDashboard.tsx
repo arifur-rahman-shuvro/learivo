@@ -1,7 +1,17 @@
 import FeaturesDialog from "../../../help/FeaturesDialog.tsx";
 import FeatureShelf from "../../../help/FeatureShelf.tsx";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Button, ProgressRing, Spinner } from "../../../ui-kit/index.ts";
+import {
+  Button,
+  GamesIcon,
+  PracticeIcon,
+  ProgressRing,
+  ReviewIcon,
+  Spinner,
+  StudyIcon,
+  Tile,
+  TileGrid,
+} from "../../../ui-kit/index.ts";
 import Home from "./HomeWelcome.tsx";
 import { SAMPLE_QUESTIONS } from "../../question-bank/domain/sample.ts";
 import { DEFAULT_QUERY } from "../../question-bank/data/repo.ts";
@@ -33,7 +43,7 @@ import PractiseArea from "./PractiseArea.tsx";
 import CustomizeDialog from "./CustomizeDialog.tsx";
 import { useInsightsData } from "./useInsightsData.ts";
 import { useWorkspace } from "./workspace.tsx";
-import { BackupNudge, Tile, ExamLine, WeekPlan } from "./HomeParts.tsx";
+import { BackupNudge, Tile as Stat, ExamLine, WeekPlan } from "./HomeParts.tsx";
 import { weekPlan } from "../domain/weekPlan.ts";
 
 /** Home for a student who has questions: today's focus, goal, streak and weak areas. */
@@ -187,11 +197,45 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
 
   const done = view?.today ?? 0;
   const blocks: Record<HomeSectionId, ReactNode> = {
-    features: <FeatureShelf onNavigate={onNavigate} onBrowse={() => setFeatures(true)} />,
+    features: (
+      <section aria-label="Quick links" className="flex flex-col gap-2">
+        <TileGrid cols={2}>
+          <Tile
+            stack
+            icon={<PracticeIcon />}
+            title="Practice"
+            help="Mixes, exams, custom"
+            onClick={() => onNavigate("#/practice")}
+          />
+          <Tile
+            stack
+            icon={<ReviewIcon />}
+            title="Review"
+            help="Cards, mistakes, notes"
+            count={dueCount}
+            countLabel="due"
+            onClick={() => onNavigate("#/review")}
+          />
+          <Tile
+            stack
+            icon={<StudyIcon />}
+            title="Focus timer"
+            help="Pomodoro and study time"
+            onClick={() => onNavigate("#/study")}
+          />
+          <Tile stack icon={<GamesIcon />} title="Mini games" help="Playful rounds" soon />
+        </TileGrid>
+        <div>
+          <Button size="sm" variant="ghost" onClick={() => setFeatures(true)}>
+            Browse all features
+          </Button>
+        </div>
+      </section>
+    ),
     focus: (
       <section
-        aria-label="Today's focus"
-        className="lv-card flex flex-wrap items-center justify-between gap-4 p-5"
+        aria-label="Next step"
+        className="lv-card flex flex-wrap items-center justify-between gap-4 border-l-4 border-l-accent p-5"
       >
         <div className="min-w-0">
           <h2 className="m-0 text-lg font-bold">
@@ -202,7 +246,9 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
           <p className="m-0 text-sm text-muted">
             {dueCount > 0
               ? "Revise them while they are fresh."
-              : "Start a practice session to keep your streak going."}
+              : done >= goal
+                ? "Today's goal is done. Keep your streak going with a quick mix."
+                : `${goal - done} more question${goal - done === 1 ? "" : "s"} reaches today's goal.`}
           </p>
         </div>
         {dueCount > 0 ? (
@@ -218,11 +264,14 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
       </section>
     ),
     numbers: (
-      <section aria-label="Your numbers" className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Tile label="Questions" value={total.toLocaleString()} />
-        <Tile label="Due for revision" value={String(dueCount)} />
-        <Tile label="Day streak" value={String(view?.streak ?? 0)} />
-        <Tile
+      <section
+        aria-label="Your numbers"
+        className="lv-card grid grid-cols-4 divide-x divide-line p-1"
+      >
+        <Stat label="Questions" value={total.toLocaleString()} />
+        <Stat label="Due" value={String(dueCount)} />
+        <Stat label="Streak" value={String(view?.streak ?? 0)} />
+        <Stat
           label="Accuracy"
           value={view?.all.accuracy == null ? "-" : `${Math.round(view.all.accuracy * 100)}%`}
         />

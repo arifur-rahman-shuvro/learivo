@@ -108,7 +108,7 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
     <div className="flex flex-col gap-4">
       <header>
         <h1 id="module-title" className="m-0 text-3xl font-bold">
-          Insights
+          Progress
         </h1>
         <p className="m-0 text-sm text-muted">
           What your finished sessions say about your studying.

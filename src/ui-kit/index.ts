@@ -29,3 +29,5 @@ export { ThemeBackground } from "./themes/ThemeBackground.tsx";
 export { ThemeSwitcher } from "./themes/ThemeSwitcher.tsx";
 export * from "./brand/Logo.tsx";
 export * from "./icons/icons.tsx";
+export { PageHeader } from "./layout/PageHeader.tsx";
+export { Tile, TileGrid } from "./layout/Tile.tsx";

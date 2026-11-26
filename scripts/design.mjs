@@ -136,7 +136,18 @@ try {
       await check(page, `${tag} results`);
 
       // Main screens with data.
-      for (const route of ["home", "questions", "practice", "study", "review", "insights"]) {
+      for (const route of [
+        "home",
+        "questions",
+        "practice",
+        "study",
+        "games",
+        "review",
+        "review/flashcards",
+        "review/notes",
+        "review/glossary",
+        "insights",
+      ]) {
         step = route;
         await page.evaluate((r) => (location.hash = `#/${r}`), route);
         await page.waitForSelector("h1");

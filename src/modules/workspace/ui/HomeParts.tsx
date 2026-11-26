@@ -39,9 +39,9 @@ export function BackupNudge({ total }: { total: number }) {
 
 export function Tile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="lv-card p-4">
-      <div className="text-3xl font-bold tabular-nums">{value}</div>
-      <div className="mt-1 text-sm text-muted">{label}</div>
+    <div className="px-1 py-3 text-center">
+      <div className="text-2xl font-bold tabular-nums">{value}</div>
+      <div className="mt-0.5 text-xs text-muted">{label}</div>
     </div>
   );
 }

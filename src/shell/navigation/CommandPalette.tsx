@@ -93,6 +93,7 @@ export default function CommandPalette({ onNavigate }: Props) {
       id: `go-${m.id}`,
       group: "Go to",
       label: m.label,
+      keywords: m.keywords,
       run: go(m.route),
     }));
     const actions: Command[] = [

@@ -169,7 +169,7 @@ export default function AppShell({
         nav={
           <BottomNav
             ids={modules.map((m) => m.id)}
-            activeId={current.id}
+            activeId={current.navParent ?? current.id}
             onSelect={(id) => go(modules.find((m) => m.id === id)?.route ?? "#/home")}
           />
         }

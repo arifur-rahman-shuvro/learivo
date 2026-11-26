@@ -10,6 +10,10 @@ import {
   PracticeIcon,
   ListSkeleton,
   ExamsScene,
+  GamesIcon,
+  StudyIcon,
+  Tile,
+  TileGrid,
 } from "../../../ui-kit/index.ts";
 import { errorText, useBank, useLoad } from "../../question-bank/ui/bank.tsx";
 import type { Attempt, Exam } from "../data/repo.ts";
@@ -38,7 +42,13 @@ export type View =
 const when = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
 
-export default function PracticeHome({ onOpen }: { onOpen: (v: View) => void }) {
+export default function PracticeHome({
+  onOpen,
+  onNavigate,
+}: {
+  onOpen: (v: View) => void;
+  onNavigate?: (route: string) => void;
+}) {
   const { repo } = useBank();
   const { attempts, rev, refresh } = usePractice();
   const workspace = useWorkspace().repo;
@@ -498,6 +508,27 @@ export default function PracticeHome({ onOpen }: { onOpen: (v: View) => void }) 
           </ul>
         )}
       </section>
+
+      {onNavigate && (
+        <section aria-label="More ways to study" className="flex flex-col gap-3">
+          <h2 className="m-0 text-xl font-semibold">More ways to study</h2>
+          <TileGrid>
+            <Tile
+              icon={<StudyIcon />}
+              title="Focus timer"
+              help="Pomodoro, stopwatch and your study time."
+              onClick={() => onNavigate("#/study")}
+            />
+            <Tile
+              icon={<GamesIcon />}
+              title="Mini games"
+              help="Quick playful rounds."
+              badge="Soon"
+              onClick={() => onNavigate("#/games")}
+            />
+          </TileGrid>
+        </section>
+      )}
 
       {paperOf && <ExamPaperDialog exam={paperOf} bank={repo} onClose={() => setPaperOf(null)} />}
 

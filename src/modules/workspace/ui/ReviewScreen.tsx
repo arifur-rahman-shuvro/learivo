@@ -1,15 +1,24 @@
 import { showToast } from "../../../core/toast.ts";
 import { useIntent } from "../../../core/intents.ts";
+import { subPage, useHash } from "../../../core/hash.ts";
 import GlossaryText from "./GlossaryText.tsx";
 import { useEffect, useMemo, useState } from "react";
 import {
   Badge,
+  BookmarkIcon,
   Button,
+  CardsIcon,
   CheckIcon,
   EmptyState,
+  GlossaryIcon,
+  MistakeIcon,
+  NoteIcon,
+  PageHeader,
   QuestionsIcon,
   ReviewIcon,
   PanelSkeleton,
+  Tile,
+  TileGrid,
   CaughtUpScene,
   SavedScene,
 } from "../../../ui-kit/index.ts";
@@ -35,6 +44,14 @@ const GROUPS: readonly { id: Group; label: string }[] = [
 ];
 
 type Tab = "due" | "mistakes" | "bookmarks" | "notes" | "flashcards" | "glossary";
+const TITLES: Record<Tab, string> = {
+  due: "Due now",
+  mistakes: "Mistakes",
+  bookmarks: "Bookmarks",
+  notes: "Notes",
+  flashcards: "Flashcards",
+  glossary: "Glossary",
+};
 const TABS: [Tab, string][] = [
   ["due", "Due now"],
   ["mistakes", "Mistakes"],
@@ -59,8 +76,13 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
   const { repo: bank, rev: bankRev } = useBank();
   const { attempts } = usePractice();
   const ws = useWorkspace();
-  const [tab, setTab] = useState<Tab>("due");
+  // Each tool is its own page: "#/review" is the hub, "#/review/notes" is the Notes page. The
+  // address keeps the phone's Back button working.
+  const sub = subPage(useHash(), "#/review");
+  const tab: Tab | null = TABS.some(([k]) => k === sub) ? (sub as Tab) : null;
+  const setTab = (t: Tab | null) => onNavigate(t ? `#/review/${t}` : "#/review");
   const [group, setGroup] = useState<Group>("wrong");
+  const [extra, setExtra] = useState({ flashcards: 0, flashcardsDue: 0, terms: 0 });
   useIntent((i) => {
     if (i.kind === "open" && TABS.some(([k]) => k === i.target)) setTab(i.target as Tab);
   });
@@ -113,6 +135,25 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
       alive = false;
     };
   }, [ws.repo, ws.rev, bank, bankRev, attempts]);
+
+  useEffect(() => {
+    let alive = true;
+    Promise.all([ws.repo.flashcards(), ws.repo.glossary()]).then(
+      ([cards, terms]) => {
+        const at = new Date();
+        if (alive)
+          setExtra({
+            flashcards: cards.length,
+            flashcardsDue: cards.filter((c) => isDue(c, at)).length,
+            terms: terms.length,
+          });
+      },
+      () => undefined,
+    );
+    return () => {
+      alive = false;
+    };
+  }, [ws.repo, ws.rev]);
 
   const now = useMemo(() => new Date(), [data]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -186,43 +227,84 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
 
   return (
     <div className="flex flex-col gap-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 id="module-title" className="m-0 text-3xl font-bold">
-            Review
-          </h1>
-          <p className="m-0 text-sm text-muted">Revise what you missed, and keep what you saved.</p>
-        </div>
-        {tab === "notes" && (
-          <Button onClick={() => setNoteFor({ questionId: null, note: null })}>New note</Button>
-        )}
-      </header>
+      {tab === null ? (
+        <PageHeader title="Review" help="Revise what you missed, and keep what you saved." />
+      ) : (
+        <PageHeader
+          title={TITLES[tab]}
+          onBack={() => setTab(null)}
+          backLabel="Review"
+          action={
+            tab === "notes" ? (
+              <Button onClick={() => setNoteFor({ questionId: null, note: null })}>New note</Button>
+            ) : undefined
+          }
+        />
+      )}
 
-      <div
-        role="tablist"
-        aria-label="Review sections"
-        className="flex gap-1 overflow-x-auto border-b border-line"
-      >
-        {TABS.map(([k, label]) => (
-          <button
-            key={k}
-            role="tab"
-            type="button"
-            aria-selected={tab === k}
-            onClick={() => {
-              setTab(k);
-            }}
-            className={`-mb-px flex shrink-0 items-center gap-1.5 border-b-2 px-3 py-2 text-sm font-semibold ${
-              tab === k ? "border-accent text-fg" : "border-transparent text-muted"
-            }`}
-          >
-            {label}
-            {data && counts[k] > 0 && (
-              <Badge tone={k === "due" ? "accent" : "neutral"}>{counts[k]}</Badge>
-            )}
-          </button>
-        ))}
-      </div>
+      {tab === null && (
+        <TileGrid>
+          <Tile
+            tone="accent"
+            icon={<ReviewIcon />}
+            title="Due now"
+            help={due.length > 0 ? "Cards ready to revise" : "Nothing due. You are caught up."}
+            count={due.length}
+            countLabel="due"
+            onClick={() => setTab("due")}
+          />
+          <Tile
+            icon={<MistakeIcon />}
+            title="Mistakes"
+            help="Questions you missed or skipped"
+            count={mistakeTotal}
+            countLabel="to review"
+            onClick={() => setTab("mistakes")}
+          />
+          <Tile
+            icon={<CardsIcon />}
+            title="Flashcards"
+            help={
+              extra.flashcards === 0
+                ? "Write your own cards"
+                : `${extra.flashcards} card${extra.flashcards === 1 ? "" : "s"} in your deck`
+            }
+            count={extra.flashcardsDue}
+            countLabel="due"
+            onClick={() => setTab("flashcards")}
+          />
+          <Tile
+            icon={<NoteIcon />}
+            title="Notes"
+            help={
+              counts.notes === 0
+                ? "Keep your own notes"
+                : `${counts.notes} note${counts.notes === 1 ? "" : "s"}`
+            }
+            onClick={() => setTab("notes")}
+          />
+          <Tile
+            icon={<BookmarkIcon />}
+            title="Bookmarks"
+            help={
+              marked.length === 0
+                ? "Save questions to come back to"
+                : `${marked.length} saved question${marked.length === 1 ? "" : "s"}`
+            }
+            onClick={() => setTab("bookmarks")}
+          />
+          <Tile
+            icon={<GlossaryIcon />}
+            title="Glossary"
+            help={
+              extra.terms === 0
+                ? "Build your own word list"
+                : `${extra.terms} term${extra.terms === 1 ? "" : "s"}`
+            }
+            onClick={() => setTab("glossary")}
+          />
+        </TileGrid>
+      )}
 
       {error && (
         <p
@@ -233,7 +315,9 @@ export default function ReviewScreen({ onNavigate }: { onNavigate: (route: strin
         </p>
       )}
 
-      {!data && !error && <PanelSkeleton />}
+      {!data && !error && tab !== null && tab !== "flashcards" && tab !== "glossary" && (
+        <PanelSkeleton />
+      )}
 
       {tab === "flashcards" && <FlashcardsPanel />}
       {tab === "glossary" && <GlossaryPanel />}

@@ -35,7 +35,7 @@ describe("accessibility of the main screens", () => {
     ["Questions", "#/questions", /Questions/],
     ["Practice", "#/practice", /Quick start/],
     ["Review", "#/review", /Review/],
-    ["Insights", "#/insights", /Insights/],
+    ["Progress", "#/insights", /Progress/],
   ] as const) {
     it(`${name} has no automatic accessibility problems`, async () => {
       const bank = new MemoryRepo();

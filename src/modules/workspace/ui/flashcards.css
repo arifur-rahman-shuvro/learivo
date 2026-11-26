@@ -1,0 +1,39 @@
+/* Study mode card: tap to turn it over. */
+.fc-card {
+  position: relative;
+  width: 100%;
+  min-height: min(56dvh, 30rem);
+  perspective: 1400px;
+  cursor: pointer;
+}
+.fc-inner {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 0.45s var(--lv-ease, ease);
+}
+.fc-card[data-flipped="true"] .fc-inner {
+  transform: rotateY(180deg);
+}
+.fc-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  overflow-y: auto;
+  text-align: center;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.fc-back {
+  transform: rotateY(180deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .fc-inner {
+    transition: none;
+  }
+}
