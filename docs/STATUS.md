@@ -38,4 +38,5 @@ Built and in use: the question bank, practice and exams, review (revision, mista
 - **Built and checked here:** timer engine and recovery, session saving, statistics, Study tab, settings, AMOLED theme; unit and component tests, SQL checks (own rows only, no duplicates, no edits; the check fails when row security is loosened), end-to-end, accessibility and design audits. The engine tests fail when the pause arithmetic is broken.
 - **Not live yet:** the branch is not merged and migration `20261126000000_focus_timer.sql` is not applied to the live project. Until the owner says so, the live site is unchanged.
 - **Not verified:** the timer on a real phone (screen off, Wake Lock, background notification). Only the owner can check this.
+- **Full screen (flip clock):** unit tests (the flip only happens on the digit that changed; the test fails if the flip is removed) and screenshots of the real stylesheet in portrait and landscape. **Not verified:** how the flip looks and feels on a real phone.
 - **Not built (optional ideas left out on purpose):** a timer started from Practice, and Coach push messages about study time.

@@ -1,0 +1,174 @@
+/* Full-screen flip clock: pure black, big flip cards, nothing else. */
+.flip-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: #000;
+  color: #f2f2f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+}
+.flip-clock {
+  --w: min(21vw, 36vh);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: calc(var(--w) * 0.22);
+}
+.flip-clock[data-groups="3"] {
+  --w: min(13vw, 30vh);
+}
+.flip-group {
+  display: flex;
+  gap: calc(var(--w) * 0.08);
+}
+.flip-sep {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--w) * 0.22);
+}
+.flip-sep i {
+  display: block;
+  width: calc(var(--w) * 0.1);
+  height: calc(var(--w) * 0.1);
+  border-radius: 50%;
+  background: #f2f2f2;
+  opacity: 0.85;
+}
+@media (orientation: portrait) {
+  .flip-clock {
+    --w: min(40vw, 20vh);
+    flex-direction: column;
+    gap: calc(var(--w) * 0.18);
+  }
+  .flip-clock[data-groups="3"] {
+    --w: min(40vw, 14vh);
+  }
+  .flip-sep {
+    display: none;
+  }
+}
+.flip-clock[data-paused="true"] {
+  opacity: 0.5;
+}
+
+.flip-card {
+  position: relative;
+  width: var(--w);
+  height: calc(var(--w) * 1.4);
+  perspective: calc(var(--w) * 6);
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: calc(var(--w) * 1.12);
+  line-height: 1;
+}
+.flip-half {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  overflow: hidden;
+  background: #1b1b1d;
+  backface-visibility: hidden;
+}
+.flip-half > span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 200%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.flip-top {
+  top: 0;
+  border-radius: calc(var(--w) * 0.1) calc(var(--w) * 0.1) 0 0;
+  transform-origin: bottom;
+  border-bottom: 1px solid #000;
+}
+.flip-top > span {
+  top: 0;
+}
+.flip-bottom {
+  bottom: 0;
+  border-radius: 0 0 calc(var(--w) * 0.1) calc(var(--w) * 0.1);
+  transform-origin: top;
+  border-top: 1px solid #000;
+  background: #151517;
+}
+.flip-bottom > span {
+  bottom: 0;
+}
+.flip-flap-top {
+  animation: flip-down 0.3s ease-in forwards;
+  z-index: 3;
+}
+.flip-flap-bottom {
+  transform: rotateX(90deg);
+  animation: flip-up 0.3s ease-out 0.3s forwards;
+  z-index: 2;
+}
+@keyframes flip-down {
+  from {
+    transform: rotateX(0deg);
+  }
+  to {
+    transform: rotateX(-90deg);
+  }
+}
+@keyframes flip-up {
+  from {
+    transform: rotateX(90deg);
+  }
+  to {
+    transform: rotateX(0deg);
+  }
+}
+
+/* The only controls: hidden until the screen is tapped or a key puts focus on them. */
+.flip-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  opacity: 0;
+  transition: opacity 0.25s;
+  pointer-events: none;
+}
+.flip-stage[data-show="true"] .flip-controls,
+.flip-controls:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+.flip-controls button {
+  min-height: 48px;
+  min-width: 120px;
+  padding: 0 22px;
+  border-radius: 999px;
+  border: 1px solid #3a3a3d;
+  background: #1b1b1d;
+  color: #f2f2f2;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.flip-controls button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .flip-flap-top,
+  .flip-flap-bottom {
+    animation-duration: 0.01s;
+    animation-delay: 0s;
+  }
+}

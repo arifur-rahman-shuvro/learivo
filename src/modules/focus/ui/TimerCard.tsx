@@ -12,13 +12,14 @@ import {
   type TimerPlan,
 } from "../domain/engine.ts";
 import { BUILT_IN_PRESETS, MODE_LABEL } from "../domain/settings.ts";
+import { FlipScreen } from "./FlipClock.tsx";
 import { Num } from "./Num.tsx";
 import { useFocus, useNow } from "./FocusProvider.tsx";
 
 const MODES: TimerMode[] = ["pomodoro", "stopwatch", "countdown", "custom"];
 
 /** The ring and the big digits. Time is read from the engine on every paint, never counted. */
-function Face({ immersive }: { immersive: boolean }) {
+function Face() {
   const { state } = useFocus();
   const t = state.active!;
   const running = isRunning(t);
@@ -26,7 +27,7 @@ function Face({ immersive }: { immersive: boolean }) {
   const left = remainingMs(t, now);
   const digits = left === null ? clock(elapsedMs(t, now)) : clock(left, "up");
   const ring = state.settings.display === "ring";
-  const size = immersive ? 340 : 248;
+  const size = 248;
   const r = 52;
   const c = 2 * Math.PI * r;
   const p = progress(t, now);
@@ -64,7 +65,7 @@ function Face({ immersive }: { immersive: boolean }) {
         )}
         <div
           className={`${ring ? "absolute" : ""} font-mono font-semibold tabular-nums leading-none`}
-          style={{ fontSize: immersive ? 76 : ring ? 48 : 72, opacity: running ? 1 : 0.7 }}
+          style={{ fontSize: ring ? 48 : 72, opacity: running ? 1 : 0.7 }}
           role="timer"
           aria-label={left === null ? "Time studied" : "Time left"}
         >
@@ -87,6 +88,25 @@ function Face({ immersive }: { immersive: boolean }) {
         </div>
       )}
     </div>
+  );
+}
+
+/** Full screen: black, flipping digits, nothing else. Time is read from the engine on every paint. */
+function Immersive({ onExit }: { onExit: () => void }) {
+  const { controller: c, state } = useFocus();
+  const t = state.active!;
+  const running = isRunning(t);
+  const now = useNow(running);
+  const left = remainingMs(t, now);
+  const text = left === null ? clock(elapsedMs(t, now)) : clock(left, "up");
+  return (
+    <FlipScreen
+      text={text}
+      label={`${left === null ? "Time studied" : "Time left"} ${text}`}
+      running={running}
+      onToggle={() => (running ? c.pause() : c.resume())}
+      onExit={onExit}
+    />
   );
 }
 
@@ -212,11 +232,9 @@ export function TimerCard({
   const running = isRunning(active);
   const isBreak = active.phase !== "focus";
   const planned = plannedMs(active);
-  const wrap = immersive
-    ? "fixed inset-0 z-[60] flex flex-col items-center justify-center gap-8 bg-bg p-6"
-    : "lv-card flex flex-col items-center gap-6 p-5";
+  if (immersive) return <Immersive onExit={() => onImmersive(false)} />;
   return (
-    <section aria-label="Timer" className={wrap}>
+    <section aria-label="Timer" className="lv-card flex flex-col items-center gap-6 p-5">
       <div className="flex w-full items-center justify-between gap-3">
         <div>
           <p className="m-0 text-lg font-semibold">{phaseLabel(active)}</p>
@@ -228,17 +246,12 @@ export function TimerCard({
             {!running && " · paused"}
           </p>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          aria-pressed={immersive}
-          onClick={() => onImmersive(!immersive)}
-        >
-          {immersive ? "Exit full screen" : "Full screen"}
+        <Button variant="ghost" size="sm" onClick={() => onImmersive(true)}>
+          Full screen
         </Button>
       </div>
 
-      <Face immersive={immersive} />
+      <Face />
 
       <p role="status" className="sr-only">
         {phaseLabel(active)} {running ? "running" : "paused"}
