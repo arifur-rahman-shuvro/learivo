@@ -7,11 +7,12 @@ describe("module registry", () => {
     expect(new Set(MODULES.map((m) => m.route)).size).toBe(MODULES.length);
   });
 
-  it("shows the five primary modules in order", () => {
+  it("shows the six primary modules in order", () => {
     expect(visibleModules().map((m) => m.id)).toEqual([
       "home",
       "questions",
       "practice",
+      "study",
       "review",
       "insights",
     ]);

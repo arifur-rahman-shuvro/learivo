@@ -1,6 +1,6 @@
 # Status, verification and open items
 
-Last updated 2026-11-26 (push notifications: the Coach). This is the one place that says what is done, what has been proven, and what is still open. Behaviour is in `FEATURES.md`; running and recovery in `OPERATIONS.md` and `RUNBOOK.md`.
+Last updated 2026-11-26 (Focus Timer and Study dashboard, on branch `focus-timer`). This is the one place that says what is done, what has been proven, and what is still open. Behaviour is in `FEATURES.md`; running and recovery in `OPERATIONS.md` and `RUNBOOK.md`.
 
 ## Where the project stands
 
@@ -10,7 +10,7 @@ Built and in use: the question bank, practice and exams, review (revision, mista
 
 ## How things were checked
 
-- **Run by the assistant, every push:** format, lint, typecheck, unit and component tests (724), build, environment/header check, end-to-end flows in a real browser against in-memory data, accessibility scan (axe, WCAG 2.1 AA) of the landing, sign-in and five signed-in screens in five theme/mode combinations at 360 px, a design audit of screens and dialogs, the exam PDF check (including Bangla text), SQL checks for row-level security and answer rules, and a coverage floor.
+- **Run by the assistant, every push:** format, lint, typecheck, unit and component tests (784), build, environment/header check, end-to-end flows in a real browser against in-memory data, accessibility scan (axe, WCAG 2.1 AA) of the landing, sign-in and six signed-in screens (including Study with a running timer) in six theme/mode combinations at 360 px, a design audit of screens and dialogs, the exam PDF check (including Bangla text), SQL checks for row-level security and answer rules, and a coverage floor.
 - **Reported passed by the owner, not run by the assistant** (no logs or screenshots supplied): offline editing and sync on a real phone, deleting a throwaway account, two accounts that cannot see each other's data, a real AI call with the owner's key, Firefox and Safari, Supabase Site URL and redirect, password-reset email, change email, Google sign-in, Gmail sender, install and offline use on the phone, exam PDF on the phone, a restore drill with the app's backup file, and the introduction page on a phone.
 - **Not verified by anyone:** the AI-decides plan with a real AI (the flow is tested with a fake AI only: plan reading, batching, retry, prompts); a timed restore of the full database from the weekly backup on a computer; many students on one database; 100,000 questions on a low-end phone; two real devices editing offline at the same time; the live site's headers seen from outside GitHub's runner; link previews in WhatsApp or Facebook; the install dialog with screenshots; screen-reader use; a penetration test.
 - **Local measurements** (not the real project): 50,000 questions and 200,000 answers for one student, list and search under 25 ms, a dump and restore of 250,000 rows matching exactly. Details in `RUNBOOK.md`.
@@ -32,3 +32,10 @@ Built and in use: the question bank, practice and exams, review (revision, mista
 - A CI run against a local Supabase (today CI uses plain Postgres for the SQL checks).
 - An architecture decision log and a recorded restore drill on the real project.
 - Offline edits of tags, collections and subjects clash silently (last change wins); only questions have the clash screen.
+
+## Focus Timer and Study dashboard (branch `focus-timer`)
+
+- **Built and checked here:** timer engine and recovery, session saving, statistics, Study tab, settings, AMOLED theme; unit and component tests, SQL checks (own rows only, no duplicates, no edits; the check fails when row security is loosened), end-to-end, accessibility and design audits. The engine tests fail when the pause arithmetic is broken.
+- **Not live yet:** the branch is not merged and migration `20261126000000_focus_timer.sql` is not applied to the live project. Until the owner says so, the live site is unchanged.
+- **Not verified:** the timer on a real phone (screen off, Wake Lock, background notification). Only the owner can check this.
+- **Not built (optional ideas left out on purpose):** a timer started from Practice, and Coach push messages about study time.

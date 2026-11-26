@@ -1,4 +1,4 @@
-export type ThemeId = "default" | "forest" | "space";
+export type ThemeId = "default" | "forest" | "space" | "amoled";
 export type Mode = "light" | "dark";
 export type ModePreference = Mode | "system";
 

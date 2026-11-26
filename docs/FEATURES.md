@@ -86,3 +86,16 @@ What each part does and the rules behind it, written from the code. For where fi
 - Marks always show with at most two decimals (13.3333 shows as 13.33, 13.25 stays 13.25, 15 stays 15), on Results, per question and in the exam score.
 - The percentage is marks earned out of the marks for **all** questions, so a skipped question counts against it: 12 right out of 20 is 60% even if only 16 were answered. Results shows Score, Percentage and "Answered x of y". "Up/Down x points from last time" uses the same percentage.
 - Insights "accuracy" is still about answered questions only (it measures how well you know what you attempt); exam scores in Insights use full marks.
+
+## Study: Focus Timer and Study Time dashboard
+
+A sixth tab, **Study**, with three views: **Timer**, **Stats**, **History**.
+
+- **Timer modes:** Pomodoro (focus, short break, long break after N sessions, optional automatic break and automatic next focus), Stopwatch, Countdown, Custom, and saved Presets. Controls: Start, Pause, Resume, Reset, Restart, Skip break, Next session, Stop.
+- **Accurate:** the clock is worked out from timestamps (start time and time already carried), not by counting ticks, so a background tab, a phone that slept or a refresh cannot make it drift. A running timer is kept on the device and is recovered after a refresh or restart; if the app was closed for a while, it asks whether to save the session as interrupted. Optional Screen Wake Lock keeps the screen on where the browser allows it.
+- **Interface:** large digits, circular progress or digits only, progress bar, fullscreen, keyboard shortcuts, and a small timer pill that stays on every other screen.
+- **Tracking:** each finished focus session is saved with start, end, actual focus time, kind, status (completed, interrupted, cancelled) and the student's own day. Break time is never saved, so it can never count as study. A session under one minute is marked cancelled: it stays in History but never counts as study time. The same session cannot be saved twice (its id is made on the device).
+- **Stats:** today, this week, this month, total, sessions, today's completed sessions, average session, daily/weekly/monthly charts, time-of-day distribution, a 12-week heatmap, best hour (after enough sessions) and quiet milestones (1, 10, 25, 50, 100 hours and more).
+- **History:** every session, filterable by day.
+- **Settings:** Pomodoro lengths, presets, default mode, 12/24-hour time, display options, notification and vibration, keep awake. A fourth theme, **AMOLED** (pure black, dark only), is in the theme list.
+- Existing practice and exam time in Insights is unchanged and is not mixed into focus totals.

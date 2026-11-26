@@ -1,6 +1,6 @@
 /** Module registry: the app shell reads this list, so adding a feature means adding a manifest. */
 
-export type ModuleId = "home" | "questions" | "practice" | "review" | "insights";
+export type ModuleId = "home" | "questions" | "practice" | "study" | "review" | "insights";
 
 export interface ModuleManifest {
   id: ModuleId;
@@ -17,6 +17,7 @@ export const MODULES: readonly ModuleManifest[] = [
   { id: "home", label: "Home", route: "#/home", primary: true, builtInPhase: 4 },
   { id: "questions", label: "Questions", route: "#/questions", primary: true, builtInPhase: 4 },
   { id: "practice", label: "Practice", route: "#/practice", primary: true, builtInPhase: 5 },
+  { id: "study", label: "Study", route: "#/study", primary: true, builtInPhase: 7 },
   { id: "review", label: "Review", route: "#/review", primary: true, builtInPhase: 6 },
   { id: "insights", label: "Insights", route: "#/insights", primary: true, builtInPhase: 6 },
 ];

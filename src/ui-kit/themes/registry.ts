@@ -1,3 +1,4 @@
+import { amoledTheme } from "./amoled/tokens.ts";
 import { defaultTheme } from "./default/tokens.ts";
 import { forestTheme } from "./forest/tokens.ts";
 import { spaceTheme } from "./space/tokens.ts";
@@ -11,6 +12,7 @@ const themes: Record<ThemeId, ThemeDefinition> = {
   default: defaultTheme,
   forest: forestTheme,
   space: spaceTheme,
+  amoled: amoledTheme,
 };
 
 export const themeList: ThemeDefinition[] = Object.values(themes);
