@@ -4,6 +4,7 @@ import { ThemeProvider } from "../../../ui-kit/themes/ThemeProvider.tsx";
 import { MemoryFocus } from "../data/memoryFocus.ts";
 import { FocusProvider } from "./FocusProvider.tsx";
 import { FocusPill } from "./FocusPill.tsx";
+import { digitGroups } from "./FlipClock.tsx";
 import StudyScreen from "./StudyScreen.tsx";
 import type { FocusRecord } from "../domain/engine.ts";
 
@@ -181,6 +182,40 @@ describe("Study screen", () => {
     render(ui(new MemoryFocus(), "u2"));
     await flush();
     expect(screen.getByRole("button", { name: "Start" })).toBeTruthy();
+  });
+});
+
+describe("full screen flip clock", () => {
+  it("shows only the flipping time on black, flips a digit when it changes, and exits", async () => {
+    render(ui());
+    await flush();
+    fireEvent.click(screen.getByRole("button", { name: "Start" }));
+    await advance(1_000);
+    fireEvent.click(screen.getByRole("button", { name: "Full screen" }));
+    const stage = screen.getByRole("region", { name: "Full screen timer" });
+    expect(stage.className).toContain("flip-stage");
+    expect(screen.getByRole("timer").getAttribute("aria-label")).toBe("Time left 24:59");
+    expect(stage.querySelectorAll("button")).toHaveLength(2); // Pause and Exit, hidden until tapped
+    const before = stage.querySelectorAll(".flip-flap-top").length;
+    expect(before).toBe(0);
+    await advance(1_000);
+    expect(screen.getByRole("timer").getAttribute("aria-label")).toBe("Time left 24:58");
+    expect(stage.querySelectorAll(".flip-flap-top").length).toBe(1); // only the changed digit flips
+    fireEvent.click(screen.getByRole("button", { name: "Pause" }));
+    expect(stage.querySelector('[data-paused="true"]')).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Exit full screen" }));
+    expect(screen.queryByRole("region", { name: "Full screen timer" })).toBeNull();
+  });
+  it("splits hours into three groups", () => {
+    expect(digitGroups("1:05:03")).toEqual([
+      ["0", "1"],
+      ["0", "5"],
+      ["0", "3"],
+    ]);
+    expect(digitGroups("05:09")).toEqual([
+      ["0", "5"],
+      ["0", "9"],
+    ]);
   });
 });
 
