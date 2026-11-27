@@ -65,16 +65,22 @@ More ideas, not yet in the list: Odd one out (three terms from one topic and one
 
 ### Break Room (entertainment)
 
-| Id          | Name            | Idea                                                     | Size |
-| ----------- | --------------- | -------------------------------------------------------- | ---- |
-| `wordguess` | Word guess      | Hidden five-letter word, six tries, colour hints         | M    |
-| `memory`    | Memory match    | Flip cards, find pairs (symbols and letters, no images)  | S    |
-| `slide`     | Number slide    | Slide and merge numbered tiles                           | M    |
-| `reaction`  | Reaction test   | Tap as soon as the screen changes colour; best time kept | S    |
-| `snake`     | Snake           | Classic, swipe to steer                                  | M    |
-| `calm`      | Breathing break | One calm minute: a circle grows and shrinks, follow it   | S    |
+Arcade and sports games, short rounds (one to three minutes), played with one thumb. The owner's brief: Tic-tac-toe, mini table tennis, mini cricket, penalty shootout and games of that kind. Build them as our own simple versions (our own rules, shapes and names); do not copy any other app's artwork, characters or code, and do not use a company's game or trademark by name.
 
-More ideas: Tic-tac-toe against a simple bot, Minesweeper, Simon says (repeat the pattern), Mini sudoku, Stack the tower (tap to drop blocks), Quick maths.
+| Id          | Name              | Idea                                                                            | Controls                          | Size |
+| ----------- | ----------------- | ------------------------------------------------------------------------------- | --------------------------------- | ---- |
+| `tictactoe` | Tic-tac-toe       | Three in a row. Against a bot (easy, hard) or two players on one phone          | Tap a square                      | S    |
+| `pingpong`  | Mini table tennis | Rally against the computer; the ball speeds up; first to 7 or best of 3         | Drag the paddle                   | M    |
+| `cricket`   | Mini cricket      | Six balls, time the swing to hit; runs by where the ball lands; best score kept | Tap to swing, swipe for direction | M    |
+| `penalty`   | Penalty shootout  | Five kicks each against a keeper who dives; choose a corner and power           | Swipe to aim and shoot            | M    |
+| `hoops`     | Basket shots      | Flick the ball into the hoop in 30 seconds; the hoop moves as the score grows   | Flick                             | M    |
+| `snake`     | Snake             | The classic; eat, grow, do not bite yourself                                    | Swipe                             | M    |
+| `memory`    | Memory match      | Flip cards and find pairs (symbols and letters, no images)                      | Tap                               | S    |
+| `calm`      | Breathing break   | One calm minute: a circle grows and shrinks, follow it                          | None                              | S    |
+
+Build order suggestion: Tic-tac-toe (smallest, proves the game contract), then Penalty shootout, Table tennis, Cricket. They need a small shared game loop (a `requestAnimationFrame` loop that uses timestamps, with a pause when the tab is hidden); write it once in `src/modules/games/shared/` when the first real-time game is built.
+
+More ideas: Minesweeper, Simon says (repeat the pattern), Mini sudoku, Stack the tower (tap to drop blocks), Quick maths, Word guess (hidden five-letter word), Number slide (merge tiles), Reaction test (tap when the screen changes), Air hockey, Darts, Bowling, Carrom.
 
 ## 6. How to add a game (step by step)
 
