@@ -39,12 +39,27 @@ describe("Mini games", () => {
       for (const x of own) expect(screen.getByText(x.title)).toBeTruthy();
       for (const x of GAMES.filter((y) => y.group !== g))
         expect(screen.queryByText(x.title)).toBeNull();
-      expect(screen.getAllByText("Coming soon")).toHaveLength(own.length);
-      expect(screen.getAllByRole("button")).toHaveLength(1); // only Back
+      const soon = own.filter((x) => x.status === "soon");
+      expect(screen.getAllByText("Coming soon")).toHaveLength(soon.length);
+      expect(screen.getAllByRole("button")).toHaveLength(1 + (own.length - soon.length)); // Back and ready games
       fireEvent.click(screen.getByRole("button", { name: /Mini games/ }));
       expect(go).toHaveBeenCalledWith("#/games");
     },
   );
+
+  it("opens a ready game from its tile and Back returns to the list", async () => {
+    window.location.hash = "#/games/break";
+    const go = vi.fn((r: string) => {
+      window.location.hash = r;
+    });
+    const { rerender } = render(<GamesScreen onNavigate={go} />);
+    fireEvent.click(screen.getByRole("button", { name: /Tic-tac-toe/ }));
+    expect(go).toHaveBeenCalledWith("#/games/break/tictactoe");
+    rerender(<GamesScreen onNavigate={go} />);
+    expect(await screen.findByRole("button", { name: /Two players/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /Break Room/ }));
+    expect(go).toHaveBeenLastCalledWith("#/games/break");
+  });
 
   it("keeps game ids unique so saved scores can rely on them", () => {
     expect(new Set(GAMES.map((x) => x.id)).size).toBe(GAMES.length);

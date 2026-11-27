@@ -89,7 +89,7 @@ What each part does and the rules behind it, written from the code. For where fi
 
 ## Navigation and layout (UI re-engineering)
 
-Five bottom tabs: Home, Questions, Practice, Review, Progress. Review is a hub of big tiles (Due now, Mistakes, Flashcards, Notes, Bookmarks, Glossary), each opening its own page with Back. Focus timer and Mini games are reached from Home and Practice. **Mini games** opens two big choices: **Brain Gym** (study games from your own questions, cards and glossary) and **Break Room** (pure fun, never counts as study). Each lists its games, all "Coming soon" for now. On Home, **Browse all features** is a large tile. Progress > Study time shows practice time and Focus timer statistics together. Plan and reasons: `docs/UI_REDESIGN.md`.
+Five bottom tabs: Home, Questions, Practice, Review, Progress. Review is a hub of big tiles (Due now, Mistakes, Flashcards, Notes, Bookmarks, Glossary), each opening its own page with Back. Focus timer and Mini games are reached from Home and Practice. **Mini games** opens two big choices: **Brain Gym** (study games from your own questions, cards and glossary) and **Break Room** (pure fun, never counts as study). Each lists its games; **Tic-tac-toe** (Break Room) is playable (easy, medium, hard bot or two players, score tally, the first move alternates) and the rest are "Coming soon". On Home, **Browse all features** is a large tile. Progress > Study time shows practice time and Focus timer statistics together. Plan and reasons: `docs/UI_REDESIGN.md`.
 
 ## Study: Focus Timer and Study Time dashboard
 
@@ -110,4 +110,4 @@ The **Focus timer** (route `#/study`, reached from Home, Practice, the floating 
 - **Home:** a Next step card (revision due, or what is left of the daily goal), four big quick links (Practice, Review with its due count, Focus timer, Mini games), then goal, numbers, week, weak areas, recent sessions and exam countdown. Customize still hides and reorders sections. The old 16-shortcut grid is replaced by "Browse all features".
 - **Review hub:** six big tiles with live counts (Due now, Mistakes, Flashcards, Notes, Bookmarks, Glossary). Each opens its own page (`#/review/notes` and so on) with a Back button; the phone's Back button returns to the hub.
 - **Flashcards:** a deck page (search, All or Due filter, tap a row to edit) with one **Study** button. Study mode is full screen: a large card that turns over, four ratings (Again, Hard, Good, Easy, each with its next interval), a progress bar, keyboard (Space turns, 1 to 4 rate, Escape leaves) and a session summary.
-- **Mini games:** a hub page with four planned games, every one marked Coming soon. Nothing is playable yet.
+- **Mini games:** two groups (Brain Gym, Break Room) with 8 planned games each. **Tic-tac-toe is playable**; every other game is marked Coming soon.

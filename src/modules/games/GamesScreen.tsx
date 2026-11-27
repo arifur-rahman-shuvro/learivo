@@ -1,18 +1,44 @@
+import { Suspense, lazy, type ComponentType } from "react";
 import { subPage, useHash } from "../../core/hash.ts";
 import { PageHeader, Tile, TileGrid } from "../../ui-kit/index.ts";
-import { GAMES, GROUPS, gamesIn, type GameGroup } from "./registry.tsx";
+import { GAMES, GROUPS, gamesIn, type GameGroup, type GameManifest } from "./registry.tsx";
+import type { GameProps } from "./types.ts";
 
 export { GAMES };
 
 const ORDER: GameGroup[] = ["brain", "break"];
+
+/** One lazy component per playable game, made once so a re-render never reloads or resets it. */
+const screens = new Map<string, ComponentType<GameProps>>();
+function screenFor(g: GameManifest): ComponentType<GameProps> | null {
+  if (g.status !== "ready" || !g.load) return null;
+  let c = screens.get(g.id);
+  if (!c) {
+    c = lazy(g.load);
+    screens.set(g.id, c);
+  }
+  return c;
+}
 
 /**
  * "#/games" is the hub with two big choices. "#/games/brain" and "#/games/break" list the games of
  * that kind. Every game is Coming soon: nothing here pretends to be playable.
  */
 export default function GamesScreen({ onNavigate }: { onNavigate: (route: string) => void }) {
-  const sub = subPage(useHash(), "#/games");
-  const group = ORDER.find((g) => g === sub) ?? null;
+  // "#/games" hub, "#/games/break" a list, "#/games/break/tictactoe" a running game
+  const [first, second] = (subPage(useHash(), "#/games") ?? "").split("/");
+  const group = ORDER.find((g) => g === first) ?? null;
+  const game = group && second ? gamesIn(group).find((g) => g.id === second) : undefined;
+  const Play = game ? screenFor(game) : null;
+
+  if (group && Play) {
+    // Reporting a finished round is wired here in one place; saving scores is not built yet.
+    return (
+      <Suspense fallback={<p className="m-0 text-muted">Loading the game…</p>}>
+        <Play onExit={() => onNavigate(`#/games/${group}`)} onFinish={() => undefined} />
+      </Suspense>
+    );
+  }
 
   if (group) {
     const info = GROUPS[group];
@@ -32,12 +58,15 @@ export default function GamesScreen({ onNavigate }: { onNavigate: (route: string
               title={g.title}
               help={g.help}
               soon={g.status === "soon"}
+              onClick={() => onNavigate(`#/games/${group}/${g.id}`)}
             />
           ))}
         </TileGrid>
-        <p className="m-0 text-center text-sm text-muted">
-          These are on the way. Tell us which one you want first.
-        </p>
+        {gamesIn(group).some((g) => g.status === "soon") && (
+          <p className="m-0 text-center text-sm text-muted">
+            The dimmed ones are on the way. Tell us which one you want first.
+          </p>
+        )}
       </div>
     );
   }

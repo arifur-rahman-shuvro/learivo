@@ -136,6 +136,7 @@ try {
       "games",
       "games/brain",
       "games/break",
+      "games/break/tictactoe",
       "review",
       "review/flashcards",
       "review/notes",
