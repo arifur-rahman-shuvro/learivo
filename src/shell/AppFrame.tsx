@@ -40,7 +40,7 @@ export default function AppFrame({ nav, onAdd, account, focus, children }: Props
       </aside>
 
       <div
-        className={`flex min-w-0 flex-col gap-5 px-4 pt-4 sm:px-6 lg:px-8 lg:pb-10 lg:pt-5 pb-28`}
+        className={`flex min-w-0 flex-col gap-5 px-4 pt-4 sm:px-6 lg:px-8 lg:pb-10 lg:pt-5 ${focus ? "pb-6" : "pb-28"}`}
       >
         <header className={`flex items-center justify-between ${hideOnPhoneInFocus}`}>
           <div className="lg:hidden">

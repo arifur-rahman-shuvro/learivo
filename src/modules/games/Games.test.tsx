@@ -1,6 +1,7 @@
 import { afterEach } from "vitest";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { useFocusMode } from "../../core/focus.ts";
 import GamesScreen from "./GamesScreen.tsx";
 import { GAMES } from "./registry.tsx";
 import { Tile } from "../../ui-kit/index.ts";
@@ -11,7 +12,7 @@ describe("Mini games", () => {
     window.location.hash = "";
   });
 
-  it("opens with two big choices, Brain Gym and Break Room, and goes back to Practice", () => {
+  it("opens with two big choices, Brain Gym and Break Room, and goes back to Home", () => {
     const go = vi.fn();
     render(<GamesScreen onNavigate={go} />);
     expect(screen.getByRole("heading", { level: 1, name: "Mini games" })).toBeTruthy();
@@ -19,8 +20,8 @@ describe("Mini games", () => {
     expect(go).toHaveBeenCalledWith("#/games/brain");
     fireEvent.click(screen.getByRole("button", { name: /Break Room/ }));
     expect(go).toHaveBeenCalledWith("#/games/break");
-    fireEvent.click(screen.getByRole("button", { name: /Practice/ }));
-    expect(go).toHaveBeenCalledWith("#/practice");
+    fireEvent.click(screen.getByRole("button", { name: /Home/ }));
+    expect(go).toHaveBeenCalledWith("#/home");
   });
 
   it.each([
@@ -59,6 +60,24 @@ describe("Mini games", () => {
     expect(await screen.findByRole("button", { name: /Two players/ })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /Break Room/ }));
     expect(go).toHaveBeenLastCalledWith("#/games/break");
+  });
+
+  it("takes the whole screen on a phone: asks the shell to hide the tab bar and top bar while open, and gives it back when closed", () => {
+    let seen = false;
+    function Probe() {
+      seen = useFocusMode();
+      return null;
+    }
+    render(<Probe />);
+    expect(seen).toBe(false);
+    const games = render(<GamesScreen onNavigate={vi.fn()} />);
+    expect(seen).toBe(true);
+    // also while a game itself is open
+    window.location.hash = "#/games/break/penalty";
+    games.rerender(<GamesScreen onNavigate={vi.fn()} />);
+    expect(seen).toBe(true);
+    games.unmount();
+    expect(seen).toBe(false);
   });
 
   it("keeps game ids unique so saved scores can rely on them", () => {

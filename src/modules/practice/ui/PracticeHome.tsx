@@ -10,7 +10,6 @@ import {
   PracticeIcon,
   ListSkeleton,
   ExamsScene,
-  GamesIcon,
   StudyIcon,
   Tile,
   TileGrid,
@@ -518,13 +517,6 @@ export default function PracticeHome({
               title="Focus timer"
               help="Pomodoro, stopwatch and your study time."
               onClick={() => onNavigate("#/study")}
-            />
-            <Tile
-              icon={<GamesIcon />}
-              title="Mini games"
-              help="Quick playful rounds."
-              badge="Soon"
-              onClick={() => onNavigate("#/games")}
             />
           </TileGrid>
         </section>

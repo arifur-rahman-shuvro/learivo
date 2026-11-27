@@ -229,7 +229,6 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
             icon={<GamesIcon />}
             title="Mini games"
             help="Train or take a break"
-            badge="Soon"
             onClick={() => onNavigate("#/games")}
           />
         </TileGrid>

@@ -65,7 +65,7 @@ export const MODULES: readonly ModuleManifest[] = [
     route: "#/games",
     primary: true,
     nav: false,
-    navParent: "practice",
+    navParent: "home",
     builtInPhase: 8,
   },
 ];
