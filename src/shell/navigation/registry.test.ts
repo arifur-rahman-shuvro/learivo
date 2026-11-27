@@ -17,7 +17,7 @@ describe("module registry", () => {
     ]);
     expect(moduleForHash("#/study").id).toBe("study");
     expect(moduleForHash("#/games").id).toBe("games");
-    expect(moduleForHash("#/games").navParent).toBe("practice");
+    expect(moduleForHash("#/games").navParent).toBe("home");
   });
 
   it("resolves a hash and falls back to Home", () => {

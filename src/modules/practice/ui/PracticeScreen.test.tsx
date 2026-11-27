@@ -321,6 +321,24 @@ describe("Practice", () => {
     await waitFor(() => expect(frame.getAttribute("srcdoc")).not.toContain("Answer key"));
   });
 
+  describe("more ways to study", () => {
+    it("offers the Focus timer but not Mini games, which live on Home", async () => {
+      render(
+        <ThemeProvider>
+          <BankProvider repo={new MemoryRepo()}>
+            <PracticeProvider attempts={new MemoryAttempts()}>
+              <WorkspaceProvider repo={new MemoryWorkspace()}>
+                <PracticeScreen onNavigate={() => undefined} />
+              </WorkspaceProvider>
+            </PracticeProvider>
+          </BankProvider>
+        </ThemeProvider>,
+      );
+      expect(await screen.findByRole("button", { name: /Focus timer/ })).toBeTruthy();
+      expect(screen.queryByRole("button", { name: /Mini games/ })).toBeNull();
+    });
+  });
+
   describe("focus mode", () => {
     it("shows progress, opens the question list as a sheet, and moves with keys", async () => {
       const { ready } = setup();

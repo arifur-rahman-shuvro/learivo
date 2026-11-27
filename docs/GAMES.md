@@ -4,14 +4,14 @@ This file is the single source of truth for the Mini games area. It is written s
 
 ## 1. Where it lives
 
-| Thing                | Place                                                                                                     |
-| -------------------- | --------------------------------------------------------------------------------------------------------- |
-| List of games        | `src/modules/games/registry.tsx` (`GAMES`, `GROUPS`)                                                      |
-| Hub and list screens | `src/modules/games/GamesScreen.tsx`                                                                       |
-| Shared types         | `src/modules/games/types.ts` (`GameProps`, `GameResult`)                                                  |
-| Tests                | `src/modules/games/Games.test.tsx`                                                                        |
-| Route                | `#/games` (hub), `#/games/brain`, `#/games/break`                                                         |
-| Module registration  | `src/shell/navigation/registry.ts` (`id: "games"`, not in the bottom bar; reached from Home and Practice) |
+| Thing                | Place                                                                                                                                           |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| List of games        | `src/modules/games/registry.tsx` (`GAMES`, `GROUPS`)                                                                                            |
+| Hub and list screens | `src/modules/games/GamesScreen.tsx`                                                                                                             |
+| Shared types         | `src/modules/games/types.ts` (`GameProps`, `GameResult`)                                                                                        |
+| Tests                | `src/modules/games/Games.test.tsx`                                                                                                              |
+| Route                | `#/games` (hub), `#/games/brain`, `#/games/break`                                                                                               |
+| Module registration  | `src/shell/navigation/registry.ts` (`id: "games"`, `navParent: "home"`, not in the bottom bar; reached from the Home tile and the feature list) |
 
 A game with `status: "soon"` shows a dimmed tile that says **Coming soon** and cannot be tapped. Nothing fake is playable. A game is only `ready` when it really plays and has tests. **Ready today: Tic-tac-toe** (`src/modules/games/tictactoe/`) and **Penalty shootout** (`src/modules/games/penalty/`). Tic-tac-toe is the working example to copy: `rules.ts` (pure rules and the bot, no React), `rules.test.ts`, `TicTacToe.tsx` (the screen) and `TicTacToe.test.tsx`.
 
@@ -23,6 +23,8 @@ A game with `status: "soon"` shows a dimmed tile that says **Coming soon** and c
 Keep this split strict. A study game that does not use the student's content belongs in Break Room; a fun game must never be counted as study.
 
 ## 3. Rules every game follows
+
+0. **Full screen.** `GamesScreen` already calls `useRequestFocus()` (from `src/core/focus.ts`), so on a phone the tab bar and top bar are hidden for every page under `#/games`. A game must therefore bring its own Back button (`PageHeader` with `onBack`, as the existing games do) and must not assume the tab bar is there. Leave a margin at the bottom for the phone's gesture bar.
 
 1. **Private and offline-friendly.** A game must run with no network. Brain Gym reads data the app already has in memory or in the offline store; it adds no new server calls.
 2. **Text only.** No image-based features (a standing product rule). Draw with CSS, SVG or canvas shapes and text. Do not use pictures of anatomy or any uploaded image.
