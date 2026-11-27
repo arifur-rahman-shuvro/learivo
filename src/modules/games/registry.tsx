@@ -149,7 +149,8 @@ export const GAMES: readonly GameManifest[] = [
     title: "Penalty shootout",
     help: "Aim, shoot and beat the keeper in five kicks.",
     icon: <SparkIcon />,
-    status: "soon",
+    status: "ready",
+    load: () => import("./penalty/Penalty.tsx"),
   },
   {
     id: "hoops",
