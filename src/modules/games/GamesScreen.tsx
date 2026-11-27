@@ -1,68 +1,68 @@
-import {
-  CardsIcon,
-  ClockIcon,
-  GamesIcon,
-  PageHeader,
-  PracticeIcon,
-  SparkIcon,
-  Tile,
-  TileGrid,
-} from "../../ui-kit/index.ts";
+import { subPage, useHash } from "../../core/hash.ts";
+import { PageHeader, Tile, TileGrid } from "../../ui-kit/index.ts";
+import { GAMES, GROUPS, gamesIn, type GameGroup } from "./registry.tsx";
 
-/** What each game will be. Every one is Coming soon: nothing here pretends to be playable. */
-export const GAMES = [
-  {
-    id: "speed",
-    title: "Speed round",
-    help: "Answer as many as you can in 60 seconds.",
-    icon: <ClockIcon />,
-  },
-  {
-    id: "match",
-    title: "Match pairs",
-    help: "Match terms to their meanings against the clock.",
-    icon: <CardsIcon />,
-  },
-  {
-    id: "duel",
-    title: "Streak duel",
-    help: "Beat your own best streak of correct answers.",
-    icon: <SparkIcon />,
-  },
-  {
-    id: "boss",
-    title: "Weak spot boss",
-    help: "Defeat your weakest topic with a short fight.",
-    icon: <PracticeIcon />,
-  },
-] as const;
+export { GAMES };
 
+const ORDER: GameGroup[] = ["brain", "break"];
+
+/**
+ * "#/games" is the hub with two big choices. "#/games/brain" and "#/games/break" list the games of
+ * that kind. Every game is Coming soon: nothing here pretends to be playable.
+ */
 export default function GamesScreen({ onNavigate }: { onNavigate: (route: string) => void }) {
+  const sub = subPage(useHash(), "#/games");
+  const group = ORDER.find((g) => g === sub) ?? null;
+
+  if (group) {
+    const info = GROUPS[group];
+    return (
+      <div className="flex flex-col gap-5">
+        <PageHeader
+          title={info.title}
+          help={info.page}
+          onBack={() => onNavigate("#/games")}
+          backLabel="Mini games"
+        />
+        <TileGrid>
+          {gamesIn(group).map((g) => (
+            <Tile
+              key={g.id}
+              icon={g.icon}
+              title={g.title}
+              help={g.help}
+              soon={g.status === "soon"}
+            />
+          ))}
+        </TileGrid>
+        <p className="m-0 text-center text-sm text-muted">
+          These are on the way. Tell us which one you want first.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <PageHeader
         title="Mini games"
-        help="Short, playful rounds built from your own questions."
+        help="Pick a side: train your brain or take a break."
         onBack={() => onNavigate("#/practice")}
         backLabel="Practice"
       />
-      <div className="lv-card flex items-center gap-3 p-4">
-        <span
-          aria-hidden
-          className="grid size-12 place-items-center rounded-control bg-accent text-on-accent"
-        >
-          <GamesIcon />
-        </span>
-        <p className="m-0 text-sm text-muted">
-          Games are on the way. They will use the questions you already have, and count toward your
-          streak.
-        </p>
-      </div>
-      <TileGrid>
-        {GAMES.map((g) => (
-          <Tile key={g.id} icon={g.icon} title={g.title} help={g.help} soon />
+      <div className="flex flex-col gap-4">
+        {ORDER.map((g) => (
+          <Tile
+            key={g}
+            tone="accent"
+            icon={GROUPS[g].icon}
+            title={GROUPS[g].title}
+            help={GROUPS[g].help}
+            badge={`${gamesIn(g).length} games soon`}
+            onClick={() => onNavigate(`#/games/${g}`)}
+          />
         ))}
-      </TileGrid>
+      </div>
     </div>
   );
 }

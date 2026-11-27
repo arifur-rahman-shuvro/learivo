@@ -89,7 +89,7 @@ What each part does and the rules behind it, written from the code. For where fi
 
 ## Navigation and layout (UI re-engineering)
 
-Five bottom tabs: Home, Questions, Practice, Review, Progress. Review is a hub of big tiles (Due now, Mistakes, Flashcards, Notes, Bookmarks, Glossary), each opening its own page with Back. Focus timer and Mini games (all "Coming soon") are reached from Home and Practice. Progress > Study time shows practice time and Focus timer statistics together. Plan and reasons: `docs/UI_REDESIGN.md`.
+Five bottom tabs: Home, Questions, Practice, Review, Progress. Review is a hub of big tiles (Due now, Mistakes, Flashcards, Notes, Bookmarks, Glossary), each opening its own page with Back. Focus timer and Mini games are reached from Home and Practice. **Mini games** opens two big choices: **Brain Gym** (study games from your own questions, cards and glossary) and **Break Room** (pure fun, never counts as study). Each lists its games, all "Coming soon" for now. On Home, **Browse all features** is a large tile. Progress > Study time shows practice time and Focus timer statistics together. Plan and reasons: `docs/UI_REDESIGN.md`.
 
 ## Study: Focus Timer and Study Time dashboard
 
