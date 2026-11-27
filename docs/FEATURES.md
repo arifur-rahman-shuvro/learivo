@@ -87,6 +87,10 @@ What each part does and the rules behind it, written from the code. For where fi
 - The percentage is marks earned out of the marks for **all** questions, so a skipped question counts against it: 12 right out of 20 is 60% even if only 16 were answered. Results shows Score, Percentage and "Answered x of y". "Up/Down x points from last time" uses the same percentage.
 - Insights "accuracy" is still about answered questions only (it measures how well you know what you attempt); exam scores in Insights use full marks.
 
+## Navigation and layout (UI re-engineering)
+
+Five bottom tabs: Home, Questions, Practice, Review, Progress. Review is a hub of big tiles (Due now, Mistakes, Flashcards, Notes, Bookmarks, Glossary), each opening its own page with Back. Focus timer and Mini games (all "Coming soon") are reached from Home and Practice. Progress > Study time shows practice time and Focus timer statistics together. Plan and reasons: `docs/UI_REDESIGN.md`.
+
 ## Study: Focus Timer and Study Time dashboard
 
 The **Focus timer** (route `#/study`, reached from Home, Practice, the floating pill or search; it is no longer in the bottom bar) has three views: **Timer**, **Stats**, **History**.

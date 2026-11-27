@@ -9,6 +9,8 @@ import { PracticeProvider, handoff } from "../../practice/ui/practice.tsx";
 import PracticeScreen from "../../practice/ui/PracticeScreen.tsx";
 import { MemoryWorkspace } from "../data/memoryWorkspace.ts";
 import { WorkspaceProvider } from "./workspace.tsx";
+import { FocusProvider } from "../../focus/ui/FocusProvider.tsx";
+import { MemoryFocus } from "../../focus/data/memoryFocus.ts";
 import ReviewScreen from "./ReviewScreen.tsx";
 import InsightsScreen from "./InsightsScreen.tsx";
 import HomeDashboard from "./HomeDashboard.tsx";
@@ -46,7 +48,11 @@ async function setup<T = void>(
     <ThemeProvider>
       <BankProvider repo={stores.bank}>
         <PracticeProvider attempts={stores.attempts}>
-          <WorkspaceProvider repo={stores.workspace}>{ui(nav)}</WorkspaceProvider>
+          <WorkspaceProvider repo={stores.workspace}>
+            <FocusProvider userId="u1" repo={new MemoryFocus()}>
+              {ui(nav)}
+            </FocusProvider>
+          </WorkspaceProvider>
         </PracticeProvider>
       </BankProvider>
     </ThemeProvider>,
@@ -265,6 +271,20 @@ describe("Insights", () => {
   it("shows an empty state before any session", async () => {
     await setup((n) => <InsightsScreen onNavigate={n} />);
     expect(await screen.findByText("Nothing to show yet")).toBeTruthy();
+  });
+
+  it("shows focus-timer stats under Study time and opens the timer", async () => {
+    const { nav } = await setup(
+      (n) => <InsightsScreen onNavigate={n} />,
+      async ({ bank, attempts }) => {
+        const [a] = await bank.create([{ ...tf("A1"), path: ["Anatomy"] }]);
+        await finished(attempts, [{ id: a!, stem: "A1", path: ["Anatomy"], right: true }]);
+      },
+    );
+    fireEvent.click(await screen.findByRole("tab", { name: "Study time" }));
+    expect(await screen.findByRole("heading", { name: "Focus timer" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Open focus timer" }));
+    expect(nav).toHaveBeenCalledWith("#/study");
   });
 
   it("starts a practice session from a weak area", async () => {

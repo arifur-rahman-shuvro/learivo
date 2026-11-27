@@ -33,6 +33,10 @@ Built and in use: the question bank, practice and exams, review (revision, mista
 - An architecture decision log and a recorded restore drill on the real project.
 - Offline edits of tags, collections and subjects clash silently (last change wins); only questions have the clash screen.
 
+## UI re-engineering
+
+Built and checked here (unit and component tests 791, e2e, accessibility and design audits on 12 screens in 6 theme/mode combinations, screenshots before and after). **Not verified:** how it feels on a real phone. No database change.
+
 ## Focus Timer and Study dashboard (branch `focus-timer`)
 
 - **Built and checked here:** timer engine and recovery, session saving, statistics, Study tab, settings, AMOLED theme; unit and component tests, SQL checks (own rows only, no duplicates, no edits; the check fails when row security is loosened), end-to-end, accessibility and design audits. The engine tests fail when the pause arithmetic is broken.

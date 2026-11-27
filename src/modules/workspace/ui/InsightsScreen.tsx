@@ -1,3 +1,4 @@
+import { Dashboard as FocusStats } from "../../focus/ui/Dashboard.tsx";
 import { shortTime } from "../../practice/domain/pace.ts";
 import PractiseArea from "./PractiseArea.tsx";
 import { useIntent } from "../../../core/intents.ts";
@@ -316,6 +317,18 @@ export default function InsightsScreen({ onNavigate }: { onNavigate: (route: str
                   }))}
                 />
               )}
+            </section>
+          )}
+
+          {tab === "time" && (
+            <section aria-label="Focus time" className="flex flex-col gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <h2 className="m-0 text-lg font-semibold">Focus timer</h2>
+                <Button variant="secondary" onClick={() => onNavigate("#/study")}>
+                  Open focus timer
+                </Button>
+              </div>
+              <FocusStats />
             </section>
           )}
 

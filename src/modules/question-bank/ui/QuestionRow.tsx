@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { ActionMenu, Badge } from "../../../ui-kit/index.ts";
+import { ActionMenu, Badge, BookmarkIcon } from "../../../ui-kit/index.ts";
 import { TYPE_LABELS } from "../domain/model.ts";
 import type { QuestionRecord } from "../data/repo.ts";
 import { DifficultyDots } from "./DifficultyDots.tsx";
@@ -82,11 +82,12 @@ export const QuestionRow = memo(function QuestionRow({
           type="button"
           aria-label={`${bookmarked ? "Bookmarked" : "Bookmark"}: ${q.stem.slice(0, 40)}`}
           onClick={() => onBookmark(q.id)}
-          className={`min-h-10 shrink-0 rounded-control border px-2.5 py-1 text-xs font-semibold ${
-            bookmarked ? "border-accent bg-surface-2" : "border-line text-muted"
+          aria-pressed={bookmarked}
+          className={`grid size-10 shrink-0 place-items-center rounded-control ${
+            bookmarked ? "text-accent" : "text-muted"
           }`}
         >
-          {bookmarked ? "Bookmarked" : "Bookmark"}
+          <BookmarkIcon size={20} fill={bookmarked ? "currentColor" : "none"} />
         </button>
       )}
       <ActionMenu

@@ -64,4 +64,4 @@ Every phase: typecheck, lint, tests (new ones mutation-checked), build, e2e, acc
 
 ## 7. Status
 
-P1 (navigation, kit, Games hub), P2 (Home) and P3 (Review hub, Flashcards rebuild) are built and checked. P4 and P5 are next. **Not verified:** any of it on a real phone.
+All five phases are built and checked. P4: Questions has one main button (Add questions) with Export, Organize and Duplicates under a More menu, a short search box, an icon bookmark; the shared page header now wraps its action under the title on narrow screens so nothing overlaps. P5: Progress > Study time now also shows the Focus timer statistics and a button that opens the timer. **Not verified:** any of it on a real phone.

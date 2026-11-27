@@ -172,16 +172,27 @@ try {
           "#/questions",
           (p) => p.getByRole("button", { name: "Add question" }).first(),
         ],
-        ["Export", "#/questions", (p) => p.getByRole("button", { name: "Export" })],
-        ["Organize", "#/questions", (p) => p.getByRole("button", { name: "Organize" })],
+        [
+          "Export",
+          "#/questions",
+          (p) => p.getByRole("button", { name: "More question tools" }),
+          "Export",
+        ],
+        [
+          "Organize",
+          "#/questions",
+          (p) => p.getByRole("button", { name: "More question tools" }),
+          "Organize",
+        ],
         ["New exam", "#/practice", (p) => p.getByRole("button", { name: "New exam" })],
       ];
-      for (const [name, route, opener] of dialogs) {
+      for (const [name, route, opener, menuItem] of dialogs) {
         step = `dialog ${name}`;
         await page.evaluate((r) => (location.hash = r), route);
         await page.waitForSelector("h1");
         const trigger = opener(page);
         await trigger.click();
+        if (menuItem) await page.getByRole("menuitem", { name: menuItem }).click();
         await page.waitForTimeout(300);
         await check(page, `${tag} dialog ${name}`);
         await close(page);
