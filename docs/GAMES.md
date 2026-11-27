@@ -13,7 +13,7 @@ This file is the single source of truth for the Mini games area. It is written s
 | Route                | `#/games` (hub), `#/games/brain`, `#/games/break`                                                         |
 | Module registration  | `src/shell/navigation/registry.ts` (`id: "games"`, not in the bottom bar; reached from Home and Practice) |
 
-A game with `status: "soon"` shows a dimmed tile that says **Coming soon** and cannot be tapped. Nothing fake is playable. A game is only `ready` when it really plays and has tests. **Ready today: Tic-tac-toe** (`src/modules/games/tictactoe/`), which is also the working example to copy: `rules.ts` (pure rules and the bot, no React), `rules.test.ts`, `TicTacToe.tsx` (the screen) and `TicTacToe.test.tsx`.
+A game with `status: "soon"` shows a dimmed tile that says **Coming soon** and cannot be tapped. Nothing fake is playable. A game is only `ready` when it really plays and has tests. **Ready today: Tic-tac-toe** (`src/modules/games/tictactoe/`) and **Penalty shootout** (`src/modules/games/penalty/`). Tic-tac-toe is the working example to copy: `rules.ts` (pure rules and the bot, no React), `rules.test.ts`, `TicTacToe.tsx` (the screen) and `TicTacToe.test.tsx`.
 
 ## 2. The two groups
 
@@ -78,7 +78,7 @@ Arcade and sports games, short rounds (one to three minutes), played with one th
 | `memory`    | Memory match      | Flip cards and find pairs (symbols and letters, no images)                                                           | Tap                               | S    |
 | `calm`      | Breathing break   | One calm minute: a circle grows and shrinks, follow it                                                               | None                              | S    |
 
-Build order suggestion: Tic-tac-toe (smallest, proves the game contract), then Penalty shootout, Table tennis, Cricket. They need a small shared game loop (a `requestAnimationFrame` loop that uses timestamps, with a pause when the tab is hidden); write it once in `src/modules/games/shared/` when the first real-time game is built.
+Build order suggestion: Tic-tac-toe and Penalty shootout are done; next Table tennis, Cricket. Penalty shootout shows a turn-based way to do "sports": rules and dice are pure functions with an injected random source (`rules.ts`), the animation is CSS only (no game loop). Table tennis and Cricket are real-time and do need the loop below. They need a small shared game loop (a `requestAnimationFrame` loop that uses timestamps, with a pause when the tab is hidden); write it once in `src/modules/games/shared/` when the first real-time game is built.
 
 More ideas: Minesweeper, Simon says (repeat the pattern), Mini sudoku, Stack the tower (tap to drop blocks), Quick maths, Word guess (hidden five-letter word), Number slide (merge tiles), Reaction test (tap when the screen changes), Air hockey, Darts, Bowling, Carrom.
 
