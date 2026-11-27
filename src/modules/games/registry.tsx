@@ -141,7 +141,8 @@ export const GAMES: readonly GameManifest[] = [
     title: "Mini cricket",
     help: "Time your swing and score runs off six balls.",
     icon: <PracticeIcon />,
-    status: "soon",
+    status: "ready",
+    load: () => import("./cricket/Cricket.tsx"),
   },
   {
     id: "penalty",
