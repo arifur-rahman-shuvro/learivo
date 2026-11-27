@@ -138,6 +138,7 @@ try {
       "games/break",
       "games/break/tictactoe",
       "games/break/penalty",
+      "games/break/cricket",
       "review",
       "review/flashcards",
       "review/notes",
