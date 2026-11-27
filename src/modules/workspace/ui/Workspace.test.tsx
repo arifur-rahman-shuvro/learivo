@@ -412,6 +412,21 @@ describe("Insights", () => {
 });
 
 describe("Home dashboard", () => {
+  it("opens Mini games, and Browse all features is a big tile that opens the feature list", async () => {
+    const { nav } = await setup(
+      (n) => <HomeDashboard onNavigate={n} />,
+      async ({ bank }) => {
+        await bank.create([{ ...tf("A1"), path: ["Anatomy"] }]);
+      },
+    );
+    fireEvent.click(await screen.findByRole("button", { name: /Mini games/ }));
+    expect(nav).toHaveBeenCalledWith("#/games");
+    const browse = screen.getByRole("button", { name: /Browse all features/ });
+    expect(browse.className).toContain("lv-card");
+    fireEvent.click(browse);
+    expect(await screen.findByRole("dialog")).toBeTruthy();
+  });
+
   it("shows the starter page when the bank is empty", async () => {
     await setup((n) => <HomeDashboard onNavigate={n} />);
     expect(

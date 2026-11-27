@@ -142,6 +142,8 @@ try {
         "practice",
         "study",
         "games",
+        "games/brain",
+        "games/break",
         "review",
         "review/flashcards",
         "review/notes",

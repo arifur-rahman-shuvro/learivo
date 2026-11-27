@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Button,
   GamesIcon,
+  SearchIcon,
   PracticeIcon,
   ProgressRing,
   ReviewIcon,
@@ -223,13 +224,21 @@ export default function HomeDashboard({ onNavigate }: { onNavigate: (route: stri
             help="Pomodoro and study time"
             onClick={() => onNavigate("#/study")}
           />
-          <Tile stack icon={<GamesIcon />} title="Mini games" help="Playful rounds" soon />
+          <Tile
+            stack
+            icon={<GamesIcon />}
+            title="Mini games"
+            help="Train or take a break"
+            badge="Soon"
+            onClick={() => onNavigate("#/games")}
+          />
         </TileGrid>
-        <div>
-          <Button size="sm" variant="ghost" onClick={() => setFeatures(true)}>
-            Browse all features
-          </Button>
-        </div>
+        <Tile
+          icon={<SearchIcon />}
+          title="Browse all features"
+          help="Every tool in one list, with search"
+          onClick={() => setFeatures(true)}
+        />
       </section>
     ),
     focus: (
