@@ -1,4 +1,5 @@
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
+import type { GameProps } from "./types.ts";
 import {
   CardsIcon,
   CheckIcon,
@@ -29,6 +30,8 @@ export interface GameManifest {
   icon: ReactNode;
   /** `soon` tiles are dimmed and not clickable. Set `ready` only when the game really plays. */
   status: "soon" | "ready";
+  /** Required when `status` is `ready`: loads the game screen as its own chunk. */
+  load?: () => Promise<{ default: ComponentType<GameProps> }>;
 }
 
 export const GROUPS: Record<
@@ -121,7 +124,8 @@ export const GAMES: readonly GameManifest[] = [
     title: "Tic-tac-toe",
     help: "Three in a row against a bot, or pass the phone to a friend.",
     icon: <CheckIcon />,
-    status: "soon",
+    status: "ready",
+    load: () => import("./tictactoe/TicTacToe.tsx"),
   },
   {
     id: "pingpong",

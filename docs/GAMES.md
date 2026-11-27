@@ -13,7 +13,7 @@ This file is the single source of truth for the Mini games area. It is written s
 | Route                | `#/games` (hub), `#/games/brain`, `#/games/break`                                                         |
 | Module registration  | `src/shell/navigation/registry.ts` (`id: "games"`, not in the bottom bar; reached from Home and Practice) |
 
-Today every game is `status: "soon"`: its tile is dimmed, says **Coming soon** and cannot be tapped. Nothing fake is playable. A game is only `ready` when it really plays and has tests.
+A game with `status: "soon"` shows a dimmed tile that says **Coming soon** and cannot be tapped. Nothing fake is playable. A game is only `ready` when it really plays and has tests. **Ready today: Tic-tac-toe** (`src/modules/games/tictactoe/`), which is also the working example to copy: `rules.ts` (pure rules and the bot, no React), `rules.test.ts`, `TicTacToe.tsx` (the screen) and `TicTacToe.test.tsx`.
 
 ## 2. The two groups
 
@@ -67,16 +67,16 @@ More ideas, not yet in the list: Odd one out (three terms from one topic and one
 
 Arcade and sports games, short rounds (one to three minutes), played with one thumb. The owner's brief: Tic-tac-toe, mini table tennis, mini cricket, penalty shootout and games of that kind. Build them as our own simple versions (our own rules, shapes and names); do not copy any other app's artwork, characters or code, and do not use a company's game or trademark by name.
 
-| Id          | Name              | Idea                                                                            | Controls                          | Size |
-| ----------- | ----------------- | ------------------------------------------------------------------------------- | --------------------------------- | ---- |
-| `tictactoe` | Tic-tac-toe       | Three in a row. Against a bot (easy, hard) or two players on one phone          | Tap a square                      | S    |
-| `pingpong`  | Mini table tennis | Rally against the computer; the ball speeds up; first to 7 or best of 3         | Drag the paddle                   | M    |
-| `cricket`   | Mini cricket      | Six balls, time the swing to hit; runs by where the ball lands; best score kept | Tap to swing, swipe for direction | M    |
-| `penalty`   | Penalty shootout  | Five kicks each against a keeper who dives; choose a corner and power           | Swipe to aim and shoot            | M    |
-| `hoops`     | Basket shots      | Flick the ball into the hoop in 30 seconds; the hoop moves as the score grows   | Flick                             | M    |
-| `snake`     | Snake             | The classic; eat, grow, do not bite yourself                                    | Swipe                             | M    |
-| `memory`    | Memory match      | Flip cards and find pairs (symbols and letters, no images)                      | Tap                               | S    |
-| `calm`      | Breathing break   | One calm minute: a circle grows and shrinks, follow it                          | None                              | S    |
+| Id          | Name              | Idea                                                                                                                 | Controls                          | Size |
+| ----------- | ----------------- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ---- |
+| `tictactoe` | Tic-tac-toe       | **Ready.** Easy, medium and hard (unbeatable) bot, or two players on one phone; the first move alternates each round | Tap a square                      | S    |
+| `pingpong`  | Mini table tennis | Rally against the computer; the ball speeds up; first to 7 or best of 3                                              | Drag the paddle                   | M    |
+| `cricket`   | Mini cricket      | Six balls, time the swing to hit; runs by where the ball lands; best score kept                                      | Tap to swing, swipe for direction | M    |
+| `penalty`   | Penalty shootout  | Five kicks each against a keeper who dives; choose a corner and power                                                | Swipe to aim and shoot            | M    |
+| `hoops`     | Basket shots      | Flick the ball into the hoop in 30 seconds; the hoop moves as the score grows                                        | Flick                             | M    |
+| `snake`     | Snake             | The classic; eat, grow, do not bite yourself                                                                         | Swipe                             | M    |
+| `memory`    | Memory match      | Flip cards and find pairs (symbols and letters, no images)                                                           | Tap                               | S    |
+| `calm`      | Breathing break   | One calm minute: a circle grows and shrinks, follow it                                                               | None                              | S    |
 
 Build order suggestion: Tic-tac-toe (smallest, proves the game contract), then Penalty shootout, Table tennis, Cricket. They need a small shared game loop (a `requestAnimationFrame` loop that uses timestamps, with a pause when the tab is hidden); write it once in `src/modules/games/shared/` when the first real-time game is built.
 
@@ -86,8 +86,8 @@ More ideas: Minesweeper, Simon says (repeat the pattern), Mini sudoku, Stack the
 
 1. **Add the manifest.** In `registry.tsx` add one entry to `GAMES` with a new unique `id` (never rename an id once it ships), `group`, `title`, a one-line `help` and an icon from `src/ui-kit`. Keep `status: "soon"` until it works. `Games.test.tsx` already checks ids are unique and that each group shows only its own games.
 2. **Make the screen.** Create `src/modules/games/<id>/<Name>.tsx` with `export default function Name(props: GameProps)`. Put the rules (scoring, shuffling, win and lose) in plain TypeScript files next to it, with no React, so they can be unit tested.
-3. **Add routing.** A running game uses `#/games/<group>/<id>`. `subPage(hash, "#/games")` returns `"brain/speed"` for that address. In `GamesScreen.tsx`, split it on `/`: the first part picks the group list, the second part (if the game is `ready`) renders its screen through `React.lazy(game.load)` inside the existing `Suspense` in `ModuleHost`. Use `PlayableGame` from `types.ts`.
-4. **Wire the tile.** For a `ready` game, give the `Tile` an `onClick` that navigates to `#/games/<group>/<id>`; remove `soon`.
+3. **Routing is already built.** A running game lives at `#/games/<group>/<id>`. `GamesScreen.tsx` finds the game in `GAMES`; when it is `ready` and has a `load`, it opens it lazily (its own chunk) and passes `GameProps` (`onExit`, `onFinish`). You do not edit `GamesScreen.tsx`.
+4. **Make it ready.** In your `registry.tsx` entry set `status: "ready"` and `load: () => import("./<id>/<Name>.tsx")`. The tile becomes tappable by itself.
 5. **Finish a round.** Call `onFinish(result)` exactly once, then show the game's own result screen with Play again and Back to games.
 6. **Test.** Unit tests for the rules (include a test that fails when the scoring is broken: change the rule, watch the test fail, change it back). A component test that plays one round with `MemoryRepo` data. Add the game's route to the `routes` lists in `scripts/a11y.mjs` and `scripts/design.mjs`.
 7. **Run the full set:** `pnpm format; pnpm typecheck; pnpm lint; pnpm test; pnpm build; pnpm e2e; pnpm a11y; pnpm design; pnpm envcheck; pnpm paper`.
