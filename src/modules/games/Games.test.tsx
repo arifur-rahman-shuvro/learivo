@@ -25,7 +25,7 @@ describe("Mini games", () => {
 
   it.each([
     ["brain", "Brain Gym", "Speed round"],
-    ["break", "Break Room", "Word guess"],
+    ["break", "Break Room", "Tic-tac-toe"],
   ] as const)(
     "%s page lists only its own games, all Coming soon and not clickable",
     (g, title, sample) => {

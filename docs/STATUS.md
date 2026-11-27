@@ -35,7 +35,7 @@ Built and in use: the question bank, practice and exams, review (revision, mista
 
 ## UI re-engineering
 
-Mini games: two groups (Brain Gym, Break Room) with 8 and 6 planned games, all Coming soon. Build guide for developers and AI: `docs/GAMES.md`.
+Mini games: two groups (Brain Gym, Break Room) with 8 planned games each, all Coming soon (Break Room: Tic-tac-toe, table tennis, cricket, penalty shootout and more). Build guide for developers and AI: `docs/GAMES.md`.
 
 Built and checked here (unit and component tests 791, e2e, accessibility and design audits on 12 screens in 6 theme/mode combinations, screenshots before and after). **Not verified:** how it feels on a real phone. No database change.
 
