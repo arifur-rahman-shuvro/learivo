@@ -1,9 +1,9 @@
 /** Which sections the Home screen shows, and in what order. The student chooses; this keeps it valid. */
 export const HOME_SECTIONS = [
-  { id: "focus", label: "Today's focus" },
-  { id: "numbers", label: "Your numbers" },
-  { id: "features", label: "All features" },
+  { id: "focus", label: "Next step" },
+  { id: "features", label: "Quick links" },
   { id: "goal", label: "Daily goal" },
+  { id: "numbers", label: "Your numbers" },
   { id: "week", label: "This week" },
   { id: "weak", label: "Weak areas" },
   { id: "recent", label: "Recent sessions" },

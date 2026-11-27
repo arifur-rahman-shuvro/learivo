@@ -128,7 +128,18 @@ try {
       .first()
       .click();
     await page.getByRole("navigation", { name: "Primary" }).waitFor();
-    for (const route of ["home", "questions", "practice", "study", "review", "insights"]) {
+    for (const route of [
+      "home",
+      "questions",
+      "practice",
+      "study",
+      "games",
+      "review",
+      "review/flashcards",
+      "review/notes",
+      "review/glossary",
+      "insights",
+    ]) {
       await page.evaluate((r) => (location.hash = `#/${r}`), route);
       await page.waitForSelector("h1");
       await page.waitForTimeout(600);

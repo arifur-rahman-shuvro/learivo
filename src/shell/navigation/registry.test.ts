@@ -7,19 +7,23 @@ describe("module registry", () => {
     expect(new Set(MODULES.map((m) => m.route)).size).toBe(MODULES.length);
   });
 
-  it("shows the six primary modules in order", () => {
+  it("shows the five main modules in order, and keeps Focus timer and Mini games reachable", () => {
     expect(visibleModules().map((m) => m.id)).toEqual([
       "home",
       "questions",
       "practice",
-      "study",
       "review",
       "insights",
     ]);
+    expect(moduleForHash("#/study").id).toBe("study");
+    expect(moduleForHash("#/games").id).toBe("games");
+    expect(moduleForHash("#/games").navParent).toBe("practice");
   });
 
   it("resolves a hash and falls back to Home", () => {
     expect(moduleForHash("#/practice").id).toBe("practice");
+    expect(moduleForHash("#/review/notes").id).toBe("review");
+    expect(moduleForHash("#/reviewer").id).toBe("home");
     expect(moduleForHash("#/nope").id).toBe("home");
     expect(moduleForHash("").id).toBe("home");
   });

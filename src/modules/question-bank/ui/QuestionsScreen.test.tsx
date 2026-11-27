@@ -47,6 +47,11 @@ async function pick(field: string, option: string) {
   );
 }
 
+async function openTool(name: string) {
+  fireEvent.click(await screen.findByRole("button", { name: "More question tools" }));
+  fireEvent.click(await screen.findByRole("menuitem", { name }));
+}
+
 describe("QuestionsScreen", () => {
   it("a list that fails to load in Organize says why and loads again on Try again", async () => {
     const repo = new MemoryRepo();
@@ -58,7 +63,7 @@ describe("QuestionsScreen", () => {
       return real();
     };
     renderScreen(repo);
-    fireEvent.click(await screen.findByRole("button", { name: "Organize" }));
+    await openTool("Organize");
     const dialog = await screen.findByRole("dialog");
     const alert = await within(dialog).findByRole("alert");
     expect(alert.textContent).toContain("Could not reach your question bank");
@@ -74,7 +79,7 @@ describe("QuestionsScreen", () => {
     const { container } = renderScreen(repo);
     await screen.findByText("Colour me");
     expect(container.querySelector('li span[aria-hidden="true"][style*="background"]')).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Organize" }));
+    await openTool("Organize");
     const dialog = await screen.findByRole("dialog");
     const group = await within(dialog).findByRole("radiogroup", { name: "Colour for Anatomy" });
     fireEvent.click(within(group).getByRole("radio", { name: "Teal" }));
@@ -280,7 +285,7 @@ describe("Add questions hub", () => {
     await repo.create([tf("Same question"), tf("Other question")]);
     await repo.create([tf("Same  question ")]);
     renderScreen(repo);
-    fireEvent.click(await screen.findByRole("button", { name: "Duplicates" }));
+    await openTool("Duplicates");
     const dlg = await screen.findByRole("dialog", { name: "Find duplicates" });
     expect(await within(dlg).findByText("1 extra copy")).toBeTruthy();
     fireEvent.click(within(dlg).getByRole("button", { name: "Archive all 1 extra copy" }));
@@ -296,7 +301,7 @@ describe("Add questions hub", () => {
     await repo.create([tf("Which nerve supplies the deltoid muscle of the shoulder joint?")]);
     await repo.create([tf("Which artery supplies the appendix?")]);
     renderScreen(repo);
-    fireEvent.click(await screen.findByRole("button", { name: "Duplicates" }));
+    await openTool("Duplicates");
     const dlg = await screen.findByRole("dialog", { name: "Find duplicates" });
     expect(await within(dlg).findByText("Possible duplicates (1)")).toBeTruthy();
     fireEvent.click(within(dlg).getByRole("button", { name: "Keep the older one" }));
@@ -311,7 +316,7 @@ describe("Add questions hub", () => {
     await repo.create([tf("Which nerve supplies the deltoid muscle of the shoulder?")]);
     await repo.create([tf("Which nerve supplies the deltoid muscle of the shoulder joint?")]);
     renderScreen(repo);
-    fireEvent.click(await screen.findByRole("button", { name: "Duplicates" }));
+    await openTool("Duplicates");
     const dlg = await screen.findByRole("dialog", { name: "Find duplicates" });
     fireEvent.click(await within(dlg).findByRole("button", { name: "Not a duplicate" }));
     expect(await within(dlg).findByText(/No duplicates found/)).toBeTruthy();

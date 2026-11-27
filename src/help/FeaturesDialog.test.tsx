@@ -60,12 +60,8 @@ describe("All features", () => {
     shell();
     const dlg = await openAll();
     fireEvent.click(within(dlg).getByRole("button", { name: /Mistake notebook/ }));
-    expect(window.location.hash).toBe("#/review");
-    await waitFor(() =>
-      expect(screen.getByRole("tab", { name: /Mistakes/ }).getAttribute("aria-selected")).toBe(
-        "true",
-      ),
-    );
+    await waitFor(() => expect(window.location.hash).toBe("#/review/mistakes"));
+    expect(await screen.findByRole("heading", { level: 1, name: "Mistakes" })).toBeTruthy();
   });
 
   it("opens the prompt maker inside Questions", async () => {

@@ -10,7 +10,7 @@ Built and in use: the question bank, practice and exams, review (revision, mista
 
 ## How things were checked
 
-- **Run by the assistant, every push:** format, lint, typecheck, unit and component tests (784), build, environment/header check, end-to-end flows in a real browser against in-memory data, accessibility scan (axe, WCAG 2.1 AA) of the landing, sign-in and six signed-in screens (including Study with a running timer) in six theme/mode combinations at 360 px, a design audit of screens and dialogs, the exam PDF check (including Bangla text), SQL checks for row-level security and answer rules, and a coverage floor.
+- **Run by the assistant, every push:** format, lint, typecheck, unit and component tests (790), build, environment/header check, end-to-end flows in a real browser against in-memory data, accessibility scan (axe, WCAG 2.1 AA) of the landing, sign-in and signed-in screens (including Study with a running timer, Mini games and each Review page) in six theme/mode combinations at 360 px, a design audit of screens and dialogs, the exam PDF check (including Bangla text), SQL checks for row-level security and answer rules, and a coverage floor.
 - **Reported passed by the owner, not run by the assistant** (no logs or screenshots supplied): offline editing and sync on a real phone, deleting a throwaway account, two accounts that cannot see each other's data, a real AI call with the owner's key, Firefox and Safari, Supabase Site URL and redirect, password-reset email, change email, Google sign-in, Gmail sender, install and offline use on the phone, exam PDF on the phone, a restore drill with the app's backup file, and the introduction page on a phone.
 - **Not verified by anyone:** the AI-decides plan with a real AI (the flow is tested with a fake AI only: plan reading, batching, retry, prompts); a timed restore of the full database from the weekly backup on a computer; many students on one database; 100,000 questions on a low-end phone; two real devices editing offline at the same time; the live site's headers seen from outside GitHub's runner; link previews in WhatsApp or Facebook; the install dialog with screenshots; screen-reader use; a penetration test.
 - **Local measurements** (not the real project): 50,000 questions and 200,000 answers for one student, list and search under 25 ms, a dump and restore of 250,000 rows matching exactly. Details in `RUNBOOK.md`.
@@ -33,6 +33,10 @@ Built and in use: the question bank, practice and exams, review (revision, mista
 - An architecture decision log and a recorded restore drill on the real project.
 - Offline edits of tags, collections and subjects clash silently (last change wins); only questions have the clash screen.
 
+## UI re-engineering
+
+Built and checked here (unit and component tests 791, e2e, accessibility and design audits on 12 screens in 6 theme/mode combinations, screenshots before and after). **Not verified:** how it feels on a real phone. No database change.
+
 ## Focus Timer and Study dashboard (branch `focus-timer`)
 
 - **Built and checked here:** timer engine and recovery, session saving, statistics, Study tab, settings, AMOLED theme; unit and component tests, SQL checks (own rows only, no duplicates, no edits; the check fails when row security is loosened), end-to-end, accessibility and design audits. The engine tests fail when the pause arithmetic is broken.
@@ -40,3 +44,9 @@ Built and in use: the question bank, practice and exams, review (revision, mista
 - **Not verified:** the timer on a real phone (screen off, Wake Lock, background notification). Only the owner can check this.
 - **Full screen (flip clock):** unit tests (the flip only happens on the digit that changed; the test fails if the flip is removed) and screenshots of the real stylesheet in portrait and landscape. **Not verified:** how the flip looks and feels on a real phone.
 - **Not built (optional ideas left out on purpose):** a timer started from Practice, and Coach push messages about study time.
+
+## UI re-engineering (branch `ui-redesign`, see `docs/UI_REDESIGN.md`)
+
+- **Done and checked here (P1 to P3):** five-tab navigation, shared page header and tile components, Home redesign, Mini games hub, Review hub with a page per tool, Flashcards rebuild with a study mode. Unit and component tests, end-to-end (including the phone Back button), accessibility and design audits in six themes. The study-mode test fails if the rating keys stop working.
+- **Not verified:** how it feels on a real phone.
+- **Next:** P4 Questions and Practice polish, P5 Progress (merge Study time) and final audit.

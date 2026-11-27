@@ -4,7 +4,9 @@ import { handoff } from "./practice.tsx";
 import Results from "./Results.tsx";
 import PracticeHome, { type View } from "./PracticeHome.tsx";
 
-export default function PracticeScreen() {
+export default function PracticeScreen({
+  onNavigate,
+}: { onNavigate?: (route: string) => void } = {}) {
   const [view, setView] = useState<View>(() => {
     const id = handoff.attemptId;
     handoff.attemptId = null;
@@ -26,5 +28,5 @@ export default function PracticeScreen() {
         onStarted={(id) => setView({ name: "play", id })}
       />
     );
-  return <PracticeHome onOpen={setView} />;
+  return <PracticeHome onOpen={setView} onNavigate={onNavigate} />;
 }

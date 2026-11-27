@@ -28,14 +28,14 @@ afterEach(() => {
 });
 
 describe("AppShell", () => {
-  it("shows Home with the six navigation items by default", async () => {
+  it("shows Home with the five navigation items by default", async () => {
     renderShell();
     expect(
       await screen.findByRole("heading", { level: 1, name: "Your question bank starts here" }),
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Home" }).getAttribute("aria-current")).toBe("page");
     const nav = screen.getByRole("navigation", { name: "Primary" });
-    expect(nav.querySelectorAll("button").length).toBe(6);
+    expect(nav.querySelectorAll("button").length).toBe(5);
   });
 
   it("follows the URL hash", async () => {
@@ -48,7 +48,7 @@ describe("AppShell", () => {
     renderShell();
     await screen.findByRole("navigation", { name: "Primary" });
     act(() => {
-      screen.getByRole("button", { name: "Insights" }).click();
+      screen.getByRole("button", { name: "Progress" }).click();
     });
     expect(window.location.hash).toBe("#/insights");
   });

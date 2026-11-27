@@ -88,3 +88,65 @@ export const SparkIcon = (p: IconProps) => (
     <path d="M19 16l.7 1.8L21.5 18.5l-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7L19 16z" />
   </Icon>
 );
+
+export const BackIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M15 5l-7 7 7 7" />
+  </Icon>
+);
+export const ChevronIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M9 5l7 7-7 7" />
+  </Icon>
+);
+export const MoreIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="5" cy="12" r="1.2" />
+    <circle cx="12" cy="12" r="1.2" />
+    <circle cx="19" cy="12" r="1.2" />
+  </Icon>
+);
+export const GamesIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3" y="7" width="18" height="11" rx="5" />
+    <path d="M8 10v5M5.5 12.5h5" />
+    <circle cx="15.5" cy="11.5" r="0.9" />
+    <circle cx="18" cy="14" r="0.9" />
+  </Icon>
+);
+export const CardsIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3" y="6" width="14" height="12" rx="2.5" />
+    <path d="M7 3h12a2 2 0 0 1 2 2v10" />
+  </Icon>
+);
+export const MistakeIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M9 9l6 6M15 9l-6 6" />
+  </Icon>
+);
+export const BookmarkIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M7 4h10v16l-5-3.5L7 20z" />
+  </Icon>
+);
+export const NoteIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M6 3h9l4 4v14H6z" />
+    <path d="M9 12h7M9 16h5" />
+  </Icon>
+);
+export const GlossaryIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M5 5a2 2 0 0 1 2-2h11v15H7a2 2 0 0 0-2 2z" />
+    <path d="M5 20a2 2 0 0 0 2 2h11" />
+    <path d="M9 8h5" />
+  </Icon>
+);
+export const ClockIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7v5l3 2" />
+  </Icon>
+);

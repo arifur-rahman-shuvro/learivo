@@ -18,6 +18,7 @@ const PracticeScreen = lazy(() => import("../modules/practice/ui/PracticeScreen.
 const QuestionsScreen = lazy(() => import("../modules/question-bank/ui/QuestionsScreen.tsx"));
 const ReviewScreen = lazy(() => import("../modules/workspace/ui/ReviewScreen.tsx"));
 const StudyScreen = lazy(() => import("../modules/focus/ui/StudyScreen.tsx"));
+const GamesScreen = lazy(() => import("../modules/games/GamesScreen.tsx"));
 const InsightsScreen = lazy(() => import("../modules/workspace/ui/InsightsScreen.tsx"));
 
 /**
@@ -56,9 +57,11 @@ export default function ModuleHost({
                   ) : module === "questions" ? (
                     <QuestionsScreen onNavigate={onNavigate} />
                   ) : module === "practice" ? (
-                    <PracticeScreen />
+                    <PracticeScreen onNavigate={onNavigate} />
                   ) : module === "study" ? (
                     <StudyScreen />
+                  ) : module === "games" ? (
+                    <GamesScreen onNavigate={onNavigate} />
                   ) : module === "review" ? (
                     <ReviewScreen onNavigate={onNavigate} />
                   ) : (

@@ -22,8 +22,8 @@ describe("home layout", () => {
     expect(l.order).toEqual([
       "goal",
       "focus",
-      "numbers",
       "features",
+      "numbers",
       "week",
       "weak",
       "recent",
@@ -34,7 +34,7 @@ describe("home layout", () => {
 
   it("moves sections and stops at the ends", () => {
     const up = moveSection(DEFAULT_HOME_LAYOUT, "goal", -1);
-    expect(up.order.slice(0, 4)).toEqual(["focus", "numbers", "goal", "features"]);
+    expect(up.order.slice(0, 4)).toEqual(["focus", "goal", "features", "numbers"]);
     expect(moveSection(DEFAULT_HOME_LAYOUT, "focus", -1)).toBe(DEFAULT_HOME_LAYOUT);
     expect(moveSection(DEFAULT_HOME_LAYOUT, "exam", 1)).toBe(DEFAULT_HOME_LAYOUT);
   });

@@ -9,9 +9,11 @@ import { FilterBar } from "./parts/FilterBar.tsx";
 import { useQuestionPages } from "./parts/useQuestionPages.ts";
 import { useIntent } from "../../../core/intents.ts";
 import {
+  ActionMenu,
   Button,
   EmptyState,
   ListSkeleton,
+  PageHeader,
   PlusIcon,
   QuestionsIcon,
   SearchIcon,
@@ -223,34 +225,31 @@ export default function QuestionsScreen({ onNavigate }: { onNavigate: (route: st
 
   return (
     <div className="flex flex-col gap-4">
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 id="module-title" className="m-0 text-3xl font-bold">
-            Questions
-          </h1>
-          <p className="m-0 text-sm text-muted" aria-live="polite">
+      <PageHeader
+        title="Questions"
+        help={
+          <span aria-live="polite">
             {loading && items.length === 0
               ? "Loading…"
               : `${total.toLocaleString()} ${archive ? "archived" : ""} question${total === 1 ? "" : "s"}${filtered ? " match" : ""}`}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button icon={<PlusIcon />} onClick={() => setPanel("hub")}>
-            Add questions
-          </Button>
-          <Button variant="secondary" onClick={() => setPanel("export")}>
-            Export
-          </Button>
-          <Button variant="secondary" onClick={() => setPanel("manage")}>
-            Organize
-          </Button>
-          {!empty && (
-            <Button variant="secondary" onClick={() => setPanel("duplicates")}>
-              Duplicates
+          </span>
+        }
+        action={
+          <div className="flex items-center gap-2">
+            <Button icon={<PlusIcon />} onClick={() => setPanel("hub")}>
+              Add questions
             </Button>
-          )}
-        </div>
-      </header>
+            <ActionMenu
+              label="More question tools"
+              items={[
+                { label: "Export", onSelect: () => setPanel("export") },
+                { label: "Organize", onSelect: () => setPanel("manage") },
+                ...(empty ? [] : [{ label: "Duplicates", onSelect: () => setPanel("duplicates") }]),
+              ]}
+            />
+          </div>
+        }
+      />
 
       <div role="tablist" aria-label="Question status" className="flex gap-1 border-b border-line">
         {(["active", "archived"] as const).map((s) => (

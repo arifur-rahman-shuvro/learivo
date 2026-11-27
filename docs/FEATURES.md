@@ -87,9 +87,13 @@ What each part does and the rules behind it, written from the code. For where fi
 - The percentage is marks earned out of the marks for **all** questions, so a skipped question counts against it: 12 right out of 20 is 60% even if only 16 were answered. Results shows Score, Percentage and "Answered x of y". "Up/Down x points from last time" uses the same percentage.
 - Insights "accuracy" is still about answered questions only (it measures how well you know what you attempt); exam scores in Insights use full marks.
 
+## Navigation and layout (UI re-engineering)
+
+Five bottom tabs: Home, Questions, Practice, Review, Progress. Review is a hub of big tiles (Due now, Mistakes, Flashcards, Notes, Bookmarks, Glossary), each opening its own page with Back. Focus timer and Mini games (all "Coming soon") are reached from Home and Practice. Progress > Study time shows practice time and Focus timer statistics together. Plan and reasons: `docs/UI_REDESIGN.md`.
+
 ## Study: Focus Timer and Study Time dashboard
 
-A sixth tab, **Study**, with three views: **Timer**, **Stats**, **History**.
+The **Focus timer** (route `#/study`, reached from Home, Practice, the floating pill or search; it is no longer in the bottom bar) has three views: **Timer**, **Stats**, **History**.
 
 - **Timer modes:** Pomodoro (focus, short break, long break after N sessions, optional automatic break and automatic next focus), Stopwatch, Countdown, Custom, and saved Presets. Controls: Start, Pause, Resume, Reset, Restart, Skip break, Next session, Stop.
 - **Accurate:** the clock is worked out from timestamps (start time and time already carried), not by counting ticks, so a background tab, a phone that slept or a refresh cannot make it drift. A running timer is kept on the device and is recovered after a refresh or restart; if the app was closed for a while, it asks whether to save the session as interrupted. Optional Screen Wake Lock keeps the screen on where the browser allows it.
@@ -99,3 +103,11 @@ A sixth tab, **Study**, with three views: **Timer**, **Stats**, **History**.
 - **History:** every session, filterable by day.
 - **Settings:** Pomodoro lengths, presets, default mode, 12/24-hour time, display options, notification and vibration, keep awake. A fourth theme, **AMOLED** (pure black, dark only), is in the theme list.
 - Existing practice and exam time in Insights is unchanged and is not mixed into focus totals.
+
+## Navigation and layout (UI re-engineering, see `docs/UI_REDESIGN.md`)
+
+- **Five bottom tabs:** Home, Questions, Practice, Review, Progress (Progress is the old Insights).
+- **Home:** a Next step card (revision due, or what is left of the daily goal), four big quick links (Practice, Review with its due count, Focus timer, Mini games), then goal, numbers, week, weak areas, recent sessions and exam countdown. Customize still hides and reorders sections. The old 16-shortcut grid is replaced by "Browse all features".
+- **Review hub:** six big tiles with live counts (Due now, Mistakes, Flashcards, Notes, Bookmarks, Glossary). Each opens its own page (`#/review/notes` and so on) with a Back button; the phone's Back button returns to the hub.
+- **Flashcards:** a deck page (search, All or Due filter, tap a row to edit) with one **Study** button. Study mode is full screen: a large card that turns over, four ratings (Again, Hard, Good, Easy, each with its next interval), a progress bar, keyboard (Space turns, 1 to 4 rate, Escape leaves) and a session summary.
+- **Mini games:** a hub page with four planned games, every one marked Coming soon. Nothing is playable yet.

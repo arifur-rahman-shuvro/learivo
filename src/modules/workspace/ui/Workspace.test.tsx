@@ -9,6 +9,8 @@ import { PracticeProvider, handoff } from "../../practice/ui/practice.tsx";
 import PracticeScreen from "../../practice/ui/PracticeScreen.tsx";
 import { MemoryWorkspace } from "../data/memoryWorkspace.ts";
 import { WorkspaceProvider } from "./workspace.tsx";
+import { FocusProvider } from "../../focus/ui/FocusProvider.tsx";
+import { MemoryFocus } from "../../focus/data/memoryFocus.ts";
 import ReviewScreen from "./ReviewScreen.tsx";
 import InsightsScreen from "./InsightsScreen.tsx";
 import HomeDashboard from "./HomeDashboard.tsx";
@@ -39,12 +41,18 @@ async function setup<T = void>(
     workspace: new MemoryWorkspace(),
   };
   const seeded = (seed ? await seed(stores) : undefined) as T;
-  const nav = vi.fn();
+  const nav = vi.fn((route: string) => {
+    if (route.startsWith("#/review")) window.location.hash = route;
+  });
   render(
     <ThemeProvider>
       <BankProvider repo={stores.bank}>
         <PracticeProvider attempts={stores.attempts}>
-          <WorkspaceProvider repo={stores.workspace}>{ui(nav)}</WorkspaceProvider>
+          <WorkspaceProvider repo={stores.workspace}>
+            <FocusProvider userId="u1" repo={new MemoryFocus()}>
+              {ui(nav)}
+            </FocusProvider>
+          </WorkspaceProvider>
         </PracticeProvider>
       </BankProvider>
     </ThemeProvider>,
@@ -107,6 +115,7 @@ async function finished(
 
 afterEach(() => {
   cleanup();
+  window.location.hash = "";
   handoff.attemptId = null;
 });
 
@@ -119,7 +128,7 @@ describe("Review: due now", () => {
         await workspace.addCards([id!]);
       },
     );
-    fireEvent.click(await screen.findByRole("tab", { name: /Due now/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Due now/ }));
     expect(await screen.findByText("1 card due")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Show answer" }));
     expect(await screen.findByText("Explanation")).toBeTruthy();
@@ -140,6 +149,7 @@ describe("Review: due now", () => {
         await workspace.addCards([id!]);
       },
     );
+    fireEvent.click(await screen.findByRole("button", { name: /Due now/ }));
     fireEvent.click(await screen.findByRole("button", { name: "Show answer" }));
     fireEvent.click(await screen.findByRole("button", { name: /Again/ }));
     await screen.findByText("You are all caught up");
@@ -160,7 +170,7 @@ describe("Review: mistakes, bookmarks, notes", () => {
         ]);
       },
     );
-    fireEvent.click(await screen.findByRole("tab", { name: /Mistakes/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Mistakes/ }));
     expect(await screen.findByText("Missed one")).toBeTruthy();
     expect(screen.queryByText("Got this right")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Add to revision" }));
@@ -184,9 +194,10 @@ describe("Review: mistakes, bookmarks, notes", () => {
         return a!;
       },
     );
-    fireEvent.click(await screen.findByRole("tab", { name: /Mistakes/ }));
-    // The tab counts the missed and the skipped question once each.
-    expect(screen.getByRole("tab", { name: /Mistakes/ }).textContent).toContain("2");
+    // The Mistakes tile counts the missed and the skipped question once each.
+    const tile = await screen.findByRole("button", { name: /Mistakes/ });
+    await waitFor(() => expect(tile.textContent).toContain("2"));
+    fireEvent.click(tile);
     fireEvent.click(await screen.findByRole("tab", { name: /Skipped/ }));
     expect(await screen.findByText("Skipped one")).toBeTruthy();
     expect(screen.queryByText("Missed one")).toBeNull();
@@ -209,7 +220,7 @@ describe("Review: mistakes, bookmarks, notes", () => {
         await workspace.setBookmark(id!, true);
       },
     );
-    fireEvent.click(await screen.findByRole("tab", { name: /Bookmarks/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Bookmarks/ }));
     expect(await screen.findByText("Saved question")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Remove bookmark" }));
     expect(await screen.findByText("No bookmarks yet")).toBeTruthy();
@@ -218,7 +229,7 @@ describe("Review: mistakes, bookmarks, notes", () => {
 
   it("writes a free note and refuses an empty one", async () => {
     await setup((n) => <ReviewScreen onNavigate={n} />);
-    fireEvent.click(await screen.findByRole("tab", { name: /Notes/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Notes/ }));
     fireEvent.click((await screen.findAllByRole("button", { name: "New note" }))[0]!);
     const dialog = await screen.findByRole("dialog");
     fireEvent.click(within(dialog).getByRole("button", { name: "Save note" }));
@@ -260,6 +271,20 @@ describe("Insights", () => {
   it("shows an empty state before any session", async () => {
     await setup((n) => <InsightsScreen onNavigate={n} />);
     expect(await screen.findByText("Nothing to show yet")).toBeTruthy();
+  });
+
+  it("shows focus-timer stats under Study time and opens the timer", async () => {
+    const { nav } = await setup(
+      (n) => <InsightsScreen onNavigate={n} />,
+      async ({ bank, attempts }) => {
+        const [a] = await bank.create([{ ...tf("A1"), path: ["Anatomy"] }]);
+        await finished(attempts, [{ id: a!, stem: "A1", path: ["Anatomy"], right: true }]);
+      },
+    );
+    fireEvent.click(await screen.findByRole("tab", { name: "Study time" }));
+    expect(await screen.findByRole("heading", { name: "Focus timer" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Open focus timer" }));
+    expect(nav).toHaveBeenCalledWith("#/study");
   });
 
   it("starts a practice session from a weak area", async () => {
@@ -459,7 +484,7 @@ describe("Home dashboard", () => {
     await waitFor(() => expect(screen.queryByRole("heading", { name: "Weak areas" })).toBeNull());
     const saved = await workspace.homeLayout();
     expect(saved.hidden).toEqual(["weak"]);
-    expect(saved.order.slice(0, 4)).toEqual(["focus", "numbers", "goal", "features"]);
+    expect(saved.order.slice(0, 4)).toEqual(["focus", "goal", "features", "numbers"]);
   });
 
   it("can reset the layout and does not save when cancelled", async () => {
@@ -502,7 +527,7 @@ describe("Review: notes search", () => {
         });
       },
     );
-    fireEvent.click(await screen.findByRole("tab", { name: /Notes/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Notes/ }));
     expect(await screen.findByText("Cardiac")).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Search notes"), { target: { value: "renal" } });
     expect(screen.queryByText("Cardiac")).toBeNull();
@@ -605,7 +630,7 @@ describe("Insights: achievements", () => {
 describe("Review: flashcards", () => {
   it("writes a card, studies it, rates it, then edits and deletes it", async () => {
     const { workspace } = await setup((n) => <ReviewScreen onNavigate={n} />);
-    fireEvent.click(await screen.findByRole("tab", { name: /Flashcards/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Flashcards/ }));
     fireEvent.click(await screen.findByRole("button", { name: "Write your first card" }));
     fireEvent.click(screen.getByRole("button", { name: "Save card" }));
     expect(await screen.findByText("Write the front of the card.")).toBeTruthy();
@@ -613,18 +638,27 @@ describe("Review: flashcards", () => {
     fireEvent.change(screen.getByLabelText("Back"), { target: { value: "**Four**" } });
     fireEvent.click(screen.getByRole("button", { name: "Save card" }));
 
+    fireEvent.click(await screen.findByRole("button", { name: "Study 1 card" }));
     const study = await screen.findByRole("region", { name: "Flashcard" });
     expect(within(study).getByText("Heart chambers?")).toBeTruthy();
-    expect(within(study).queryByText("Four")).toBeNull();
+    // The answer sits on the back of the card, hidden from screen readers until it is turned over.
+    expect(within(study).getByText("Four").closest(".fc-face")!.getAttribute("aria-hidden")).toBe(
+      "true",
+    );
     fireEvent.click(within(study).getByRole("button", { name: "Show answer" }));
     expect(within(study).getByText("Four").tagName).toBe("STRONG");
+    expect(
+      within(study).getByText("Heart chambers?").closest(".fc-face")!.getAttribute("aria-hidden"),
+    ).toBe("true");
     fireEvent.click(within(study).getByRole("button", { name: /^Good/ }));
-    await screen.findByText("No cards due");
+    await screen.findByText("Session done");
+    fireEvent.click(screen.getByRole("button", { name: "Back to flashcards" }));
+    await screen.findByText("All caught up");
     const [saved] = await workspace.flashcards();
     expect(saved!.reps).toBe(1);
     expect(new Date(saved!.due).getTime()).toBeGreaterThan(Date.now());
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    fireEvent.click(screen.getByRole("button", { name: /Heart chambers\?/ }));
     fireEvent.change(screen.getByLabelText("Front"), {
       target: { value: "Chambers of the heart?" },
     });
@@ -632,9 +666,66 @@ describe("Review: flashcards", () => {
     expect(await screen.findByText("Chambers of the heart?")).toBeTruthy();
     expect((await workspace.flashcards())[0]!.reps).toBe(1); // editing keeps the schedule
 
-    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+    fireEvent.click(await screen.findByRole("button", { name: /Chambers of the heart\?/ }));
     fireEvent.click(screen.getByRole("button", { name: "Delete card" }));
     expect(await screen.findByText("No flashcards yet")).toBeTruthy();
+  });
+});
+
+describe("Review hub", () => {
+  it("shows six big tiles with counts, opens a page, and Back returns to the hub", async () => {
+    await setup(
+      (n) => <ReviewScreen onNavigate={n} />,
+      async ({ bank, workspace }) => {
+        const [a] = await bank.create([tf("Q1")]);
+        await workspace.addCards([a!]);
+        await workspace.saveFlashcard({ id: null, front: "F", back: "B" });
+      },
+    );
+    expect(await screen.findByRole("heading", { level: 1, name: "Review" })).toBeTruthy();
+    for (const name of ["Due now", "Mistakes", "Flashcards", "Notes", "Bookmarks", "Glossary"])
+      expect(screen.getByRole("button", { name: new RegExp(name) })).toBeTruthy();
+    expect(screen.queryByRole("tab")).toBeNull(); // no row of tiny tabs any more
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /Due now/ }).textContent).toContain("1"),
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Bookmarks/ }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Bookmarks" })).toBeTruthy();
+    expect(window.location.hash).toBe("#/review/bookmarks");
+    fireEvent.click(screen.getByRole("button", { name: "Review" }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Review" })).toBeTruthy();
+    expect(window.location.hash).toBe("#/review");
+  });
+});
+
+describe("Flashcard study mode", () => {
+  it("turns with Space, rates with the number keys, and ends with a summary", async () => {
+    const { workspace } = await setup(
+      (n) => <ReviewScreen onNavigate={n} />,
+      async ({ workspace }) => {
+        await workspace.saveFlashcard({ id: null, front: "One?", back: "1" });
+        await workspace.saveFlashcard({ id: null, front: "Two?", back: "2" });
+      },
+    );
+    fireEvent.click(await screen.findByRole("button", { name: /Flashcards/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Study 2 cards" }));
+    const study = await screen.findByRole("region", { name: "Flashcard" });
+    expect(within(study).getByText("1 / 2")).toBeTruthy();
+    fireEvent.keyDown(window, { key: "3" }); // not turned over yet: ignored
+    expect(within(study).getByText("1 / 2")).toBeTruthy();
+    fireEvent.keyDown(window, { key: " " });
+    fireEvent.keyDown(window, { key: "1" }); // Again
+    expect(await within(study).findByText("2 / 2")).toBeTruthy();
+    fireEvent.keyDown(window, { key: " " });
+    fireEvent.keyDown(window, { key: "4" }); // Easy
+    expect(await screen.findByText("Session done")).toBeTruthy();
+    expect(
+      screen.getByText(/2 cards reviewed\. 1 remembered well, 1 to see again soon/),
+    ).toBeTruthy();
+    const cards = await workspace.flashcards();
+    expect(cards.filter((c) => c.reps > 0 || c.lapses > 0)).toHaveLength(2);
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(await screen.findByText("All caught up")).toBeTruthy();
   });
 });
 
@@ -651,7 +742,7 @@ describe("Review: glossary", () => {
         });
       },
     );
-    fireEvent.click(await screen.findByRole("tab", { name: /Glossary/ }));
+    fireEvent.click(await screen.findByRole("button", { name: /Glossary/ }));
     fireEvent.click(await screen.findByRole("button", { name: "Add your first term" }));
     fireEvent.change(screen.getByLabelText("Term"), { target: { value: "Systole" } });
     fireEvent.change(screen.getByLabelText("Meaning"), { target: { value: "Contraction phase" } });
@@ -673,7 +764,8 @@ describe("Review: glossary", () => {
     });
     expect(screen.getByText("Systole")).toBeTruthy();
 
-    fireEvent.click(screen.getByRole("tab", { name: /Notes/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Review" })); // Back to the hub
+    fireEvent.click(await screen.findByRole("button", { name: /Notes/ }));
     const hit = await screen.findByTitle("Contraction phase");
     expect(hit.textContent).toBe("Systole");
   });

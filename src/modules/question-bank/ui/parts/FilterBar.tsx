@@ -99,7 +99,7 @@ export function FilterBar({
           type="search"
           className="lv-input min-w-0 flex-1"
           aria-label="Search questions"
-          placeholder="Search questions and explanations"
+          placeholder="Search questions"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
         />

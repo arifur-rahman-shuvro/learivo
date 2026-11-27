@@ -155,7 +155,7 @@ try {
   step = "flashcard, note and glossary term";
   await page.goto(`${BASE}#/review`);
   const dialog = page.getByRole("dialog");
-  await page.getByRole("tab", { name: /^Flashcards/ }).click();
+  await page.getByRole("button", { name: /^Flashcards/ }).click();
   await page.getByRole("button", { name: "New card" }).click();
   await dialog.locator("textarea").nth(0).fill("Which nerve supplies the deltoid?");
   await dialog.locator("textarea").nth(1).fill("The axillary nerve");
@@ -163,13 +163,15 @@ try {
   // The question missed in the exam above was turned into a flashcard automatically.
   await expectText("2 cards");
   await expectText("Which nerve supplies the deltoid?");
-  await page.getByRole("tab", { name: /^Notes/ }).click();
+  await page.goBack(); // the phone Back button returns to the Review hub
+  await page.getByRole("button", { name: /^Notes/ }).click();
   await page.getByRole("button", { name: "New note" }).first().click();
   await dialog.locator("input").first().fill("Brachial plexus");
   await dialog.locator("textarea").first().fill("Roots C5 to T1");
   await dialog.getByRole("button", { name: "Save note" }).click();
   await expectText("Brachial plexus");
-  await page.getByRole("tab", { name: /^Glossary/ }).click();
+  await page.goBack();
+  await page.getByRole("button", { name: /^Glossary/ }).click();
   await page.getByRole("button", { name: "New term" }).click();
   await dialog.locator("input").first().fill("Ischaemia");
   await dialog.locator("textarea").first().fill("Too little blood reaching a tissue");
