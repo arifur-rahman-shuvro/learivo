@@ -133,7 +133,8 @@ export const GAMES: readonly GameManifest[] = [
     title: "Mini table tennis",
     help: "Drag your paddle and rally against the computer.",
     icon: <ClockIcon />,
-    status: "soon",
+    status: "ready",
+    load: () => import("./pingpong/PingPong.tsx"),
   },
   {
     id: "cricket",
