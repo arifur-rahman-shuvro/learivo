@@ -1,163 +1,195 @@
-/* Mini cricket: drawn with plain shapes. The ball is moved by one CSS animation whose length is the ball's travel time. */
-.cri-field {
-  position: relative;
+/* Mini cricket screens. The pitch itself is drawn on a canvas (render.ts). */
+.cri-wrap {
   width: 100%;
-  max-width: 22rem;
+  max-width: 28rem;
   margin: 0 auto;
-  aspect-ratio: 3 / 4;
+}
+.cri-hero {
+  position: relative;
+  height: 9rem;
   overflow: hidden;
   border-radius: 1rem;
-  background: radial-gradient(ellipse at 50% 40%, #2f8f4e, #1f6b3a 70%);
+  background: radial-gradient(ellipse at 50% 60%, #44a05a, #2f7f45 70%);
+}
+.cri-hero-rope {
+  position: absolute;
+  inset: 0.75rem 1.5rem;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  opacity: 0.9;
+}
+.cri-hero-pitch {
+  position: absolute;
+  left: 50%;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 2.2rem;
+  transform: translateX(-50%);
+  border-radius: 6px;
+  background: #d9b673;
+}
+.cri-hero-ball {
+  position: absolute;
+  left: 50%;
+  top: 1rem;
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-left: -0.4rem;
+  border-radius: 50%;
+  background: #d62828;
+  animation: cri-hero-bowl 2.4s ease-in infinite;
+}
+@keyframes cri-hero-bowl {
+  0% {
+    transform: translateY(0) scale(0.7);
+  }
+  70% {
+    transform: translateY(6.4rem) scale(1.3);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(6.4rem) scale(1.3);
+    opacity: 0;
+  }
+}
+.cri-seg {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
   border: 2px solid var(--color-line, #ccc);
-  padding: 0;
-  display: block;
+  border-radius: 0.75rem;
+  background: transparent;
+  text-align: left;
   cursor: pointer;
-  touch-action: manipulation;
+}
+.cri-seg[aria-pressed="true"] {
+  border-color: var(--color-accent, #2f6fe4);
+  box-shadow: inset 0 0 0 1px var(--color-accent, #2f6fe4);
+}
+.cri-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+}
+.cri-chips {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cri-chip {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid var(--color-line, #ccc);
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.cri-chip.cri-big {
+  border-color: var(--color-accent, #2f6fe4);
+}
+.cri-chip.cri-out {
+  border-color: var(--color-danger, #d62828);
+  color: var(--color-danger, #d62828);
+}
+@media (max-width: 22rem) {
+  .cri-chips {
+    display: none;
+  }
+}
+/* The stage keeps the picture's 9:14 shape and never grows taller than the screen. */
+.cri-stage {
+  position: relative;
+  width: min(100%, calc((100dvh - 10rem) * 0.643));
+  margin: 0 auto;
+  aspect-ratio: 9 / 14;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: #1c2540;
+  cursor: pointer;
+  touch-action: none;
   user-select: none;
+  -webkit-user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
-.cri-field:focus-visible {
+.cri-stage:focus-visible {
   outline: 3px solid #fff;
   outline-offset: -6px;
 }
-.cri-pitch {
+.cri-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.cri-feedback {
   position: absolute;
-  left: 38%;
-  right: 38%;
+  left: 0;
+  right: 0;
   top: 6%;
-  bottom: 6%;
-  background: #d9b87a;
-  border-radius: 6px;
-  box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.12);
-}
-.cri-stumps {
-  position: absolute;
-  left: 50%;
-  top: 86%;
-  width: 14%;
-  height: 9%;
-  transform: translateX(-50%);
-  background: repeating-linear-gradient(90deg, #f5f5f5 0 14%, transparent 14% 43%);
-  border-radius: 2px;
-}
-.cri-bowler {
-  position: absolute;
-  left: 50%;
-  top: 7%;
-  width: 7%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: #e8e8e8;
-  transform: translateX(-50%);
-}
-.cri-ring {
-  position: absolute;
-  left: 50%;
-  top: 76%;
-  width: 20%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  border: 3px dashed rgba(255, 255, 255, 0.85);
-  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
   pointer-events: none;
+  color: #fff;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+  animation: cri-pop 0.28s ease-out;
 }
-.cri-batter {
+.cri-word {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.cri-detail {
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+.cri-label {
+  font-size: 2.4rem;
+  font-weight: 900;
+  line-height: 1.05;
+  text-align: center;
+}
+.cri-label-out {
+  color: #ff8a8a;
+}
+@keyframes cri-pop {
+  from {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.cri-pause {
   position: absolute;
-  left: 50%;
-  top: 80%;
-  width: 9%;
-  height: 13%;
-  transform: translateX(-50%);
-  border-radius: 40% 40% 12% 12%;
-  background: #3b6fe0;
-  pointer-events: none;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1rem;
+  background: rgba(10, 14, 28, 0.82);
+  color: #fff;
 }
-.cri-bat {
-  position: absolute;
-  left: 82%;
-  top: 6%;
-  width: 34%;
-  height: 120%;
-  border-radius: 4px;
-  background: #e6c27a;
-  transform-origin: 20% 90%;
-  transform: rotate(-20deg);
-}
-.cri-field[data-swing="true"] .cri-bat {
-  animation: cri-swing 0.22s ease-out forwards;
-}
-@keyframes cri-swing {
-  from {
-    transform: rotate(-20deg);
-  }
-  to {
-    transform: rotate(-150deg);
-  }
-}
-.cri-ball {
-  position: absolute;
-  left: 50%;
-  top: 14%;
-  width: 5%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #ff6b5c, #b3261e);
-  transform: translate(-50%, -50%) scale(0.5);
-  opacity: 0;
-  pointer-events: none;
-}
-.cri-ball[data-mode="bowl"] {
-  opacity: 1;
-  animation: cri-bowl var(--dur) linear forwards;
-}
-.cri-ball[data-mode="hit"] {
-  opacity: 1;
-  left: 50%;
-  top: 76%;
-  animation: cri-hit 0.8s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
-}
-.cri-ball[data-mode="miss"] {
-  opacity: 1;
-  left: 50%;
-  top: 76%;
-  animation: cri-pass 0.5s ease-in forwards;
-}
-@keyframes cri-bowl {
-  from {
-    top: 14%;
-    transform: translate(-50%, -50%) scale(0.5);
-  }
-  to {
-    top: 76%;
-    transform: translate(-50%, -50%) scale(1.5);
-  }
-}
-@keyframes cri-hit {
-  from {
-    left: 50%;
-    top: 76%;
-    transform: translate(-50%, -50%) scale(1.5);
-  }
-  to {
-    left: var(--hx);
-    top: var(--hy);
-    transform: translate(-50%, -50%) scale(var(--hs));
-  }
-}
-@keyframes cri-pass {
-  from {
-    top: 76%;
-    transform: translate(-50%, -50%) scale(1.5);
-  }
-  to {
-    top: 100%;
-    transform: translate(-50%, -50%) scale(2);
-  }
+.cri-pause .lv-btn {
+  min-width: 12rem;
 }
 @media (prefers-reduced-motion: reduce) {
-  .cri-field[data-swing="true"] .cri-bat,
-  .cri-ball[data-mode="hit"],
-  .cri-ball[data-mode="miss"] {
-    animation-duration: 0.01s;
+  .cri-hero-ball,
+  .cri-feedback {
+    animation: none;
   }
 }
