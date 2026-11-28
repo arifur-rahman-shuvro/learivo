@@ -1,0 +1,213 @@
+/* Mini table tennis screens. The table itself is drawn on a canvas (render.ts). */
+.pp-wrap {
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
+}
+.pp-hero {
+  display: grid;
+  place-items: center;
+  height: 9rem;
+  border-radius: 1rem;
+  background: #0d1426;
+}
+.pp-hero-table {
+  position: relative;
+  width: 5.2rem;
+  height: 7.6rem;
+  border: 3px solid #fff;
+  border-radius: 0.5rem;
+  background: #1b3a8a;
+}
+.pp-hero-net {
+  position: absolute;
+  left: -0.4rem;
+  right: -0.4rem;
+  top: 50%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.9);
+}
+.pp-hero-paddle {
+  position: absolute;
+  left: 50%;
+  width: 1.8rem;
+  height: 0.4rem;
+  margin-left: -0.9rem;
+  border-radius: 0.2rem;
+}
+.pp-hero-top {
+  top: 0.5rem;
+  background: #2ec4b6;
+  animation: pp-hero-slide 2.4s ease-in-out infinite;
+}
+.pp-hero-bottom {
+  bottom: 0.5rem;
+  background: #ff6b6b;
+  animation: pp-hero-slide 2.4s ease-in-out infinite reverse;
+}
+.pp-hero-ball {
+  position: absolute;
+  left: 50%;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin-left: -0.35rem;
+  border-radius: 50%;
+  background: #ffd23f;
+  animation: pp-hero-rally 1.2s ease-in-out infinite alternate;
+}
+@keyframes pp-hero-slide {
+  0%,
+  100% {
+    transform: translateX(-0.8rem);
+  }
+  50% {
+    transform: translateX(0.8rem);
+  }
+}
+@keyframes pp-hero-rally {
+  from {
+    top: 1.1rem;
+  }
+  to {
+    top: 6.2rem;
+  }
+}
+.pp-seg {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--color-line, #ccc);
+  border-radius: 0.75rem;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.pp-seg[aria-pressed="true"] {
+  border-color: var(--color-accent, #2f6fe4);
+  box-shadow: inset 0 0 0 1px var(--color-accent, #2f6fe4);
+}
+.pp-hud {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.75rem;
+}
+.pp-hud .pp-score {
+  margin-left: auto;
+  font-size: 1.9rem;
+  font-weight: 800;
+  line-height: 1;
+}
+/* In a 2 Players match the top player reads the top bar upside down, facing him. */
+.pp-flip {
+  transform: rotate(180deg);
+}
+.pp-dot {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+}
+/* The stage keeps the picture's 360:600 shape and never grows taller than the screen. */
+.pp-stage {
+  position: relative;
+  width: min(100%, calc((100dvh - 13rem) * 0.6));
+  margin: 0 auto;
+  aspect-ratio: 360 / 600;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: #0d1426;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.pp-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.pp-banner {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 44%;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  animation: pp-pop 0.3s ease-out;
+}
+.pp-hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 9%;
+  margin: 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.85);
+  pointer-events: none;
+}
+@keyframes pp-pop {
+  from {
+    transform: scale(0.7);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.pp-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 1rem;
+  background: rgba(10, 14, 28, 0.86);
+  color: #fff;
+}
+.pp-overlay .lv-btn {
+  min-width: 12rem;
+}
+.pp-facts {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem 1rem;
+}
+.pp-facts dd {
+  margin: 0;
+  font-weight: 700;
+  text-align: right;
+}
+.pp-facts-dark {
+  min-width: 12rem;
+  font-size: 0.9rem;
+}
+.pp-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.pp-table th,
+.pp-table td {
+  padding: 0.3rem 0.4rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-line, #ddd);
+}
+@media (prefers-reduced-motion: reduce) {
+  .pp-hero-top,
+  .pp-hero-bottom,
+  .pp-hero-ball,
+  .pp-banner {
+    animation: none;
+  }
+}

@@ -147,6 +147,7 @@ try {
         "games/break/tictactoe",
         "games/break/penalty",
         "games/break/cricket",
+        "games/break/pingpong",
         "review",
         "review/flashcards",
         "review/notes",
